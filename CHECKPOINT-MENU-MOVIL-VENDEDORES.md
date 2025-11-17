@@ -167,3 +167,7 @@ En dispositivos móviles, de la misma forma que funciona en PC.
 **Estado:** Listo para continuar diagnóstico
 
 
+
+
+
+

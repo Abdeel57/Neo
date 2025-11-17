@@ -28,7 +28,7 @@ const config = {
   backend: {
     port: 3000,
     command: 'npm',
-    args: ['run', 'start:prisma'],
+    args: ['run', 'start:dev'],
     cwd: path.join(__dirname, 'backend')
   }
 };
