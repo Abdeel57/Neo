@@ -98,19 +98,19 @@ const CountdownTimer = ({ targetDate }: { targetDate: Date | string }) => {
                 const isThreeOrMoreDigits = unit.digitCount >= 3;
                 const isFourDigits = unit.digitCount >= 4;
                 
-                // Tamaños de contenedor ajustados según número de dígitos
+                // Tamaños de contenedor ajustados según número de dígitos - Más grandes y relucientes
                 const digitSizeClasses = isFourDigits
-                    ? "w-6 h-9 sm:w-7 sm:h-11 md:w-8 md:h-12 lg:w-9 lg:h-14" // Muy pequeño para 4 dígitos
+                    ? "w-8 h-12 sm:w-10 sm:h-14 md:w-12 md:h-18 lg:w-14 lg:h-20" // Más grande para 4 dígitos
                     : isThreeOrMoreDigits
-                    ? "w-7 h-10 sm:w-8 sm:h-12 md:w-9 md:h-14 lg:w-10 lg:h-16" // Más pequeño cuando hay 3 dígitos
-                    : "w-8 h-12 sm:w-10 sm:h-14 md:w-12 md:h-16 lg:w-14 lg:h-20"; // Tamaño normal para 2 dígitos
+                    ? "w-10 h-14 sm:w-12 sm:h-18 md:w-14 md:h-20 lg:w-16 lg:h-24" // Más grande cuando hay 3 dígitos
+                    : "w-12 h-16 sm:w-14 sm:h-20 md:w-16 md:h-24 lg:w-18 lg:h-28"; // Tamaño grande para 2 dígitos
                 
-                // Tamaños de texto ajustados
+                // Tamaños de texto ajustados - Más grandes y relucientes
                 const textSizeClasses = isFourDigits
-                    ? "text-sm sm:text-base md:text-lg lg:text-xl" // Muy pequeño para 4 dígitos
+                    ? "text-lg sm:text-xl md:text-2xl lg:text-3xl" // Más grande para 4 dígitos
                     : isThreeOrMoreDigits
-                    ? "text-base sm:text-lg md:text-xl lg:text-2xl" // Texto más pequeño para 3 dígitos
-                    : "text-lg sm:text-xl md:text-2xl lg:text-4xl"; // Tamaño normal para 2 dígitos
+                    ? "text-xl sm:text-2xl md:text-3xl lg:text-4xl" // Texto más grande para 3 dígitos
+                    : "text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl"; // Tamaño grande para 2 dígitos
                 
                 // Espacios entre dígitos ajustados
                 const gapClasses = isThreeOrMoreDigits
@@ -128,7 +128,11 @@ const CountdownTimer = ({ targetDate }: { targetDate: Date | string }) => {
                                         key={`${unit.label}-${digit}-${i}`}
                                         className="relative flex-shrink-0"
                                     >
-                                        <div className={`${digitSizeClasses} bg-white/10 backdrop-blur-sm rounded-lg overflow-hidden border border-white/20 shadow-lg`}>
+                                        <div className={`${digitSizeClasses} bg-white/15 backdrop-blur-md rounded-xl overflow-hidden border-2 border-white/30 shadow-2xl`}
+                                            style={{
+                                                boxShadow: '0 0 20px rgba(255, 255, 255, 0.3), 0 0 40px rgba(255, 255, 255, 0.2), 0 0 60px rgba(255, 255, 255, 0.1), inset 0 0 20px rgba(255, 255, 255, 0.1)'
+                                            }}
+                                        >
                                             <AnimatePresence mode="wait">
                                                 <motion.div
                                                     key={digit}
@@ -136,7 +140,11 @@ const CountdownTimer = ({ targetDate }: { targetDate: Date | string }) => {
                                                     animate={{ y: '0%', opacity: 1 }}
                                                     exit={{ y: '100%', opacity: 0 }}
                                                     transition={{ duration: 0.3, ease: 'easeInOut' }}
-                                                    className={`absolute inset-0 flex items-center justify-center ${textSizeClasses} font-bold text-white`}
+                                                    className={`absolute inset-0 flex items-center justify-center ${textSizeClasses} font-black text-white`}
+                                                    style={{
+                                                        textShadow: '0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255, 255, 255, 0.6), 0 0 30px rgba(255, 255, 255, 0.4), 0 0 40px rgba(255, 255, 255, 0.2)',
+                                                        filter: 'drop-shadow(0 0 5px rgba(255, 255, 255, 0.5))'
+                                                    }}
                                                 >
                                                     {digit}
                                                 </motion.div>
@@ -154,8 +162,12 @@ const CountdownTimer = ({ targetDate }: { targetDate: Date | string }) => {
                         </div>
                         {/* Separador (dos puntos) - solo entre unidades, no después de la última */}
                         {index < timeUnits.length - 1 && (
-                            <div className="flex items-center self-center pt-6 sm:pt-8 md:pt-10 lg:pt-12 px-0.5 sm:px-1">
-                                <span className="text-white text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold leading-none">
+                            <div className="flex items-center self-center pt-8 sm:pt-10 md:pt-12 lg:pt-14 px-1 sm:px-2">
+                                <span className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black leading-none"
+                                    style={{
+                                        textShadow: '0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255, 255, 255, 0.6)'
+                                    }}
+                                >
                                     :
                                 </span>
                             </div>
