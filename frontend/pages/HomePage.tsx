@@ -11,6 +11,7 @@ import Faq from '../components/Faq';
 import CountdownTimer from '../components/CountdownTimer';
 import HeroRaffle from '../components/HeroRaffle';
 import { useAnalytics } from '../contexts/AnalyticsContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { Trophy, Gift, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useOptimizedAnimations } from '../utils/deviceDetection';
@@ -21,6 +22,11 @@ const HomePage = () => {
     const [loading, setLoading] = useState(true);
     const { trackPageView } = useAnalytics();
     const reduceAnimations = useOptimizedAnimations();
+    const { appearance } = useTheme();
+    
+    // Obtener colores del tema o usar valores por defecto
+    const primaryColor = appearance?.colors?.action || '#0ea5e9';
+    const accentColor = appearance?.colors?.accent || '#ec4899';
 
     useEffect(() => {
         setLoading(true);
@@ -110,7 +116,16 @@ const HomePage = () => {
                                     <Zap className="w-8 h-8 md:w-10 md:h-10 text-white" />
                                 </div>
                             </div>
-                            <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-4">
+                            <h2 
+                                className="text-4xl md:text-5xl lg:text-6xl font-black mb-4"
+                                style={{
+                                    background: `linear-gradient(135deg, ${primaryColor} 0%, ${accentColor} 50%, ${primaryColor} 100%)`,
+                                    WebkitBackgroundClip: 'text',
+                                    WebkitTextFillColor: 'transparent',
+                                    backgroundClip: 'text',
+                                    filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))'
+                                }}
+                            >
                                 Más Sorteos Disponibles
                             </h2>
                             <p className="text-lg md:text-xl text-slate-300 max-w-2xl mx-auto">
