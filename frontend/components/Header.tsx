@@ -23,7 +23,7 @@ const Header = () => {
             
             {/* Barra principal del header */}
             <div 
-                className="w-full py-3 md:py-4 px-4 md:px-6"
+                className="w-full py-4 md:py-5 px-4 md:px-6"
                 style={{ 
                     backgroundColor: appearance?.colors?.backgroundSecondary || '#1f2937'
                 }}
@@ -38,13 +38,14 @@ const Header = () => {
                             <motion.button
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
-                                className="w-full max-w-[200px] md:max-w-[250px] px-4 py-2 md:py-3 rounded-lg font-bold text-white text-sm md:text-base transition-all duration-300 shadow-lg hover:shadow-xl"
+                                className="w-full max-w-[180px] md:max-w-[220px] px-3 py-2.5 md:py-3 rounded-lg font-bold text-white text-xs md:text-sm transition-all duration-300 shadow-md hover:shadow-lg"
                                 style={{
-                                    backgroundColor: headerColor,
-                                    color: '#ffffff'
+                                    backgroundColor: 'transparent',
+                                    color: '#ffffff',
+                                    border: `2px solid ${headerColor}`
                                 }}
                             >
-                                <div className="flex flex-col items-center">
+                                <div className="flex flex-col items-center leading-tight">
                                     <span>MÉTODOS</span>
                                     <span>DE PAGO</span>
                                 </div>
@@ -61,48 +62,42 @@ const Header = () => {
                                 transition={{ duration: 0.2 }}
                                 className="relative"
                             >
-                                {appearance?.logoUrl ? (
-                                    <div className="relative">
-                                        {/* Círculo de fondo con borde */}
-                                        <div 
-                                            className="w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center shadow-xl border-4"
-                                            style={{
-                                                backgroundColor: appearance?.colors?.backgroundPrimary || '#111827',
-                                                borderColor: headerColor
-                                            }}
-                                        >
-                                            <img 
-                                                src={appearance.logoUrl} 
-                                                alt={appearance?.siteName || 'Logo'} 
-                                                className="w-16 h-16 md:w-20 md:h-20 object-contain"
-                                            />
-                                        </div>
-                                        {/* Badge de verificación (opcional) */}
-                                        <div 
-                                            className="absolute -top-1 -right-1 w-6 h-6 md:w-7 md:h-7 rounded-full flex items-center justify-center shadow-lg border-2 border-white"
-                                            style={{ backgroundColor: '#3b82f6' }}
-                                        >
-                                            <svg className="w-4 h-4 md:w-5 md:h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                            </svg>
-                                        </div>
-                                    </div>
-                                ) : (
+                                <div className="relative">
+                                    {/* Círculo de fondo con borde */}
                                     <div 
-                                        className="w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center shadow-xl border-4"
+                                        className="w-24 h-24 md:w-28 md:h-28 rounded-full flex flex-col items-center justify-center shadow-xl border-4 relative overflow-hidden"
                                         style={{
                                             backgroundColor: appearance?.colors?.backgroundPrimary || '#111827',
                                             borderColor: headerColor
                                         }}
                                     >
-                                        <span 
-                                            className="text-2xl md:text-3xl font-black"
-                                            style={{ color: headerColor }}
-                                        >
-                                            {appearance?.siteName?.charAt(0) || 'L'}
-                                        </span>
+                                        {appearance?.logoUrl ? (
+                                            <img 
+                                                src={appearance.logoUrl} 
+                                                alt={appearance?.siteName || 'Logo'} 
+                                                className="w-full h-full object-contain p-2"
+                                            />
+                                        ) : (
+                                            <div className="flex flex-col items-center justify-center w-full h-full p-2 md:p-3">
+                                                <span 
+                                                    className="text-sm md:text-base font-black leading-tight text-center break-words px-1"
+                                                    style={{ color: headerColor }}
+                                                >
+                                                    {appearance?.siteName || 'Lucky Snap'}
+                                                </span>
+                                            </div>
+                                        )}
                                     </div>
-                                )}
+                                    {/* Badge de verificación (opcional) */}
+                                    <div 
+                                        className="absolute -top-1 -right-1 w-6 h-6 md:w-7 md:h-7 rounded-full flex items-center justify-center shadow-lg border-2 border-white z-10"
+                                        style={{ backgroundColor: '#3b82f6' }}
+                                    >
+                                        <svg className="w-4 h-4 md:w-5 md:h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                        </svg>
+                                    </div>
+                                </div>
                             </motion.div>
                         </Link>
 
@@ -114,13 +109,14 @@ const Header = () => {
                             <motion.button
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
-                                className="w-full max-w-[200px] md:max-w-[250px] px-4 py-2 md:py-3 rounded-lg font-bold text-white text-sm md:text-base transition-all duration-300 shadow-lg hover:shadow-xl"
+                                className="w-full max-w-[180px] md:max-w-[220px] px-3 py-2.5 md:py-3 rounded-lg font-bold text-white text-xs md:text-sm transition-all duration-300 shadow-md hover:shadow-lg"
                                 style={{
-                                    backgroundColor: headerColor,
-                                    color: '#ffffff'
+                                    backgroundColor: 'transparent',
+                                    color: '#ffffff',
+                                    border: `2px solid ${headerColor}`
                                 }}
                             >
-                                <div className="flex flex-col items-center">
+                                <div className="flex flex-col items-center leading-tight">
                                     <span>VERIFICAR</span>
                                     <span>BOLETOS</span>
                                 </div>
