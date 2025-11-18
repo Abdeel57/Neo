@@ -16,7 +16,7 @@ const Header = () => {
         <header className="relative w-full sticky top-0 z-50 overflow-hidden">
             {/* Línea de color superior */}
             <div 
-                className="w-full h-2 md:h-3"
+                className="w-full h-1"
                 style={{ 
                     background: `linear-gradient(90deg, ${headerColor} 0%, ${accentColor} 50%, ${headerColor} 100%)`
                 }}
@@ -24,12 +24,12 @@ const Header = () => {
             
             {/* Barra principal del header */}
             <div 
-                className="w-full py-4 md:py-5 px-4 md:px-6"
+                className="w-full py-4 md:py-5 px-4 md:px-6 flex justify-center"
                 style={{ 
                     backgroundColor: appearance?.colors?.backgroundSecondary || '#1f2937'
                 }}
             >
-                <div className="container mx-auto max-w-7xl">
+                <div className="w-full max-w-[50%] relative">
                     <div className="flex items-center justify-between relative">
                         {/* Botón Izquierdo - Métodos de Pago */}
                         <Link 
@@ -42,13 +42,24 @@ const Header = () => {
                                 className="w-full max-w-[180px] md:max-w-[220px] px-4 py-3 md:py-3.5 rounded-lg font-bold text-white text-xs md:text-sm transition-all duration-300"
                                 style={{
                                     backgroundColor: 'transparent',
-                                    color: '#ffffff',
-                                    boxShadow: `0 4px 15px rgba(0, 0, 0, 0.3), 0 0 20px ${headerColor}30`
+                                    color: '#ffffff'
                                 }}
                             >
                                 <div className="flex flex-col items-center leading-tight">
-                                    <span>MÉTODOS</span>
-                                    <span>DE PAGO</span>
+                                    <span 
+                                        style={{
+                                            textShadow: `0 0 10px ${headerColor}80, 0 0 20px ${headerColor}60, 0 0 30px ${headerColor}40`
+                                        }}
+                                    >
+                                        MÉTODOS
+                                    </span>
+                                    <span 
+                                        style={{
+                                            textShadow: `0 0 10px ${headerColor}80, 0 0 20px ${headerColor}60, 0 0 30px ${headerColor}40`
+                                        }}
+                                    >
+                                        DE PAGO
+                                    </span>
                                 </div>
                             </motion.button>
                         </Link>
@@ -147,13 +158,24 @@ const Header = () => {
                                 className="w-full max-w-[180px] md:max-w-[220px] px-4 py-3 md:py-3.5 rounded-lg font-bold text-white text-xs md:text-sm transition-all duration-300"
                                 style={{
                                     backgroundColor: 'transparent',
-                                    color: '#ffffff',
-                                    boxShadow: `0 4px 15px rgba(0, 0, 0, 0.3), 0 0 20px ${headerColor}30`
+                                    color: '#ffffff'
                                 }}
                             >
                                 <div className="flex flex-col items-center leading-tight">
-                                    <span>VERIFICAR</span>
-                                    <span>BOLETOS</span>
+                                    <span 
+                                        style={{
+                                            textShadow: `0 0 10px ${headerColor}80, 0 0 20px ${headerColor}60, 0 0 30px ${headerColor}40`
+                                        }}
+                                    >
+                                        VERIFICAR
+                                    </span>
+                                    <span 
+                                        style={{
+                                            textShadow: `0 0 10px ${headerColor}80, 0 0 20px ${headerColor}60, 0 0 30px ${headerColor}40`
+                                        }}
+                                    >
+                                        BOLETOS
+                                    </span>
                                 </div>
                             </motion.button>
                         </Link>
@@ -163,7 +185,7 @@ const Header = () => {
 
             {/* Línea de color inferior */}
             <div 
-                className="w-full h-2 md:h-3"
+                className="w-full h-1"
                 style={{ 
                     background: `linear-gradient(90deg, ${headerColor} 0%, ${accentColor} 50%, ${headerColor} 100%)`
                 }}
