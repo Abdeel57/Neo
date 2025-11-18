@@ -115,12 +115,13 @@ const HeroRaffle: React.FC<HeroRaffleProps> = ({ raffle }) => {
             </div>
 
             {/* Contenido centrado sobre la imagen */}
-            <div className="container mx-auto px-4 relative z-10 min-h-screen flex flex-col justify-start py-8 pt-12 sm:pt-16 md:pt-20">
+            <div className="container mx-auto px-4 relative z-10 min-h-screen flex flex-col justify-between py-8">
+                {/* Título y descripción en la parte superior */}
                 <motion.div
                     initial={isMobile ? { opacity: 0 } : { opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={isMobile ? { duration: 0.4 } : { duration: 0.8 }}
-                    className="flex flex-col items-center text-center space-y-3 sm:space-y-4"
+                    className="flex flex-col items-center text-center space-y-3 sm:space-y-4 pt-12 sm:pt-16 md:pt-20"
                 >
                     {/* Título */}
                     <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-white leading-none max-w-4xl">
@@ -133,16 +134,16 @@ const HeroRaffle: React.FC<HeroRaffleProps> = ({ raffle }) => {
                             {raffle.description}
                         </p>
                     )}
+                </motion.div>
 
-                    {/* Espacio adicional para mover elementos más abajo y dar más vista a las imágenes */}
-                    <div className="h-20 sm:h-28 md:h-36 lg:h-44 xl:h-52"></div>
-
-                    {/* Sección de compra y contador - 25% más pequeña y más abajo */}
-                    <motion.div
-                        initial={isMobile ? { opacity: 0 } : { opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={isMobile ? { duration: 0.4, delay: 0.1 } : { duration: 0.8, delay: 0.2 }}
-                        className="w-full max-w-[75%] bg-white/10 backdrop-blur-lg rounded-3xl p-4 sm:p-5 border border-white/20 mt-8"
+                {/* Sección de compra y contador - En la parte inferior como pie de página */}
+                <motion.div
+                    initial={isMobile ? { opacity: 0 } : { opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={isMobile ? { duration: 0.4, delay: 0.1 } : { duration: 0.8, delay: 0.2 }}
+                    className="flex flex-col items-center pb-8 sm:pb-12"
+                >
+                    <div className="w-full max-w-[75%] bg-white/10 backdrop-blur-lg rounded-3xl p-4 sm:p-5 border border-white/20"
                         style={{ transform: 'scale(0.75)' }}
                     >
                         {/* Botón principal - Comprar Boletos - 25% más pequeño */}
@@ -160,7 +161,7 @@ const HeroRaffle: React.FC<HeroRaffleProps> = ({ raffle }) => {
                         <div style={{ transform: 'scale(0.75)' }}>
                             <CountdownTimer targetDate={raffle.drawDate} />
                         </div>
-                    </motion.div>
+                    </div>
 
                     {/* Galería de miniaturas (si hay múltiples imágenes) */}
                     {allImages.length > 1 && (
