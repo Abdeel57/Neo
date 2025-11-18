@@ -143,18 +143,18 @@ const HeroRaffle: React.FC<HeroRaffleProps> = ({ raffle }) => {
                     transition={isMobile ? { duration: 0.4, delay: 0.1 } : { duration: 0.8, delay: 0.2 }}
                     className="flex flex-col items-center pb-8 sm:pb-12"
                 >
-                    <div className="w-full max-w-[90%] sm:max-w-[85%] md:max-w-[80%] bg-white/10 backdrop-blur-lg rounded-3xl p-5 sm:p-6 md:p-7 border border-white/20"
+                    <div className="w-full max-w-[90%] sm:max-w-[85%] md:max-w-[80%] bg-white/10 backdrop-blur-lg rounded-3xl px-5 sm:px-6 md:px-7 py-3 sm:py-4 md:py-4 border border-white/20"
                     >
                         {/* Botón principal - Comprar Boletos - Más grande y legible */}
                         <Link
                             to={`/sorteo/${raffle.slug}`}
-                            className="inline-flex items-center justify-center gap-0 bg-accent hover:bg-accent/90 text-white font-bold text-base sm:text-lg md:text-xl px-8 sm:px-10 md:px-12 py-3 sm:py-3.5 md:py-4 rounded-2xl shadow-2xl hover:shadow-accent/50 hover:scale-105 transition-all duration-300 w-full mb-5 sm:mb-6"
+                            className="inline-flex items-center justify-center gap-0 bg-accent hover:bg-accent/90 text-white font-bold text-base sm:text-lg md:text-xl px-8 sm:px-10 md:px-12 py-2.5 sm:py-3 md:py-3.5 rounded-2xl shadow-2xl hover:shadow-accent/50 hover:scale-105 transition-all duration-300 w-full mb-3 sm:mb-4"
                         >
                             <span>COMPRAR BOLETOS</span>
                         </Link>
 
                         {/* Contador de tiempo */}
-                        <div className="mb-4 sm:mb-5">
+                        <div className="mb-3 sm:mb-4">
                             <p className="text-white/80 text-sm sm:text-base md:text-lg font-medium">El sorteo termina en:</p>
                         </div>
                         <CountdownTimer targetDate={raffle.drawDate} />

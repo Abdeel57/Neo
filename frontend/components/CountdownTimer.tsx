@@ -117,43 +117,52 @@ const CountdownTimer = ({ targetDate }: { targetDate: Date | string }) => {
                     ? "gap-0.5 sm:gap-1 md:gap-1" // Gaps más pequeños para 3+ dígitos
                     : "gap-1 sm:gap-1.5 md:gap-2"; // Gaps normales para 2 dígitos
 
+                // Determinar el ancho del contenedor basado en el número de dígitos
+                const containerWidthClasses = isFourDigits
+                    ? "min-w-[60px] sm:min-w-[70px] md:min-w-[80px] lg:min-w-[90px]"
+                    : isThreeOrMoreDigits
+                    ? "min-w-[50px] sm:min-w-[60px] md:min-w-[70px] lg:min-w-[80px]"
+                    : "min-w-[45px] sm:min-w-[55px] md:min-w-[65px] lg:min-w-[75px]";
+
+                const containerHeightClasses = isFourDigits
+                    ? "h-12 sm:h-14 md:h-16 lg:h-18"
+                    : isThreeOrMoreDigits
+                    ? "h-14 sm:h-16 md:h-18 lg:h-20"
+                    : "h-16 sm:h-18 md:h-20 lg:h-24";
+
                 return (
                     <React.Fragment key={unit.label}>
                         {/* Unidad de tiempo (días, horas, minutos, segundos) */}
                         <div className="flex flex-col items-center min-w-0">
-                            {/* Contenedor de dígitos */}
-                            <div className={`flex items-center ${gapClasses}`}>
-                                {String(unit.value).padStart(unit.digitCount, '0').split('').map((digit, i) => (
-                                    <motion.div
-                                        key={`${unit.label}-${digit}-${i}`}
-                                        className="relative flex-shrink-0"
-                                    >
-                                        <div className={`${digitSizeClasses} bg-white/15 backdrop-blur-md rounded-xl overflow-hidden border-2 border-white/30 shadow-2xl`}
+                            {/* Contenedor único con el número completo */}
+                            <motion.div
+                                key={`${unit.label}-${unit.value}`}
+                                className="relative flex-shrink-0"
+                            >
+                                <div className={`${containerWidthClasses} ${containerHeightClasses} bg-white/15 backdrop-blur-md rounded-xl overflow-hidden border-2 border-white/30 shadow-2xl flex items-center justify-center px-2 sm:px-3`}
+                                    style={{
+                                        boxShadow: '0 0 20px rgba(255, 255, 255, 0.3), 0 0 40px rgba(255, 255, 255, 0.2), 0 0 60px rgba(255, 255, 255, 0.1), inset 0 0 20px rgba(255, 255, 255, 0.1)'
+                                    }}
+                                >
+                                    <AnimatePresence mode="wait">
+                                        <motion.div
+                                            key={String(unit.value).padStart(unit.digitCount, '0')}
+                                            initial={{ y: '-100%', opacity: 0 }}
+                                            animate={{ y: '0%', opacity: 1 }}
+                                            exit={{ y: '100%', opacity: 0 }}
+                                            transition={{ duration: 0.3, ease: 'easeInOut' }}
+                                            className={`flex items-center justify-center ${textSizeClasses} font-black text-white`}
                                             style={{
-                                                boxShadow: '0 0 20px rgba(255, 255, 255, 0.3), 0 0 40px rgba(255, 255, 255, 0.2), 0 0 60px rgba(255, 255, 255, 0.1), inset 0 0 20px rgba(255, 255, 255, 0.1)'
+                                                textShadow: '0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255, 255, 255, 0.6), 0 0 30px rgba(255, 255, 255, 0.4), 0 0 40px rgba(255, 255, 255, 0.2)',
+                                                filter: 'drop-shadow(0 0 5px rgba(255, 255, 255, 0.5))'
                                             }}
                                         >
-                                            <AnimatePresence mode="wait">
-                                                <motion.div
-                                                    key={digit}
-                                                    initial={{ y: '-100%', opacity: 0 }}
-                                                    animate={{ y: '0%', opacity: 1 }}
-                                                    exit={{ y: '100%', opacity: 0 }}
-                                                    transition={{ duration: 0.3, ease: 'easeInOut' }}
-                                                    className={`absolute inset-0 flex items-center justify-center ${textSizeClasses} font-black text-white`}
-                                                    style={{
-                                                        textShadow: '0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255, 255, 255, 0.6), 0 0 30px rgba(255, 255, 255, 0.4), 0 0 40px rgba(255, 255, 255, 0.2)',
-                                                        filter: 'drop-shadow(0 0 5px rgba(255, 255, 255, 0.5))'
-                                                    }}
-                                                >
-                                                    {digit}
-                                                </motion.div>
-                                            </AnimatePresence>
-                                        </div>
-                                    </motion.div>
-                                ))}
-                            </div>
-                            {/* Etiqueta debajo de los dígitos */}
+                                            {String(unit.value).padStart(unit.digitCount, '0')}
+                                        </motion.div>
+                                    </AnimatePresence>
+                                </div>
+                            </motion.div>
+                            {/* Etiqueta debajo del número */}
                             <div className="mt-1 sm:mt-1.5 text-center w-full">
                                 <span className="text-[10px] sm:text-xs text-white/70 font-medium uppercase tracking-wide">
                                     {unit.label}
