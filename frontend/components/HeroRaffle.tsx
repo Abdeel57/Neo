@@ -134,33 +134,32 @@ const HeroRaffle: React.FC<HeroRaffleProps> = ({ raffle }) => {
                         </p>
                     )}
 
-                    {/* Espacio adicional para mover elementos más abajo */}
-                    <div className="h-4 sm:h-6 md:h-8"></div>
+                    {/* Espacio adicional para mover elementos más abajo y dar más vista a las imágenes */}
+                    <div className="h-12 sm:h-16 md:h-20 lg:h-24"></div>
 
-                    {/* Precio - Simplificado */}
-                    <div className="inline-flex items-center justify-center px-4 sm:px-6 py-2 sm:py-2.5 bg-accent rounded-full">
-                        <span className="text-white text-lg sm:text-xl font-bold">L. {raffle.price}</span>
-                    </div>
-
-                    {/* Botón principal - Comprar Boletos - Más delgado, sin ícono */}
-                    <Link
-                        to={`/sorteo/${raffle.slug}`}
-                        className="inline-flex items-center justify-center gap-0 bg-accent hover:bg-accent/90 text-white font-bold text-base sm:text-lg px-8 sm:px-10 py-2.5 sm:py-3 rounded-2xl shadow-2xl hover:shadow-accent/50 hover:scale-105 transition-all duration-300"
-                    >
-                        <span>COMPRAR BOLETOS</span>
-                    </Link>
-
-                    {/* Contador de tiempo */}
+                    {/* Sección de compra y contador - 25% más pequeña y más abajo */}
                     <motion.div
                         initial={isMobile ? { opacity: 0 } : { opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={isMobile ? { duration: 0.4, delay: 0.1 } : { duration: 0.8, delay: 0.2 }}
-                        className="w-full max-w-2xl bg-white/10 backdrop-blur-lg rounded-3xl p-6 sm:p-8 border border-white/20 mt-8"
+                        className="w-full max-w-[75%] bg-white/10 backdrop-blur-lg rounded-3xl p-4 sm:p-5 border border-white/20 mt-8"
+                        style={{ transform: 'scale(0.75)' }}
                     >
-                        <div className="mb-4">
-                            <p className="text-white/80 text-sm sm:text-base font-medium">El sorteo termina en:</p>
+                        {/* Botón principal - Comprar Boletos - 25% más pequeño */}
+                        <Link
+                            to={`/sorteo/${raffle.slug}`}
+                            className="inline-flex items-center justify-center gap-0 bg-accent hover:bg-accent/90 text-white font-bold text-sm sm:text-base px-6 sm:px-8 py-2 sm:py-2.5 rounded-2xl shadow-2xl hover:shadow-accent/50 hover:scale-105 transition-all duration-300 w-full mb-4"
+                        >
+                            <span>COMPRAR BOLETOS</span>
+                        </Link>
+
+                        {/* Contador de tiempo */}
+                        <div className="mb-3">
+                            <p className="text-white/80 text-xs sm:text-sm font-medium">El sorteo termina en:</p>
                         </div>
-                        <CountdownTimer targetDate={raffle.drawDate} />
+                        <div style={{ transform: 'scale(0.75)' }}>
+                            <CountdownTimer targetDate={raffle.drawDate} />
+                        </div>
                     </motion.div>
 
                     {/* Galería de miniaturas (si hay múltiples imágenes) */}
