@@ -4,7 +4,8 @@
   "description": "Backend for Lucky Snap",
   "private": true,
   "scripts": {
-    "build": "npx prisma migrate deploy && npx prisma generate && nest build",
+    "build": "npx prisma generate && nest build",
+    "build:with-migrate": "npx prisma migrate deploy && npx prisma generate && nest build",
     "start": "node dist/main.js",
     "start:dev": "nest start --watch",
     "start:prod": "node dist/main.js",
