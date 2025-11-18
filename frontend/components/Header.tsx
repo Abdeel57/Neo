@@ -24,7 +24,7 @@ const Header = () => {
             
             {/* Barra principal del header */}
             <div 
-                className="w-full py-4 md:py-5 px-4 md:px-6 flex justify-center items-center"
+                className="w-full py-2 md:py-2.5 px-4 md:px-6 flex justify-center items-center"
                 style={{ 
                     backgroundColor: appearance?.colors?.backgroundSecondary || '#1f2937'
                 }}
