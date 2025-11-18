@@ -63,7 +63,7 @@ const Header = () => {
                                 transition={{ duration: 0.2 }}
                                 className="relative"
                             >
-                                {appearance?.logoUrl ? (
+                                {(appearance?.logoUrl || (appearance as any)?.logo) ? (
                                     <div className="relative">
                                         {/* Efecto de resplandor sutil siempre visible */}
                                         <div 
@@ -76,12 +76,15 @@ const Header = () => {
                                         {/* Contenedor del logo - 80px sin bordes */}
                                         <div className="relative w-20 h-20 flex items-center justify-center bg-transparent">
                                             <img 
-                                                src={appearance.logoUrl} 
+                                                src={appearance.logoUrl || (appearance as any)?.logo} 
                                                 alt={appearance?.siteName || 'Logo'} 
                                                 className="w-full h-full object-contain bg-transparent"
                                                 style={{ 
                                                     mixBlendMode: 'normal',
                                                     filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2))'
+                                                }}
+                                                onError={(e) => {
+                                                    console.error('Error loading logo:', e);
                                                 }}
                                             />
                                         </div>
