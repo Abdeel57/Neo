@@ -115,21 +115,21 @@ const HeroRaffle: React.FC<HeroRaffleProps> = ({ raffle }) => {
             </div>
 
             {/* Contenido centrado sobre la imagen */}
-            <div className="container mx-auto px-4 relative z-10 min-h-screen flex flex-col justify-center py-8">
+            <div className="container mx-auto px-4 relative z-10 min-h-screen flex flex-col justify-start py-8 pt-12 sm:pt-16 md:pt-20">
                 <motion.div
                     initial={isMobile ? { opacity: 0 } : { opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={isMobile ? { duration: 0.4 } : { duration: 0.8 }}
-                    className="flex flex-col items-center text-center space-y-6 sm:space-y-8"
+                    className="flex flex-col items-center text-center space-y-3 sm:space-y-4"
                 >
                     {/* Título */}
-                    <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-white leading-tight max-w-4xl">
+                    <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-white leading-none max-w-4xl">
                         {raffle.title}
                     </h1>
 
                     {/* Descripción (solo si existe) */}
                     {raffle.description && (
-                        <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl text-white font-black tracking-wide max-w-2xl">
+                        <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl text-white font-black tracking-wide max-w-2xl leading-tight">
                             {raffle.description}
                         </p>
                     )}
