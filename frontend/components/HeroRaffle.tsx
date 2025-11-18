@@ -131,7 +131,7 @@ const HeroRaffle: React.FC<HeroRaffleProps> = ({ raffle }) => {
         <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-primary via-secondary to-tertiary">
             {/* Imagen principal como fondo de pantalla completa */}
             <div 
-                className="absolute inset-0 w-full h-full touch-none"
+                className="absolute inset-0 w-full h-full"
                 onTouchStart={onTouchStart}
                 onTouchMove={onTouchMove}
                 onTouchEnd={onTouchEnd}
@@ -190,6 +190,49 @@ const HeroRaffle: React.FC<HeroRaffleProps> = ({ raffle }) => {
                 <div className="absolute inset-0 bg-black/35"></div>
                 
                 {/* Patrón de textura deshabilitado (se removió la marca de agua) */}
+                
+                {/* Flechas de navegación */}
+                {allImages.length > 1 && (
+                    <>
+                        {/* Flecha izquierda - Imagen anterior */}
+                        <button
+                            onClick={() => {
+                                const prevIndex = (currentImageIndex - 1 + allImages.length) % allImages.length;
+                                changeImage(prevIndex, true);
+                            }}
+                            className="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center bg-black/20 hover:bg-black/40 backdrop-blur-sm rounded-full border border-white/20 hover:border-white/40 transition-all duration-300 opacity-60 hover:opacity-100"
+                            aria-label="Imagen anterior"
+                        >
+                            <svg 
+                                className="w-5 h-5 md:w-6 md:h-6 text-white" 
+                                fill="none" 
+                                stroke="currentColor" 
+                                viewBox="0 0 24 24"
+                            >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                            </svg>
+                        </button>
+                        
+                        {/* Flecha derecha - Siguiente imagen */}
+                        <button
+                            onClick={() => {
+                                const nextIndex = (currentImageIndex + 1) % allImages.length;
+                                changeImage(nextIndex, true);
+                            }}
+                            className="absolute right-4 md:right-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center bg-black/20 hover:bg-black/40 backdrop-blur-sm rounded-full border border-white/20 hover:border-white/40 transition-all duration-300 opacity-60 hover:opacity-100"
+                            aria-label="Siguiente imagen"
+                        >
+                            <svg 
+                                className="w-5 h-5 md:w-6 md:h-6 text-white" 
+                                fill="none" 
+                                stroke="currentColor" 
+                                viewBox="0 0 24 24"
+                            >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                            </svg>
+                        </button>
+                    </>
+                )}
             </div>
 
             {/* Contenido centrado sobre la imagen */}
@@ -237,39 +280,6 @@ const HeroRaffle: React.FC<HeroRaffleProps> = ({ raffle }) => {
                         </div>
                         <CountdownTimer targetDate={raffle.drawDate} />
                     </div>
-
-                    {/* Galería de miniaturas (si hay múltiples imágenes) */}
-                    {allImages.length > 1 && (
-                        <div className="mt-6 flex gap-2 sm:gap-3">
-                            {allImages.slice(0, 4).map((img, index) => (
-                                <button
-                                    key={index}
-                                    onClick={() => changeImage(index, true)}
-                                    className={`w-12 h-12 sm:w-16 sm:h-16 rounded-xl overflow-hidden border-2 transition-all ${
-                                        index === currentImageIndex 
-                                            ? 'border-accent scale-110 shadow-lg shadow-accent/50' 
-                                            : 'border-white/40 opacity-60 hover:opacity-100'
-                                    }`}
-                                >
-                                    <ResponsiveImage
-                                        src={img}
-                                        alt={`Vista ${index + 1}`}
-                                        widths={[240, 320, 480, 640]}
-                                        sizesHint="96px"
-                                        preferFormat="auto"
-                                        loading="lazy"
-                                        decoding="async"
-                                        className="w-full h-full object-cover"
-                                    />
-                                </button>
-                            ))}
-                            {allImages.length > 4 && (
-                                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl bg-white/20 flex items-center justify-center text-white text-xs border-2 border-white/40">
-                                    +{allImages.length - 4}
-                                </div>
-                            )}
-                        </div>
-                    )}
                 </motion.div>
             </div>
         </section>
