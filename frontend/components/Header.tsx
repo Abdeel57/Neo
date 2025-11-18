@@ -24,13 +24,13 @@ const Header = () => {
             
             {/* Barra principal del header */}
             <div 
-                className="w-full py-4 md:py-5 px-4 md:px-6 flex justify-center"
+                className="w-full py-4 md:py-5 px-4 md:px-6 flex justify-center items-center"
                 style={{ 
                     backgroundColor: appearance?.colors?.backgroundSecondary || '#1f2937'
                 }}
             >
-                <div className="w-full max-w-[50%] relative">
-                    <div className="flex items-center justify-between relative">
+                <div className="w-full max-w-[85%] sm:max-w-[70%] md:max-w-[55%] lg:max-w-[45%] relative flex justify-center mx-auto">
+                    <div className="flex items-center justify-between relative w-full gap-2 md:gap-4">
                         {/* Botón Izquierdo - Métodos de Pago */}
                         <Link 
                             to="/cuentas-de-pago"
