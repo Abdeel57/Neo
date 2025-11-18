@@ -12,6 +12,9 @@ interface HeroRaffleProps {
 
 const HeroRaffle: React.FC<HeroRaffleProps> = ({ raffle }) => {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [touchStart, setTouchStart] = useState<number | null>(null);
+    const [touchEnd, setTouchEnd] = useState<number | null>(null);
+    const intervalRef = React.useRef<NodeJS.Timeout | null>(null);
 
     // Preparar imágenes: incluir imagen principal + galería (evitando duplicados)
     const allImages = (() => {
@@ -44,44 +47,119 @@ const HeroRaffle: React.FC<HeroRaffleProps> = ({ raffle }) => {
         return images;
     })();
 
-    // Cambio automático DESACTIVADO en móviles para mejor rendimiento
-    useEffect(() => {
-        // Solo activar en desktop
-        if (allImages.length > 1 && window.innerWidth >= 768) {
-            const interval = setInterval(() => {
+    // Función para iniciar el cambio automático
+    const startAutoChange = React.useCallback(() => {
+        if (allImages.length > 1) {
+            // Limpiar intervalo anterior si existe
+            if (intervalRef.current) {
+                clearInterval(intervalRef.current);
+            }
+            
+            // Crear nuevo intervalo de 7 segundos
+            intervalRef.current = setInterval(() => {
                 setCurrentImageIndex((prev) => (prev + 1) % allImages.length);
-            }, 5000);
-            return () => clearInterval(interval);
+            }, 7000);
         }
     }, [allImages.length]);
+
+    // Función para cambiar de imagen y reiniciar el contador
+    const changeImage = React.useCallback((newIndex: number, isManual: boolean = false) => {
+        setCurrentImageIndex(newIndex);
+        
+        // Si es un cambio manual, reiniciar el intervalo
+        if (isManual) {
+            if (intervalRef.current) {
+                clearInterval(intervalRef.current);
+            }
+            // Reiniciar el intervalo después de un breve delay
+            setTimeout(() => {
+                if (allImages.length > 1) {
+                    intervalRef.current = setInterval(() => {
+                        setCurrentImageIndex((prev) => (prev + 1) % allImages.length);
+                    }, 7000);
+                }
+            }, 100);
+        }
+    }, [allImages.length]);
+
+    // Cambio automático - activo en desktop y móvil
+    useEffect(() => {
+        if (allImages.length > 1) {
+            startAutoChange();
+            return () => {
+                if (intervalRef.current) {
+                    clearInterval(intervalRef.current);
+                }
+            };
+        }
+    }, [allImages.length, startAutoChange]);
 
     // Detectar móvil para desactivar animaciones
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
+    // Funciones para manejar swipe en móviles
+    const minSwipeDistance = 50;
+
+    const onTouchStart = (e: React.TouchEvent) => {
+        setTouchEnd(null);
+        setTouchStart(e.targetTouches[0].clientX);
+    };
+
+    const onTouchMove = (e: React.TouchEvent) => {
+        setTouchEnd(e.targetTouches[0].clientX);
+    };
+
+    const onTouchEnd = () => {
+        if (!touchStart || !touchEnd) return;
+        
+        const distance = touchStart - touchEnd;
+        const isLeftSwipe = distance > minSwipeDistance;
+        const isRightSwipe = distance < -minSwipeDistance;
+
+        if (isLeftSwipe && allImages.length > 1) {
+            // Deslizar izquierda - siguiente imagen
+            const nextIndex = (currentImageIndex + 1) % allImages.length;
+            changeImage(nextIndex, true);
+        } else if (isRightSwipe && allImages.length > 1) {
+            // Deslizar derecha - imagen anterior
+            const prevIndex = (currentImageIndex - 1 + allImages.length) % allImages.length;
+            changeImage(prevIndex, true);
+        }
+    };
+
     return (
         <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-primary via-secondary to-tertiary">
             {/* Imagen principal como fondo de pantalla completa */}
-            <div className="absolute inset-0 w-full h-full">
+            <div 
+                className="absolute inset-0 w-full h-full touch-none"
+                onTouchStart={onTouchStart}
+                onTouchMove={onTouchMove}
+                onTouchEnd={onTouchEnd}
+            >
                 {isMobile ? (
-                    // Móvil: Imagen estática con fade-in suave
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.5 }}
-                        className="w-full h-full"
-                    >
-                        <ResponsiveImage
-                            src={allImages[currentImageIndex]}
-                            alt={raffle.title}
-                            widths={[1200, 1920]}
-                            sizesHint="100vw"
-                            preferFormat="auto"
-                            loading="eager"
-                            decoding="async"
-                            fetchPriority="high"
-                            className="w-full h-full object-cover"
-                        />
-                    </motion.div>
+                    // Móvil: Con animaciones y soporte para swipe
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={currentImageIndex}
+                            className="w-full h-full"
+                            initial={{ opacity: 0, x: 0 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: 0 }}
+                            transition={{ duration: 0.5 }}
+                        >
+                            <ResponsiveImage
+                                src={allImages[currentImageIndex]}
+                                alt={raffle.title}
+                                widths={[1200, 1920]}
+                                sizesHint="100vw"
+                                preferFormat="auto"
+                                loading="eager"
+                                decoding="async"
+                                fetchPriority="high"
+                                className="w-full h-full object-cover"
+                            />
+                        </motion.div>
+                    </AnimatePresence>
                 ) : (
                     // Desktop: Con animaciones
                     <AnimatePresence mode="wait">
@@ -166,7 +244,7 @@ const HeroRaffle: React.FC<HeroRaffleProps> = ({ raffle }) => {
                             {allImages.slice(0, 4).map((img, index) => (
                                 <button
                                     key={index}
-                                    onClick={() => setCurrentImageIndex(index)}
+                                    onClick={() => changeImage(index, true)}
                                     className={`w-12 h-12 sm:w-16 sm:h-16 rounded-xl overflow-hidden border-2 transition-all ${
                                         index === currentImageIndex 
                                             ? 'border-accent scale-110 shadow-lg shadow-accent/50' 
