@@ -92,7 +92,7 @@ const Header = () => {
                                                 className="w-full h-full object-contain bg-transparent"
                                                 style={{ 
                                                     mixBlendMode: 'normal',
-                                                    filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2))'
+                                                    filter: `drop-shadow(0 0 5px ${headerColor}80) drop-shadow(0 0 10px ${headerColor}60) drop-shadow(0 0 15px ${headerColor}40) drop-shadow(0 0 20px ${headerColor}30) drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2))`
                                                 }}
                                                 onError={(e) => {
                                                     console.error('Error loading logo:', e);
