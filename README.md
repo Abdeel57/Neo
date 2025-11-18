@@ -8,18 +8,24 @@ Sistema completo de gestión de rifas con panel de administración, frontend mod
 ```bash
 npm start
 ```
-Este comando iniciará automáticamente tanto el frontend como el backend.
+Este comando iniciará automáticamente tanto el frontend como el backend usando `start-app.js`.
 
 ### Opción 2: Inicio Manual
 ```bash
 # Terminal 1 - Backend
 cd backend
-npm run start:optimized
+npm run start:dev
 
 # Terminal 2 - Frontend  
 cd frontend
 npm run dev
 ```
+
+### Opción 3: Script Batch (Windows)
+```bash
+iniciar-completo.bat
+```
+Este script detiene procesos existentes, verifica dependencias y Prisma, e inicia ambos servidores en ventanas separadas.
 
 ## 📱 URLs de Acceso
 
@@ -70,9 +76,9 @@ npm run typecheck      # Verificar tipos TypeScript
 - **Animaciones**: Framer Motion
 - **Formularios**: React Hook Form
 
-### Backend (Node.js + Express)
+### Backend (NestJS)
 - **Runtime**: Node.js 18+
-- **Framework**: Express.js
+- **Framework**: NestJS + TypeScript
 - **Base de Datos**: PostgreSQL + Prisma ORM
 - **CORS**: Configurado para desarrollo y producción
 
@@ -117,22 +123,26 @@ JWT_SECRET=...
 
 ## 🚨 Solución de Problemas
 
-### Error de Prisma en Windows
-Si encuentras errores EPERM con Prisma:
+### Verificar Estado de Servidores
 ```bash
-cd backend
-npm run start:optimized
+node verificar-servidores.js
 ```
+Este script verifica si los servidores frontend y backend están corriendo.
 
 ### Puerto en Uso
 Si los puertos 3000 o 5173 están ocupados:
 ```bash
-# Verificar procesos
+# Windows - Verificar procesos
 netstat -ano | findstr :3000
 netstat -ano | findstr :5173
 
 # Terminar proceso (reemplazar PID)
 taskkill /PID <PID> /F
+```
+
+O usa el script:
+```bash
+reiniciar-backend.bat
 ```
 
 ### Problemas de Dependencias
@@ -141,18 +151,26 @@ npm run clean
 npm run install:all
 ```
 
+### Problemas de Base de Datos
+Si el backend no puede conectar a la base de datos, el servidor iniciará de todas formas e intentará reconectar automáticamente cada 10 segundos.
+
 ## 📈 Despliegue
 
 ### Desarrollo Local
 ```bash
 npm start
+# o
+iniciar-completo.bat
 ```
 
 ### Producción
-```bash
-npm run build
-npm run migrate:deploy
-```
+
+Para desplegar el backend en Railway, consulta la guía completa:
+- **[DEPLOY-BACKEND-RAILWAY.md](./DEPLOY-BACKEND-RAILWAY.md)** - Guía paso a paso para deploy en Railway
+- **[SOLUCION-DEFINITIVA-RAILWAY.md](./SOLUCION-DEFINITIVA-RAILWAY.md)** - Solución de problemas comunes en Railway
+
+Para desarrollo local detallado:
+- **[GUIA-INICIO-LOCAL.md](./GUIA-INICIO-LOCAL.md)** - Guía completa para iniciar el proyecto localmente
 
 ## 🤝 Soporte
 
@@ -164,11 +182,18 @@ Si encuentras problemas:
 
 ## 📝 Notas Importantes
 
-- El backend usa el script optimizado `start-optimized.js` por defecto
+- El backend usa NestJS con Prisma ORM
 - La base de datos está configurada para Railway PostgreSQL
 - CORS está configurado para desarrollo y producción
 - Todas las rutas de API están bajo `/api`
 - El panel de administración está en `/#/admin`
+- El backend intenta reconectar automáticamente si la base de datos no está disponible inicialmente
+
+## 📚 Documentación Adicional
+
+- **[GUIA-INICIO-LOCAL.md](./GUIA-INICIO-LOCAL.md)** - Guía completa para desarrollo local
+- **[DEPLOY-BACKEND-RAILWAY.md](./DEPLOY-BACKEND-RAILWAY.md)** - Guía de deploy en Railway
+- **[SOLUCION-DEFINITIVA-RAILWAY.md](./SOLUCION-DEFINITIVA-RAILWAY.md)** - Solución de problemas en Railway
 
 ---
 
