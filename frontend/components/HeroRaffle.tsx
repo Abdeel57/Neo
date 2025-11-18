@@ -135,7 +135,7 @@ const HeroRaffle: React.FC<HeroRaffleProps> = ({ raffle }) => {
                     )}
 
                     {/* Espacio adicional para mover elementos más abajo y dar más vista a las imágenes */}
-                    <div className="h-12 sm:h-16 md:h-20 lg:h-24"></div>
+                    <div className="h-20 sm:h-28 md:h-36 lg:h-44 xl:h-52"></div>
 
                     {/* Sección de compra y contador - 25% más pequeña y más abajo */}
                     <motion.div
