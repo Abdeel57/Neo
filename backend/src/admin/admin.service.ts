@@ -565,6 +565,9 @@ export class AdminService {
   }
 
   async markOrderPaid(id: string, paymentMethod?: string, notes?: string) {
+    await this.ensureOrdersTable();
+    await this.ensureRafflesTable();
+    
     const order = await this.prisma.order.findUnique({ where: { id } });
     if (!order) throw new NotFoundException('Order not found');
     if (order.status === 'PAID') return order;
@@ -590,6 +593,45 @@ export class AdminService {
       data: updateData,
       include: { raffle: true, user: true },
     });
+
+    return {
+      ...updated,
+      customer: {
+        id: updated.user.id,
+        name: updated.user.name || 'Sin nombre',
+        phone: updated.user.phone || 'Sin teléfono',
+        email: updated.user.email || '',
+        district: updated.user.district || 'Sin distrito',
+      },
+      raffleTitle: updated.raffle.title,
+      total: updated.total,
+    };
+  }
+
+  async markOrderAsPending(id: string) {
+    await this.ensureOrdersTable();
+    await this.ensureRafflesTable();
+    
+    const order = await this.prisma.order.findUnique({ 
+      where: { id },
+      include: { raffle: true, user: true }
+    });
+    
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+
+    // Cambiar estado a PENDING sin liberar boletos (no decrementar sold)
+    const updated = await this.prisma.order.update({
+      where: { id },
+      data: { 
+        status: 'PENDING' as any,
+        updatedAt: new Date() 
+      },
+      include: { raffle: true, user: true },
+    });
+
+    console.log('✅ Orden marcada como pendiente (boletos NO liberados)');
 
     return {
       ...updated,
