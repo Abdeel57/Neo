@@ -157,7 +157,7 @@ Adjunto el comprobante de pago. Gracias! 🙏`;
                 setRaffle(raffleData || null);
                 setPaymentAccounts(settingsData.paymentAccounts || []);
                 // Usar número por defecto si no existe contactInfo
-                setContactWhatsapp(settingsData.contactInfo?.whatsapp || '50400000000');
+                setContactWhatsapp(settingsData.contactInfo?.whatsapp || '521234567890');
                 
                 // Cargar boletos ocupados para poder asignar los disponibles
                 if (raffleData?.id) {
