@@ -7,9 +7,10 @@ import {
     FileText,
     Clock,
     RefreshCw,
+    XCircle,
 } from 'lucide-react';
 import { Order } from '../../types';
-import { getOrders, updateOrder, releaseOrder } from '../../services/api';
+import { getOrders, updateOrder, releaseOrder, editOrder, markOrderAsPending } from '../../services/api';
 import EditOrderForm from '../../components/admin/EditOrderForm';
 
 const AdminCustomersPage: React.FC = () => {
@@ -100,14 +101,44 @@ const AdminCustomersPage: React.FC = () => {
     const handleSaveEdit = async (updated: Order) => {
         try {
             setIsLoadingAction(true);
-            await updateOrder(updated.id!, updated);
+            // Usar editOrder que llama al endpoint correcto
+            const editData = {
+                customer: updated.customer ? {
+                    name: updated.customer.name,
+                    phone: updated.customer.phone,
+                    email: updated.customer.email,
+                    district: updated.customer.district,
+                } : undefined,
+                notes: updated.notes,
+            };
+            
+            await editOrder(updated.id!, editData);
             await refreshData();
             closeEdit();
             console.log('✅ Orden actualizada');
             alert('✅ Orden actualizada correctamente');
-        } catch (e) {
+        } catch (e: any) {
             console.error('❌ Error al actualizar orden:', e);
             alert(`❌ Error: ${e.message || 'Error al actualizar la orden'}`);
+        } finally {
+            setIsLoadingAction(false);
+        }
+    };
+
+    // Marcar como pendiente de nuevo (sin liberar boletos)
+    const handleMarkPending = async (orderId: string) => {
+        if (!window.confirm('¿Estás seguro de marcar esta orden como pendiente? Los boletos NO se liberarán al inventario.')) return;
+        try {
+            setIsLoadingAction(true);
+            await markOrderAsPending(orderId);
+            await refreshData();
+            closeDetails();
+            closeEdit();
+            console.log('✅ Orden marcada como pendiente');
+            alert('✅ Orden marcada como pendiente correctamente');
+        } catch (e: any) {
+            console.error('❌ Error al marcar como pendiente:', e);
+            alert(`❌ Error: ${e.message || 'Error al marcar la orden como pendiente'}`);
         } finally {
             setIsLoadingAction(false);
         }
@@ -124,7 +155,7 @@ const AdminCustomersPage: React.FC = () => {
             closeEdit();
             console.log('✅ Boletos liberados');
             alert('✅ Boletos liberados correctamente');
-        } catch (e) {
+        } catch (e: any) {
             console.error('❌ Error al liberar orden:', e);
             alert(`❌ Error: ${e.message || 'Error al liberar la orden'}`);
         } finally {
@@ -261,7 +292,7 @@ const AdminCustomersPage: React.FC = () => {
                                 </div>
 
                                 {/* Botones de acción */}
-                                <div className="grid grid-cols-3 gap-2">
+                                <div className="grid grid-cols-2 gap-2">
                                     <button
                                         onClick={() => handleView(order)}
                                         disabled={isLoadingAction}
@@ -277,6 +308,14 @@ const AdminCustomersPage: React.FC = () => {
                                     >
                                         <FileText className="w-4 h-4" />
                                         <span>Editar</span>
+                                    </button>
+                                    <button
+                                        onClick={() => handleMarkPending(order.id!)}
+                                        disabled={isLoadingAction}
+                                        className="flex items-center justify-center space-x-2 px-3 py-2 bg-orange-600 text-white rounded-xl hover:bg-orange-700 transition-colors text-sm disabled:opacity-50"
+                                    >
+                                        <XCircle className="w-4 h-4" />
+                                        <span>Marcar Pendiente</span>
                                     </button>
                                     <button
                                         onClick={() => handleRelease(order.id!)}
@@ -411,14 +450,14 @@ const AdminCustomersPage: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    <div className="flex space-x-3">
+                                    <div className="grid grid-cols-3 gap-3">
                                         <button
                                             onClick={() => {
                                                 closeDetails();
                                                 handleEdit(selectedOrder);
                                             }}
                                             disabled={isLoadingAction}
-                                            className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors disabled:opacity-50"
+                                            className="flex items-center justify-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors disabled:opacity-50"
                                         >
                                             <FileText className="w-4 h-4" />
                                             <span>Editar</span>
@@ -426,10 +465,21 @@ const AdminCustomersPage: React.FC = () => {
                                         <button
                                             onClick={() => {
                                                 closeDetails();
+                                                handleMarkPending(selectedOrder.id!);
+                                            }}
+                                            disabled={isLoadingAction}
+                                            className="flex items-center justify-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-xl hover:bg-orange-700 transition-colors disabled:opacity-50"
+                                        >
+                                            <XCircle className="w-4 h-4" />
+                                            <span>Marcar Pendiente</span>
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                closeDetails();
                                                 handleRelease(selectedOrder.id!);
                                             }}
                                             disabled={isLoadingAction}
-                                            className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-yellow-600 text-white rounded-xl hover:bg-yellow-700 transition-colors disabled:opacity-50"
+                                            className="flex items-center justify-center space-x-2 px-4 py-2 bg-yellow-600 text-white rounded-xl hover:bg-yellow-700 transition-colors disabled:opacity-50"
                                         >
                                             <Clock className="w-4 h-4" />
                                             <span>Liberar</span>

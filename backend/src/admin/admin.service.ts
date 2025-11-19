@@ -606,6 +606,10 @@ export class AdminService {
   }
 
   async editOrder(id: string, body: { customer?: any; tickets?: number[]; notes?: string }) {
+    await this.ensureOrdersTable();
+    await this.ensureUsersTable();
+    await this.ensureRafflesTable();
+    
     const order = await this.prisma.order.findUnique({ where: { id }, include: { user: true } });
     if (!order) throw new NotFoundException('Order not found');
 

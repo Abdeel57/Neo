@@ -1087,6 +1087,32 @@ export const deleteOrder = async (id: string): Promise<void> => {
 };
 
 // Nuevas funciones específicas de órdenes según especificaciones
+export const markOrderAsPending = async (id: string): Promise<Order> => {
+    try {
+        console.log('🚀 Trying backend for mark order as pending...');
+        const response = await fetch(`${API_URL}/admin/orders/${id}/mark-pending`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+        });
+        if (response.ok) {
+            const result = await response.json();
+            console.log('✅ Backend order marked as pending successfully');
+            return parseOrderDates(result);
+        } else {
+            console.log('❌ Backend returned error status:', response.status);
+            const errorText = await response.text();
+            console.log('❌ Error details:', errorText);
+        }
+    } catch (error) {
+        console.log('❌ Backend failed with exception:', error);
+    }
+    
+    // Fallback to local data
+    console.log('🔄 Using local data for mark order as pending');
+    const { localApi } = await import('./localApi');
+    return localApi.updateOrder(id, { status: 'PENDING' });
+};
+
 export const markOrderPaid = async (id: string, paymentMethod?: string, notes?: string): Promise<Order> => {
     try {
         console.log('🚀 Trying backend for mark order paid...');

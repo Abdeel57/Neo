@@ -73,6 +73,16 @@ export class AdminController {
     }
   }
 
+  @Put('orders/:id/mark-pending')
+  async markOrderAsPending(@Param('id') id: string) {
+    try {
+      return await this.adminService.markOrderAsPending(id);
+    } catch (error) {
+      console.error('Error marking order as pending:', error);
+      throw new HttpException('Error al marcar la orden como pendiente', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
   @Put('orders/:id/edit')
   async editOrder(
     @Param('id') id: string,
