@@ -1972,6 +1972,47 @@ export class AdminService {
     }
   }
 
+  // Helper para asegurar que la tabla settings tiene las columnas de color de texto
+  private async ensureSettingsTableColumns() {
+    try {
+      // Verificar y agregar titleColor si no existe
+      const titleColorExists = await this.prisma.$queryRaw<Array<{column_name: string}>>`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'settings' AND column_name = 'titleColor'
+      `;
+      if (titleColorExists.length === 0) {
+        await this.prisma.$executeRawUnsafe(`ALTER TABLE "settings" ADD COLUMN IF NOT EXISTS "titleColor" TEXT;`);
+        console.log('✅ Added titleColor column to settings table');
+      }
+
+      // Verificar y agregar subtitleColor si no existe
+      const subtitleColorExists = await this.prisma.$queryRaw<Array<{column_name: string}>>`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'settings' AND column_name = 'subtitleColor'
+      `;
+      if (subtitleColorExists.length === 0) {
+        await this.prisma.$executeRawUnsafe(`ALTER TABLE "settings" ADD COLUMN IF NOT EXISTS "subtitleColor" TEXT;`);
+        console.log('✅ Added subtitleColor column to settings table');
+      }
+
+      // Verificar y agregar descriptionColor si no existe
+      const descriptionColorExists = await this.prisma.$queryRaw<Array<{column_name: string}>>`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'settings' AND column_name = 'descriptionColor'
+      `;
+      if (descriptionColorExists.length === 0) {
+        await this.prisma.$executeRawUnsafe(`ALTER TABLE "settings" ADD COLUMN IF NOT EXISTS "descriptionColor" TEXT;`);
+        console.log('✅ Added descriptionColor column to settings table');
+      }
+    } catch (error) {
+      console.warn('⚠️ Error checking/adding text color columns to settings table:', error);
+      // No lanzar error, solo loguear - las columnas se crearán en el SQL directo si es necesario
+    }
+  }
+
   private safeStringify(data: any): string {
     try {
       if (!data) return JSON.stringify([]);
