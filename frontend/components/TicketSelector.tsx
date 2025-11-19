@@ -78,15 +78,15 @@ const VirtualTicketCell: React.FC<GridChildComponentProps<ScrollGridData>> = ({ 
 };
 
 const TicketSelector = ({ totalTickets, occupiedTickets, selectedTickets, onTicketClick, listingMode = 'paginado', hideOccupied = false }: TicketSelectorProps) => {
-    const { appearance } = useTheme();
+    const { appearance, preCalculatedTextColors } = useTheme();
     const [currentPage, setCurrentPage] = useState(1);
     const ticketsPerPage = 50;
     const occupiedSet = useMemo(() => new Set(occupiedTickets), [occupiedTickets]);
     
-    // Calcular colores de contraste
+    // Usar colores pre-calculados (optimización de rendimiento)
     const backgroundColor = appearance?.colors?.backgroundPrimary || '#1a1a1a';
     const accentColor = appearance?.colors?.accent || '#00ff00';
-    const textColor = useMemo(() => DesignSystemUtils.getContrastText(backgroundColor), [backgroundColor]);
+    const textColor = preCalculatedTextColors.description;
 
     const orderedTickets = useMemo(() => {
         if (!totalTickets || totalTickets <= 0) return [];
@@ -310,7 +310,7 @@ const TicketSelector = ({ totalTickets, occupiedTickets, selectedTickets, onTick
     }), [orderedTickets, columns, cellWidth, hideOccupied, occupiedSet, selectedSet, createTicketNode]);
 
     const Legend = () => {
-        const legendTextColor = DesignSystemUtils.getContrastText(containerBgColor);
+        const legendTextColor = preCalculatedTextColors.description;
         return (
             <div 
                 className="flex flex-wrap justify-center items-center gap-x-6 gap-y-2 mb-4 text-sm"
@@ -347,7 +347,7 @@ const TicketSelector = ({ totalTickets, occupiedTickets, selectedTickets, onTick
     const showScrollGrid = listingMode === 'scroll' && totalDisplayTickets > 0 && columns > 0 && rowCount > 0;
 
     const containerBgColor = appearance?.colors?.backgroundPrimary || '#1a1a1a';
-    const containerTextColor = useMemo(() => DesignSystemUtils.getContrastText(containerBgColor), [containerBgColor]);
+    const containerTextColor = preCalculatedTextColors.description;
     
     return (
         <div 

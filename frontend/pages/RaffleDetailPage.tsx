@@ -18,7 +18,7 @@ import { DesignSystemUtils } from '../utils/design-system-utils';
 
 const RaffleDetailPage = () => {
     const { slug } = useParams<{ slug: string }>();
-    const { appearance } = useTheme();
+    const { appearance, preCalculatedTextColors } = useTheme();
     const [raffle, setRaffle] = useState<Raffle | null>(null);
     const [occupiedTickets, setOccupiedTickets] = useState<number[]>([]);
     const [selectedTickets, setSelectedTickets] = useState<number[]>([]);
@@ -267,7 +267,7 @@ const RaffleDetailPage = () => {
                                         <>
                                             <p 
                                                 className="mb-2"
-                                                style={{ color: DesignSystemUtils.getContrastText(appearance?.colors?.backgroundPrimary || '#1a1a1a') }}
+                                                style={{ color: preCalculatedTextColors.description }}
                                             >
                                                 Selecciona tus boletos de la tabla de abajo para comenzar.
                                             </p>

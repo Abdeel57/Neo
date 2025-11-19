@@ -294,6 +294,10 @@ export class PublicService {
           backgroundSecondary: settings.secondaryColor || '#1f2937',
           accent: settings.accentColor || '#ec4899',
           action: settings.actionColor || '#0ea5e9',
+          // Nuevos campos opcionales de color de texto
+          titleColor: settings.titleColor || undefined,
+          subtitleColor: settings.subtitleColor || undefined,
+          descriptionColor: settings.descriptionColor || undefined,
         }
       },
       contactInfo: {

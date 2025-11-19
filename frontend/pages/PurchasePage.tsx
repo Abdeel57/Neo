@@ -23,7 +23,7 @@ const PurchasePage = () => {
     const { slug } = useParams<{ slug: string }>();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const { appearance } = useTheme();
+    const { appearance, preCalculatedTextColors } = useTheme();
 
     const [raffle, setRaffle] = useState<Raffle | null>(null);
     const [loading, setLoading] = useState(true);
@@ -599,13 +599,13 @@ Adjunto el comprobante de pago. Gracias! 🙏`;
                                     />
                                     <p 
                                         className="relative z-10"
-                                        style={{ color: DesignSystemUtils.getContrastText(appearance?.colors?.backgroundPrimary || '#1a1a1a') }}
+                                        style={{ color: preCalculatedTextColors.description }}
                                     >
                                         Fecha del sorteo
                                     </p>
                                     <p 
                                         className="relative z-10 font-semibold"
-                                        style={{ color: DesignSystemUtils.getContrastText(appearance?.colors?.backgroundPrimary || '#1a1a1a') }}
+                                        style={{ color: preCalculatedTextColors.title }}
                                     >
                                         {raffle.drawDate ? new Date(raffle.drawDate).toLocaleDateString('es-MX') : 'Por definir'}
                                     </p>

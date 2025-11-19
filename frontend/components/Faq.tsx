@@ -9,17 +9,14 @@ import { isMobile } from '../utils/deviceDetection';
 const Faq = () => {
     const [faqs, setFaqs] = useState<FaqItemData[]>([]);
     const [openFaqId, setOpenFaqId] = useState<string | null>(null);
-    const { appearance } = useTheme();
+    const { appearance, preCalculatedTextColors } = useTheme();
     const mobile = isMobile();
     
     // Obtener colores del tema
     const accentColor = appearance?.colors?.accent || '#ec4899';
-    const backgroundColor = appearance?.colors?.backgroundPrimary || '#111827';
     
-    // Memoizar el cálculo de contraste para evitar recalcular en cada render
-    const titleColor = useMemo(() => {
-        return DesignSystemUtils.getContrastText(backgroundColor);
-    }, [backgroundColor]);
+    // Usar colores pre-calculados (optimización de rendimiento)
+    const titleColor = preCalculatedTextColors.title;
 
     useEffect(() => {
         getSettings().then(settings => setFaqs(settings.faqs));

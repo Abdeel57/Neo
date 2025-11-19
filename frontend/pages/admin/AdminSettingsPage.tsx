@@ -560,6 +560,49 @@ const AdminSettingsPage = () => {
                                 <p className="text-xs text-gray-500 mt-1">Color de fondo para secciones y cards</p>
                             </div>
                         </div>
+
+                        {/* Colores de Texto Personalizables */}
+                        <div className="mt-6 pt-6 border-t border-gray-200">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Colores de Texto (Opcional)</h3>
+                            <p className="text-sm text-gray-600 mb-4">
+                                Personaliza los colores de texto. Si no los configuras, se calcularán automáticamente para garantizar el mejor contraste.
+                            </p>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label className={labelClasses}>Color de Títulos</label>
+                                    <input 
+                                        type="color" 
+                                        {...register('appearance.colors.titleColor')} 
+                                        className="w-full h-12 border border-gray-300 rounded-xl cursor-pointer"
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        Color para títulos principales. Déjalo vacío para cálculo automático.
+                                    </p>
+                                </div>
+                                <div>
+                                    <label className={labelClasses}>Color de Subtítulos</label>
+                                    <input 
+                                        type="color" 
+                                        {...register('appearance.colors.subtitleColor')} 
+                                        className="w-full h-12 border border-gray-300 rounded-xl cursor-pointer"
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        Color para subtítulos. Déjalo vacío para cálculo automático.
+                                    </p>
+                                </div>
+                                <div>
+                                    <label className={labelClasses}>Color de Descripciones</label>
+                                    <input 
+                                        type="color" 
+                                        {...register('appearance.colors.descriptionColor')} 
+                                        className="w-full h-12 border border-gray-300 rounded-xl cursor-pointer"
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        Color para descripciones y textos secundarios. Déjalo vacío para cálculo automático.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
                     </OptimizedSectionWrapper>
 
                     {/* Contact Info Section */}

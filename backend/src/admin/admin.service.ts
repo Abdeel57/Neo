@@ -1792,6 +1792,10 @@ export class AdminService {
         secondaryColor: appearanceData.colors?.backgroundSecondary || '#1f2937',
         accentColor: appearanceData.colors?.accent || '#ec4899',
         actionColor: appearanceData.colors?.action || '#0ea5e9',
+        // Nuevos campos de color de texto (opcionales)
+        titleColor: appearanceData.colors?.titleColor || null,
+        subtitleColor: appearanceData.colors?.subtitleColor || null,
+        descriptionColor: appearanceData.colors?.descriptionColor || null,
         
         // Contact info
         whatsapp: contactData.whatsapp || null,
@@ -1851,6 +1855,9 @@ export class AdminService {
                 "secondaryColor" TEXT NOT NULL DEFAULT '#1f2937',
                 "accentColor" TEXT NOT NULL DEFAULT '#ec4899',
                 "actionColor" TEXT NOT NULL DEFAULT '#0ea5e9',
+                "titleColor" TEXT,
+                "subtitleColor" TEXT,
+                "descriptionColor" TEXT,
                 "whatsapp" TEXT,
                 "email" TEXT,
                 "emailFromName" TEXT,
@@ -1998,6 +2005,10 @@ export class AdminService {
           backgroundSecondary: settings.secondaryColor || '#1f2937',
           accent: settings.accentColor || '#ec4899',
           action: settings.actionColor || '#0ea5e9',
+          // Nuevos campos opcionales de color de texto
+          titleColor: settings.titleColor || undefined,
+          subtitleColor: settings.subtitleColor || undefined,
+          descriptionColor: settings.descriptionColor || undefined,
         }
       },
       contactInfo: {

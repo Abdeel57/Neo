@@ -103,6 +103,11 @@ export interface AppearanceSettings {
         backgroundSecondary: string;
         accent: string;
         action: string;
+        // Colores de texto personalizables (opcionales)
+        // Si no están configurados, se calculan automáticamente basándose en el contraste
+        titleColor?: string;      // Color para títulos principales
+        subtitleColor?: string;   // Color para subtítulos
+        descriptionColor?: string; // Color para descripciones y textos secundarios
     };
 }
 

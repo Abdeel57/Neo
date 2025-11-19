@@ -1,15 +1,25 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
 import { getSettings } from '../services/api';
 import { AppearanceSettings, LogoAnimation } from '../types';
 
 // Importar utilidades de diseño
 import { DesignSystemUtils } from '../utils/design-system-utils';
 
+interface PreCalculatedTextColors {
+  title: string;
+  subtitle: string;
+  description: string;
+  titleOnSecondary: string;
+  subtitleOnSecondary: string;
+  descriptionOnSecondary: string;
+}
+
 interface ThemeContextType {
   appearance: AppearanceSettings;
   setAppearance: React.Dispatch<React.SetStateAction<AppearanceSettings>>;
   isLoading: boolean;
   updateAppearance: (newAppearance: AppearanceSettings) => void;
+  preCalculatedTextColors: PreCalculatedTextColors;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -40,6 +50,30 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     console.log('🎨 Updating appearance:', newAppearance);
     setAppearance(newAppearance);
   };
+
+  // Pre-calcular colores de texto una sola vez (optimización de rendimiento)
+  // Si los colores están configurados manualmente, se usan; si no, se calculan automáticamente
+  const preCalculatedTextColors = useMemo<PreCalculatedTextColors>(() => {
+    const bgPrimary = appearance?.colors?.backgroundPrimary || '#1a1a1a';
+    const bgSecondary = appearance?.colors?.backgroundSecondary || '#2a2a2a';
+    
+    return {
+      // Colores para fondo primario
+      title: appearance?.colors?.titleColor || DesignSystemUtils.getContrastText(bgPrimary),
+      subtitle: appearance?.colors?.subtitleColor || DesignSystemUtils.getContrastText(bgPrimary),
+      description: appearance?.colors?.descriptionColor || DesignSystemUtils.getContrastText(bgPrimary),
+      // Colores para fondo secundario
+      titleOnSecondary: appearance?.colors?.titleColor || DesignSystemUtils.getContrastText(bgSecondary),
+      subtitleOnSecondary: appearance?.colors?.subtitleColor || DesignSystemUtils.getContrastText(bgSecondary),
+      descriptionOnSecondary: appearance?.colors?.descriptionColor || DesignSystemUtils.getContrastText(bgSecondary),
+    };
+  }, [
+    appearance?.colors?.backgroundPrimary,
+    appearance?.colors?.backgroundSecondary,
+    appearance?.colors?.titleColor,
+    appearance?.colors?.subtitleColor,
+    appearance?.colors?.descriptionColor
+  ]);
 
   useEffect(() => {
     getSettings().then(settings => {
@@ -135,7 +169,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   }, [appearance, isLoading]);
 
   return (
-    <ThemeContext.Provider value={{ appearance, setAppearance, isLoading, updateAppearance }}>
+    <ThemeContext.Provider value={{ appearance, setAppearance, isLoading, updateAppearance, preCalculatedTextColors }}>
       {children}
     </ThemeContext.Provider>
   );

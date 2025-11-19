@@ -7,16 +7,11 @@ import DesignSystemUtils from '../utils/design-system-utils';
 
 const HowItWorks = () => {
     const reduceAnimations = useOptimizedAnimations();
-    const { appearance } = useTheme();
-    const backgroundColor = appearance?.colors?.backgroundPrimary || '#111827';
+    const { appearance, preCalculatedTextColors } = useTheme();
     
-    // Función helper para contraste inteligente
-    const getTextColor = (bgColor: string): string => {
-        return DesignSystemUtils.getContrastText(bgColor);
-    };
-    
-    const titleColor = useMemo(() => getTextColor(backgroundColor), [backgroundColor]);
-    const descriptionColor = useMemo(() => getTextColor(backgroundColor), [backgroundColor]);
+    // Usar colores pre-calculados (optimización de rendimiento)
+    const titleColor = preCalculatedTextColors.title;
+    const descriptionColor = preCalculatedTextColors.description;
     
     const steps = [
         {
