@@ -10,6 +10,8 @@ import BonusesCard from '../components/BonusesCard';
 import { Link } from 'react-router-dom';
 import metaPixelService from '../services/metaPixel';
 import { formatPhoneNumberForMexico } from '../utils/phoneUtils';
+import { useTheme } from '../contexts/ThemeContext';
+import { DesignSystemUtils } from '../utils/design-system-utils';
 
 type FormData = {
     name: string;
@@ -21,6 +23,7 @@ const PurchasePage = () => {
     const { slug } = useParams<{ slug: string }>();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
+    const { appearance } = useTheme();
 
     const [raffle, setRaffle] = useState<Raffle | null>(null);
     const [loading, setLoading] = useState(true);
@@ -580,15 +583,59 @@ Adjunto el comprobante de pago. Gracias! 🙏`;
 
                             {/* Información del sorteo */}
                             <div className="grid grid-cols-2 gap-4 text-sm">
-                                <div className="bg-background-primary/50 p-3 rounded-lg">
-                                    <p className="text-slate-400">Fecha del sorteo</p>
-                                    <p className="text-white font-semibold">
-                                        {raffle.drawDate ? new Date(raffle.drawDate).toLocaleDateString('es-HN') : 'Por definir'}
+                                <div 
+                                    className="p-3 rounded-lg"
+                                    style={{
+                                        background: appearance?.colors?.backgroundPrimary || '#1a1a1a',
+                                        position: 'relative',
+                                        overflow: 'hidden'
+                                    }}
+                                >
+                                    <div
+                                        className="absolute inset-0 opacity-30 blur-xl"
+                                        style={{
+                                            background: `radial-gradient(circle at center, ${appearance?.colors?.accent || '#00ff00'} 0%, transparent 70%)`
+                                        }}
+                                    />
+                                    <p 
+                                        className="relative z-10"
+                                        style={{ color: DesignSystemUtils.getContrastText(appearance?.colors?.backgroundPrimary || '#1a1a1a') }}
+                                    >
+                                        Fecha del sorteo
+                                    </p>
+                                    <p 
+                                        className="relative z-10 font-semibold"
+                                        style={{ color: DesignSystemUtils.getContrastText(appearance?.colors?.backgroundPrimary || '#1a1a1a') }}
+                                    >
+                                        {raffle.drawDate ? new Date(raffle.drawDate).toLocaleDateString('es-MX') : 'Por definir'}
                                     </p>
                                 </div>
-                                <div className="bg-background-primary/50 p-3 rounded-lg">
-                                    <p className="text-slate-400">Precio por boleto</p>
-                                    <p className="text-accent font-bold text-lg">${pricePerTicket.toFixed(2)} MXN</p>
+                                <div 
+                                    className="p-3 rounded-lg"
+                                    style={{
+                                        background: appearance?.colors?.accent || '#00ff00',
+                                        position: 'relative',
+                                        overflow: 'hidden'
+                                    }}
+                                >
+                                    <div
+                                        className="absolute inset-0 opacity-20 blur-xl"
+                                        style={{
+                                            background: `radial-gradient(circle at center, ${appearance?.colors?.accent || '#00ff00'} 0%, transparent 70%)`
+                                        }}
+                                    />
+                                    <p 
+                                        className="relative z-10"
+                                        style={{ color: DesignSystemUtils.getContrastText(appearance?.colors?.accent || '#00ff00') }}
+                                    >
+                                        Precio por boleto
+                                    </p>
+                                    <p 
+                                        className="relative z-10 font-bold text-lg"
+                                        style={{ color: DesignSystemUtils.getContrastText(appearance?.colors?.accent || '#00ff00') }}
+                                    >
+                                        ${pricePerTicket.toFixed(2)} MXN
+                                    </p>
                                 </div>
                             </div>
                         </div>

@@ -13,9 +13,12 @@ import PackSelector from '../components/PackSelector';
 import { motion } from 'framer-motion';
 import metaPixelService from '../services/metaPixel';
 import { useToast } from '../hooks/useToast';
+import { useTheme } from '../contexts/ThemeContext';
+import { DesignSystemUtils } from '../utils/design-system-utils';
 
 const RaffleDetailPage = () => {
     const { slug } = useParams<{ slug: string }>();
+    const { appearance } = useTheme();
     const [raffle, setRaffle] = useState<Raffle | null>(null);
     const [occupiedTickets, setOccupiedTickets] = useState<number[]>([]);
     const [selectedTickets, setSelectedTickets] = useState<number[]>([]);
@@ -262,10 +265,37 @@ const RaffleDetailPage = () => {
                                 <div className="text-center mb-4">
                                     {!selectedPack && (
                                         <>
-                                            <p className="text-slate-400 mb-2">Selecciona tus boletos de la tabla de abajo para comenzar.</p>
-                                            <div className="bg-background-primary rounded-lg p-3 border border-slate-700/50 mb-4">
-                                                <p className="text-sm text-slate-300">Precio por boleto:</p>
-                                                <p className="text-xl font-bold text-accent">${pricePerTicket.toFixed(2)} MXN</p>
+                                            <p 
+                                                className="mb-2"
+                                                style={{ color: DesignSystemUtils.getContrastText(appearance?.colors?.backgroundPrimary || '#1a1a1a') }}
+                                            >
+                                                Selecciona tus boletos de la tabla de abajo para comenzar.
+                                            </p>
+                                            <div 
+                                                className="rounded-lg p-3 mb-4 relative overflow-hidden"
+                                                style={{
+                                                    background: appearance?.colors?.accent || '#00ff00',
+                                                    border: `1px solid ${appearance?.colors?.accent || '#00ff00'}80`
+                                                }}
+                                            >
+                                                <div
+                                                    className="absolute inset-0 opacity-20 blur-xl"
+                                                    style={{
+                                                        background: `radial-gradient(circle at center, ${appearance?.colors?.accent || '#00ff00'} 0%, transparent 70%)`
+                                                    }}
+                                                />
+                                                <p 
+                                                    className="text-sm relative z-10"
+                                                    style={{ color: DesignSystemUtils.getContrastText(appearance?.colors?.accent || '#00ff00') }}
+                                                >
+                                                    Precio por boleto:
+                                                </p>
+                                                <p 
+                                                    className="text-xl font-bold relative z-10"
+                                                    style={{ color: DesignSystemUtils.getContrastText(appearance?.colors?.accent || '#00ff00') }}
+                                                >
+                                                    ${pricePerTicket.toFixed(2)} MXN
+                                                </p>
                                             </div>
                                         </>
                                     )}

@@ -4,6 +4,8 @@ import { FixedSizeGrid as Grid } from 'react-window';
 import type { GridChildComponentProps } from 'react-window';
 import { Check } from 'lucide-react';
 import { isMobile } from '../utils/deviceDetection';
+import { useTheme } from '../contexts/ThemeContext';
+import { DesignSystemUtils } from '../utils/design-system-utils';
 
 interface TicketSelectorProps {
     totalTickets: number;
@@ -76,9 +78,15 @@ const VirtualTicketCell: React.FC<GridChildComponentProps<ScrollGridData>> = ({ 
 };
 
 const TicketSelector = ({ totalTickets, occupiedTickets, selectedTickets, onTicketClick, listingMode = 'paginado', hideOccupied = false }: TicketSelectorProps) => {
+    const { appearance } = useTheme();
     const [currentPage, setCurrentPage] = useState(1);
     const ticketsPerPage = 50;
     const occupiedSet = useMemo(() => new Set(occupiedTickets), [occupiedTickets]);
+    
+    // Calcular colores de contraste
+    const backgroundColor = appearance?.colors?.backgroundPrimary || '#1a1a1a';
+    const accentColor = appearance?.colors?.accent || '#00ff00';
+    const textColor = useMemo(() => DesignSystemUtils.getContrastText(backgroundColor), [backgroundColor]);
 
     const orderedTickets = useMemo(() => {
         if (!totalTickets || totalTickets <= 0) return [];
@@ -155,26 +163,64 @@ const TicketSelector = ({ totalTickets, occupiedTickets, selectedTickets, onTick
 
     const createTicketNode = useCallback((ticket: number, isOccupied: boolean, isSelected: boolean) => {
         const baseClasses = 'relative p-1 text-center rounded-md text-sm cursor-pointer transition-all duration-200 flex items-center justify-center aspect-square';
+        
+        // Estilos dinámicos basados en el estado
+        let bgStyle: React.CSSProperties = {};
+        let textStyle: React.CSSProperties = {};
+        
+        if (isOccupied) {
+            bgStyle = { background: 'rgba(100, 100, 100, 0.3)' };
+            textStyle = { color: 'rgba(150, 150, 150, 0.5)' };
+        } else if (isSelected) {
+            bgStyle = { background: accentColor };
+            textStyle = { color: DesignSystemUtils.getContrastText(accentColor) };
+        } else {
+            bgStyle = {
+                background: backgroundColor,
+                position: 'relative' as const,
+                overflow: 'hidden' as const
+            };
+            textStyle = { color: textColor };
+        }
+        
         const stateClasses = isOccupied
-            ? 'bg-slate-700/50 text-slate-500/50 cursor-not-allowed line-through'
+            ? 'cursor-not-allowed line-through'
             : isSelected
-                ? 'bg-accent text-white font-bold shadow-neon-accent'
-                : 'bg-background-primary text-slate-300 hover:bg-slate-700 hover:shadow-neon-accent';
+                ? 'font-bold shadow-neon-accent'
+                : 'hover:shadow-neon-accent';
 
+        const ticketContent = (
+            <>
+                {!isOccupied && !isSelected && (
+                    <div
+                        className="absolute inset-0 opacity-20 blur-xl"
+                        style={{
+                            background: `radial-gradient(circle at center, ${accentColor} 0%, transparent 70%)`
+                        }}
+                    />
+                )}
+                {isSelected && (
+                    <div className="absolute inset-0 flex items-center justify-center z-10">
+                        <Check size={16} style={{ color: textStyle.color }} />
+                    </div>
+                )}
+                <span 
+                    className={isSelected ? 'opacity-0' : 'opacity-100 relative z-10'}
+                    style={textStyle}
+                >
+                    {String(ticket).padStart(ticketPadding, '0')}
+                </span>
+            </>
+        );
+        
         if (mobile) {
             return (
                 <div
                     className={`${baseClasses} ${stateClasses}`}
+                    style={bgStyle}
                     onClick={() => !isOccupied && onTicketClick(ticket)}
                 >
-                    {isSelected && (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                            <Check size={16} />
-                        </div>
-                    )}
-                    <span className={isSelected ? 'opacity-0' : 'opacity-100'}>
-                        {String(ticket).padStart(ticketPadding, '0')}
-                    </span>
+                    {ticketContent}
                 </div>
             );
         }
@@ -182,27 +228,16 @@ const TicketSelector = ({ totalTickets, occupiedTickets, selectedTickets, onTick
         return (
             <motion.div
                 className={`${baseClasses} ${stateClasses}`}
+                style={bgStyle}
                 onClick={() => !isOccupied && onTicketClick(ticket)}
                 whileTap={{ scale: isOccupied ? 1 : 0.9 }}
             >
                 <AnimatePresence>
-                    {isSelected && (
-                        <motion.div
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            exit={{ scale: 0 }}
-                            className="absolute inset-0 flex items-center justify-center"
-                        >
-                            <Check size={16} />
-                        </motion.div>
-                    )}
+                    {ticketContent}
                 </AnimatePresence>
-                <span className={isSelected ? 'opacity-0' : 'opacity-100'}>
-                    {String(ticket).padStart(ticketPadding, '0')}
-                </span>
             </motion.div>
         );
-    }, [mobile, onTicketClick, ticketPadding]);
+    }, [mobile, onTicketClick, ticketPadding, backgroundColor, accentColor, textColor]);
 
     const paginatedTickets = useMemo(() => {
         if (listingMode !== 'paginado' || totalDisplayTickets <= 0) {
@@ -274,28 +309,62 @@ const TicketSelector = ({ totalTickets, occupiedTickets, selectedTickets, onTick
         createTicketNode,
     }), [orderedTickets, columns, cellWidth, hideOccupied, occupiedSet, selectedSet, createTicketNode]);
 
-    const Legend = () => (
-        <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-2 mb-4 text-sm">
-            <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded-full bg-background-primary border border-slate-600"></div>
-                <span>Disponible</span>
+    const Legend = () => {
+        const legendTextColor = DesignSystemUtils.getContrastText(containerBgColor);
+        return (
+            <div 
+                className="flex flex-wrap justify-center items-center gap-x-6 gap-y-2 mb-4 text-sm"
+                style={{ color: legendTextColor }}
+            >
+                <div className="flex items-center gap-2">
+                    <div 
+                        className="w-4 h-4 rounded-full border"
+                        style={{
+                            background: backgroundColor,
+                            borderColor: accentColor + '60'
+                        }}
+                    />
+                    <span>Disponible</span>
+                </div>
+                <div className="flex items-center gap-2">
+                    <div 
+                        className="w-4 h-4 rounded-full"
+                        style={{ background: accentColor }}
+                    />
+                    <span>Seleccionado</span>
+                </div>
+                <div className="flex items-center gap-2">
+                    <div 
+                        className="w-4 h-4 rounded-full line-through"
+                        style={{ background: 'rgba(100, 100, 100, 0.3)' }}
+                    />
+                    <span>Vendido</span>
+                </div>
             </div>
-            <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded-full bg-accent"></div>
-                <span>Seleccionado</span>
-            </div>
-            <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded-full bg-slate-700/50 line-through"></div>
-                <span>Vendido</span>
-            </div>
-        </div>
-    );
+        );
+    };
 
     const showScrollGrid = listingMode === 'scroll' && totalDisplayTickets > 0 && columns > 0 && rowCount > 0;
 
+    const containerBgColor = appearance?.colors?.backgroundPrimary || '#1a1a1a';
+    const containerTextColor = useMemo(() => DesignSystemUtils.getContrastText(containerBgColor), [containerBgColor]);
+    
     return (
-        <div className="bg-background-secondary p-4 rounded-lg shadow-lg border border-slate-700/50">
-            <Legend />
+        <div 
+            className="p-4 rounded-lg shadow-lg relative overflow-hidden"
+            style={{
+                background: containerBgColor,
+                border: `1px solid ${appearance?.colors?.accent || '#00ff00'}40`
+            }}
+        >
+            <div
+                className="absolute inset-0 opacity-20 blur-2xl pointer-events-none"
+                style={{
+                    background: `radial-gradient(circle at center, ${appearance?.colors?.accent || '#00ff00'} 0%, transparent 70%)`
+                }}
+            />
+            <div className="relative z-10">
+                <Legend />
             <div ref={containerRef}>
                 {listingMode === 'scroll' ? (
                     showScrollGrid ? (
@@ -325,11 +394,18 @@ const TicketSelector = ({ totalTickets, occupiedTickets, selectedTickets, onTick
                 )}
             </div>
             {listingMode === 'paginado' && (
-                <div className="flex justify-center items-center gap-4 mt-4 text-white">
+                <div 
+                    className="flex justify-center items-center gap-4 mt-4"
+                    style={{ color: containerTextColor }}
+                >
                     <button
                         onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                         disabled={currentPage === 1}
-                        className="px-3 py-1 bg-action rounded-md disabled:opacity-50"
+                        className="px-3 py-1 rounded-md disabled:opacity-50"
+                        style={{
+                            background: appearance?.colors?.action || '#0066ff',
+                            color: DesignSystemUtils.getContrastText(appearance?.colors?.action || '#0066ff')
+                        }}
                     >
                         Anterior
                     </button>
@@ -339,12 +415,17 @@ const TicketSelector = ({ totalTickets, occupiedTickets, selectedTickets, onTick
                     <button
                         onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                         disabled={currentPage === totalPages}
-                        className="px-3 py-1 bg-action rounded-md disabled:opacity-50"
+                        className="px-3 py-1 rounded-md disabled:opacity-50"
+                        style={{
+                            background: appearance?.colors?.action || '#0066ff',
+                            color: DesignSystemUtils.getContrastText(appearance?.colors?.action || '#0066ff')
+                        }}
                     >
                         Siguiente
                     </button>
                 </div>
             )}
+            </div>
         </div>
     );
 };
