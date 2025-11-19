@@ -9,6 +9,7 @@ import Spinner from '../components/Spinner';
 import BonusesCard from '../components/BonusesCard';
 import { Link } from 'react-router-dom';
 import metaPixelService from '../services/metaPixel';
+import { formatPhoneNumberForMexico } from '../utils/phoneUtils';
 
 type FormData = {
     name: string;
@@ -490,7 +491,11 @@ Adjunto el comprobante de pago. Gracias! 🙏`;
                                     
                                     // Codificar el mensaje preservando los emojis correctamente
                                     const encodedMessage = encodeWhatsAppMessage(whatsappMessage);
-                                    const whatsappUrl = `https://wa.me/${contactWhatsapp.replace(/\D/g, '')}?text=${encodedMessage}`;
+                                    // Formatear número de WhatsApp para México (10 dígitos + código 52)
+                                    const formattedWhatsApp = formatPhoneNumberForMexico(contactWhatsapp);
+                                    const whatsappUrl = formattedWhatsApp 
+                                        ? `https://wa.me/${formattedWhatsApp}?text=${encodedMessage}`
+                                        : `https://wa.me/${contactWhatsapp.replace(/\D/g, '')}?text=${encodedMessage}`;
                                     
                                     return (
                                         <a 

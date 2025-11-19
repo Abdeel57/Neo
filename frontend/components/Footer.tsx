@@ -5,6 +5,7 @@ import { Settings } from '../types';
 import { Facebook, Instagram, Mail, MessageCircle, Heart } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useOptimizedAnimations } from '../utils/deviceDetection';
+import { formatPhoneNumberForMexico } from '../utils/phoneUtils';
 
 // Icono de TikTok personalizado
 const TikTokIcon = ({ size = 24 }: { size?: number }) => (
@@ -79,7 +80,7 @@ const Footer = () => {
                             <div className="flex flex-col gap-3 flex-grow">
                                 {contactInfo.whatsapp && (
                                     <motion.a
-                                        href={`https://wa.me/${contactInfo.whatsapp}`}
+                                        href={`https://wa.me/${formatPhoneNumberForMexico(contactInfo.whatsapp) || contactInfo.whatsapp.replace(/\D/g, '')}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="flex items-center justify-center md:justify-start gap-3 px-4 py-3 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-xl border border-green-500/20 hover:border-green-500/40 hover:bg-green-500/15 transition-all duration-300 group"

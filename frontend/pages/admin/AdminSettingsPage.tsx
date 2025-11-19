@@ -571,7 +571,7 @@ const AdminSettingsPage = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label className={labelClasses}>WhatsApp</label>
-                                <input {...register('contactInfo.whatsapp')} className={inputClasses} placeholder="+50499999999" />
+                                <input {...register('contactInfo.whatsapp')} className={inputClasses} placeholder="521234567890 o 1234567890" />
                             </div>
                             <div>
                                 <label className={labelClasses}>Email de Contacto</label>
