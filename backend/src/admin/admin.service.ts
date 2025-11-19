@@ -1054,6 +1054,7 @@ export class AdminService {
 
   async downloadTickets(raffleId: string, tipo: 'apartados' | 'pagados', formato: 'csv' | 'excel'): Promise<{ filename: string; content: string; contentType: string }> {
     try {
+      await this.ensureRafflesTable();
       console.log('📥 Downloading tickets:', { raffleId, tipo, formato });
 
       // Verificar que la rifa existe
