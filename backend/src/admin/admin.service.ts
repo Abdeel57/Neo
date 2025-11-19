@@ -1793,9 +1793,10 @@ export class AdminService {
         accentColor: appearanceData.colors?.accent || '#ec4899',
         actionColor: appearanceData.colors?.action || '#0ea5e9',
         // Nuevos campos de color de texto (opcionales)
-        titleColor: appearanceData.colors?.titleColor || null,
-        subtitleColor: appearanceData.colors?.subtitleColor || null,
-        descriptionColor: appearanceData.colors?.descriptionColor || null,
+        // Si vienen como string vacío, convertir a null
+        titleColor: appearanceData.colors?.titleColor && appearanceData.colors.titleColor !== '' ? appearanceData.colors.titleColor : null,
+        subtitleColor: appearanceData.colors?.subtitleColor && appearanceData.colors.subtitleColor !== '' ? appearanceData.colors.subtitleColor : null,
+        descriptionColor: appearanceData.colors?.descriptionColor && appearanceData.colors.descriptionColor !== '' ? appearanceData.colors.descriptionColor : null,
         
         // Contact info
         whatsapp: contactData.whatsapp || null,

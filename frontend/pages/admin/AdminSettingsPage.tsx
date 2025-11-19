@@ -343,6 +343,10 @@ const AdminSettingsPage = () => {
                         backgroundSecondary: data.appearance?.colors?.backgroundSecondary || '#1f2937',
                         accent: data.appearance?.colors?.accent || '#ec4899',
                         action: data.appearance?.colors?.action || '#0ea5e9',
+                        // Incluir colores de texto (enviar solo si tienen valor, sino null)
+                        titleColor: data.appearance?.colors?.titleColor || null,
+                        subtitleColor: data.appearance?.colors?.subtitleColor || null,
+                        descriptionColor: data.appearance?.colors?.descriptionColor || null,
                     }
                 },
                 contactInfo: {
@@ -570,35 +574,62 @@ const AdminSettingsPage = () => {
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
                                     <label className={labelClasses}>Color de Títulos</label>
-                                    <input 
-                                        type="color" 
-                                        {...register('appearance.colors.titleColor')} 
-                                        className="w-full h-12 border border-gray-300 rounded-xl cursor-pointer"
-                                    />
+                                    <div className="flex gap-2 items-center">
+                                        <input 
+                                            type="color" 
+                                            {...register('appearance.colors.titleColor')} 
+                                            className="w-full h-12 border border-gray-300 rounded-xl cursor-pointer"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setValue('appearance.colors.titleColor', '')}
+                                            className="px-3 h-12 bg-red-100 text-red-700 rounded-xl hover:bg-red-200 transition-colors text-sm whitespace-nowrap"
+                                        >
+                                            Auto
+                                        </button>
+                                    </div>
                                     <p className="text-xs text-gray-500 mt-1">
-                                        Color para títulos principales. Déjalo vacío para cálculo automático.
+                                        Presiona "Auto" para cálculo automático según el fondo.
                                     </p>
                                 </div>
                                 <div>
                                     <label className={labelClasses}>Color de Subtítulos</label>
-                                    <input 
-                                        type="color" 
-                                        {...register('appearance.colors.subtitleColor')} 
-                                        className="w-full h-12 border border-gray-300 rounded-xl cursor-pointer"
-                                    />
+                                    <div className="flex gap-2 items-center">
+                                        <input 
+                                            type="color" 
+                                            {...register('appearance.colors.subtitleColor')} 
+                                            className="w-full h-12 border border-gray-300 rounded-xl cursor-pointer"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setValue('appearance.colors.subtitleColor', '')}
+                                            className="px-3 h-12 bg-red-100 text-red-700 rounded-xl hover:bg-red-200 transition-colors text-sm whitespace-nowrap"
+                                        >
+                                            Auto
+                                        </button>
+                                    </div>
                                     <p className="text-xs text-gray-500 mt-1">
-                                        Color para subtítulos. Déjalo vacío para cálculo automático.
+                                        Presiona "Auto" para cálculo automático según el fondo.
                                     </p>
                                 </div>
                                 <div>
                                     <label className={labelClasses}>Color de Descripciones</label>
-                                    <input 
-                                        type="color" 
-                                        {...register('appearance.colors.descriptionColor')} 
-                                        className="w-full h-12 border border-gray-300 rounded-xl cursor-pointer"
-                                    />
+                                    <div className="flex gap-2 items-center">
+                                        <input 
+                                            type="color" 
+                                            {...register('appearance.colors.descriptionColor')} 
+                                            className="w-full h-12 border border-gray-300 rounded-xl cursor-pointer"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setValue('appearance.colors.descriptionColor', '')}
+                                            className="px-3 h-12 bg-red-100 text-red-700 rounded-xl hover:bg-red-200 transition-colors text-sm whitespace-nowrap"
+                                        >
+                                            Auto
+                                        </button>
+                                    </div>
                                     <p className="text-xs text-gray-500 mt-1">
-                                        Color para descripciones y textos secundarios. Déjalo vacío para cálculo automático.
+                                        Presiona "Auto" para cálculo automático según el fondo.
                                     </p>
                                 </div>
                             </div>
