@@ -8,6 +8,174 @@ import * as bcrypt from 'bcrypt';
 export class AdminService {
   constructor(private prisma: PrismaService) {}
 
+  // Helper para asegurar que la tabla winners existe
+  private async ensureWinnersTable() {
+    try {
+      await this.prisma.$queryRaw`SELECT 1 FROM "winners" LIMIT 1`;
+    } catch (error: any) {
+      const isTableError = error.code === 'P2021' || 
+                          error.code === '42P01' || 
+                          error.message?.includes('does not exist') ||
+                          error.message?.includes('Unknown table') ||
+                          (error.message?.includes('relation') && error.message?.includes('does not exist'));
+      
+      if (isTableError) {
+        console.warn('⚠️ winners table does not exist, creating it...');
+        await this.prisma.$executeRaw`
+          CREATE TABLE IF NOT EXISTS "winners" (
+              "id" TEXT NOT NULL,
+              "name" TEXT NOT NULL,
+              "prize" TEXT NOT NULL,
+              "imageUrl" TEXT NOT NULL,
+              "raffleTitle" TEXT NOT NULL,
+              "drawDate" TIMESTAMP(3) NOT NULL,
+              "ticketNumber" INTEGER,
+              "testimonial" TEXT,
+              "phone" TEXT,
+              "city" TEXT,
+              "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              CONSTRAINT "winners_pkey" PRIMARY KEY ("id")
+          );
+        `;
+        console.log('✅ winners table created successfully');
+      } else {
+        throw error;
+      }
+    }
+  }
+
+  // Helper para asegurar que la tabla raffles tiene todas las columnas necesarias
+  private async ensureRafflesTable() {
+    try {
+      // Verificar si la columna gallery existe
+      const result = await this.prisma.$queryRaw<Array<{column_name: string}>>`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'raffles' AND column_name = 'gallery'
+      `;
+      
+      if (result.length === 0) {
+        console.warn('⚠️ raffles table missing gallery column, adding it...');
+        await this.prisma.$executeRaw`
+          ALTER TABLE "raffles" 
+          ADD COLUMN IF NOT EXISTS "gallery" JSONB;
+        `;
+      }
+      
+      // Verificar otras columnas necesarias
+      const columnsToCheck = ['packs', 'bonuses', 'boletosConOportunidades', 'numeroOportunidades', 'giftTickets'];
+      for (const col of columnsToCheck) {
+        const colResult = await this.prisma.$queryRaw<Array<{column_name: string}>>`
+          SELECT column_name 
+          FROM information_schema.columns 
+          WHERE table_name = 'raffles' AND column_name = ${col}
+        `;
+        
+        if (colResult.length === 0) {
+          console.warn(`⚠️ raffles table missing ${col} column, adding it...`);
+          if (col === 'packs') {
+            await this.prisma.$executeRaw`ALTER TABLE "raffles" ADD COLUMN IF NOT EXISTS "packs" JSONB;`;
+          } else if (col === 'bonuses') {
+            await this.prisma.$executeRaw`ALTER TABLE "raffles" ADD COLUMN IF NOT EXISTS "bonuses" TEXT[] DEFAULT '{}';`;
+          } else if (col === 'boletosConOportunidades') {
+            await this.prisma.$executeRaw`ALTER TABLE "raffles" ADD COLUMN IF NOT EXISTS "boletosConOportunidades" BOOLEAN DEFAULT false;`;
+          } else if (col === 'numeroOportunidades') {
+            await this.prisma.$executeRaw`ALTER TABLE "raffles" ADD COLUMN IF NOT EXISTS "numeroOportunidades" INTEGER DEFAULT 1;`;
+          } else if (col === 'giftTickets') {
+            await this.prisma.$executeRaw`ALTER TABLE "raffles" ADD COLUMN IF NOT EXISTS "giftTickets" INTEGER;`;
+          }
+        }
+      }
+      
+      // Verificar que drawDate existe (puede ser endDate en versiones antiguas)
+      const drawDateResult = await this.prisma.$queryRaw<Array<{column_name: string}>>`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'raffles' AND column_name = 'drawDate'
+      `;
+      
+      if (drawDateResult.length === 0) {
+        // Verificar si existe endDate y renombrarla
+        const endDateResult = await this.prisma.$queryRaw<Array<{column_name: string}>>`
+          SELECT column_name 
+          FROM information_schema.columns 
+          WHERE table_name = 'raffles' AND column_name = 'endDate'
+        `;
+        
+        if (endDateResult.length > 0) {
+          await this.prisma.$executeRaw`ALTER TABLE "raffles" RENAME COLUMN "endDate" TO "drawDate";`;
+        } else {
+          await this.prisma.$executeRaw`ALTER TABLE "raffles" ADD COLUMN IF NOT EXISTS "drawDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;`;
+        }
+      }
+      
+      // Verificar que tickets existe (puede ser totalTickets en versiones antiguas)
+      const ticketsResult = await this.prisma.$queryRaw<Array<{column_name: string}>>`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'raffles' AND column_name = 'tickets'
+      `;
+      
+      if (ticketsResult.length === 0) {
+        const totalTicketsResult = await this.prisma.$queryRaw<Array<{column_name: string}>>`
+          SELECT column_name 
+          FROM information_schema.columns 
+          WHERE table_name = 'raffles' AND column_name = 'totalTickets'
+        `;
+        
+        if (totalTicketsResult.length > 0) {
+          await this.prisma.$executeRaw`ALTER TABLE "raffles" RENAME COLUMN "totalTickets" TO "tickets";`;
+        } else {
+          await this.prisma.$executeRaw`ALTER TABLE "raffles" ADD COLUMN IF NOT EXISTS "tickets" INTEGER NOT NULL DEFAULT 100;`;
+        }
+      }
+      
+    } catch (error: any) {
+      // Si la tabla no existe, crearla completa
+      const isTableError = error.code === 'P2021' || 
+                          error.code === '42P01' || 
+                          error.message?.includes('does not exist') ||
+                          error.message?.includes('Unknown table');
+      
+      if (isTableError) {
+        console.warn('⚠️ raffles table does not exist, creating it...');
+        await this.prisma.$executeRaw`
+          CREATE TABLE IF NOT EXISTS "raffles" (
+              "id" TEXT NOT NULL,
+              "title" TEXT NOT NULL,
+              "description" TEXT,
+              "imageUrl" TEXT,
+              "gallery" JSONB,
+              "price" DOUBLE PRECISION NOT NULL DEFAULT 50.0,
+              "tickets" INTEGER NOT NULL,
+              "sold" INTEGER NOT NULL DEFAULT 0,
+              "drawDate" TIMESTAMP(3) NOT NULL,
+              "status" TEXT NOT NULL DEFAULT 'draft',
+              "slug" TEXT,
+              "boletosConOportunidades" BOOLEAN NOT NULL DEFAULT false,
+              "numeroOportunidades" INTEGER NOT NULL DEFAULT 1,
+              "giftTickets" INTEGER,
+              "packs" JSONB,
+              "bonuses" TEXT[] DEFAULT '{}',
+              "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              CONSTRAINT "raffles_pkey" PRIMARY KEY ("id")
+          );
+        `;
+        
+        await this.prisma.$executeRaw`
+          CREATE UNIQUE INDEX IF NOT EXISTS "raffles_slug_key" ON "raffles"("slug") WHERE "slug" IS NOT NULL;
+        `;
+        
+        console.log('✅ raffles table created successfully');
+      } else {
+        console.error('❌ Error ensuring raffles table:', error);
+        // No lanzar error, solo loguear
+      }
+    }
+  }
+
   // Helper para asegurar que la tabla admin_users existe
   private async ensureAdminUsersTable() {
     try {
@@ -448,6 +616,7 @@ export class AdminService {
   // Raffles
   async getAllRaffles(limit: number = 50) {
     try {
+      await this.ensureRafflesTable();
       console.log('📋 Getting all raffles, limit:', limit);
       const raffles = await this.prisma.raffle.findMany({ 
         orderBy: { createdAt: 'desc' },
@@ -528,22 +697,34 @@ export class AdminService {
   }
 
   async getFinishedRaffles() {
-    const now = new Date();
-    // Buscar rifas que estén finalizadas, activas, O que ya hayan pasado la fecha de sorteo
-    return this.prisma.raffle.findMany({ 
-      where: { 
-        OR: [
-          { status: 'finished' },
-          { status: 'active' }, // Incluir rifas activas para poder hacer sorteos
-          { drawDate: { lte: now }, status: { not: 'draft' } }
-        ]
-      },
-      orderBy: { drawDate: 'desc' }
-    });
+    try {
+      await this.ensureRafflesTable();
+      const now = new Date();
+      // Buscar rifas que estén finalizadas, activas, O que ya hayan pasado la fecha de sorteo
+      return this.prisma.raffle.findMany({ 
+        where: { 
+          OR: [
+            { status: 'finished' },
+            { status: 'active' }, // Incluir rifas activas para poder hacer sorteos
+            { drawDate: { lte: now }, status: { not: 'draft' } }
+          ]
+        },
+        orderBy: { drawDate: 'desc' }
+      });
+    } catch (error: any) {
+      console.error('❌ Error getting finished raffles:', error);
+      if (error.code === 'P2021' || error.code === '42P01' || error.message?.includes('does not exist')) {
+        await this.ensureRafflesTable();
+        return [];
+      }
+      throw error;
+    }
   }
   
   async createRaffle(data: Omit<Raffle, 'id' | 'sold' | 'createdAt' | 'updatedAt'>) {
     try {
+      await this.ensureRafflesTable();
+      
       // Validar campos requeridos
       if (!data.title || data.title.trim() === '') {
         throw new Error('El título es requerido');
@@ -641,6 +822,8 @@ export class AdminService {
 
   async updateRaffle(id: string, data: Raffle) {
     try {
+      await this.ensureRafflesTable();
+      
       // Verificar que la rifa existe
       const existingRaffle = await this.prisma.raffle.findUnique({ 
         where: { id },
@@ -1057,7 +1240,17 @@ export class AdminService {
 
   // Winners
   async getAllWinners() {
-    return this.prisma.winner.findMany({ orderBy: { createdAt: 'desc' } });
+    try {
+      await this.ensureWinnersTable();
+      return this.prisma.winner.findMany({ orderBy: { createdAt: 'desc' } });
+    } catch (error: any) {
+      console.error('❌ Error getting winners:', error);
+      if (error.code === 'P2021' || error.code === '42P01' || error.message?.includes('does not exist')) {
+        await this.ensureWinnersTable();
+        return [];
+      }
+      throw error;
+    }
   }
   
   async drawWinner(raffleId: string) {
@@ -1100,6 +1293,8 @@ export class AdminService {
   async saveWinner(data: Omit<Winner, 'id' | 'createdAt' | 'updatedAt'>) {
     console.log('💾 Saving winner with data:', data);
     
+    await this.ensureWinnersTable();
+    
     // Validar que el campo 'name' existe y no está vacío
     if (!data.name || data.name.trim() === '') {
       throw new BadRequestException('El campo "name" es requerido para guardar un ganador');
@@ -1130,6 +1325,7 @@ export class AdminService {
   }
 
   async deleteWinner(id: string) {
+    await this.ensureWinnersTable();
     return this.prisma.winner.delete({ where: { id } });
   }
 
