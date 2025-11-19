@@ -296,7 +296,7 @@ const MobileOptimizedRaffleForm: React.FC<MobileOptimizedRaffleFormProps> = ({
                                         </div>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                             <div>
-                                                <label className={labelClasses}>Precio por boleto (LPS)</label>
+                                                <label className={labelClasses}>Precio por boleto ($ MXN)</label>
                                                 <input
                                                     type="number"
                                                     step="0.01"
@@ -382,7 +382,7 @@ const MobileOptimizedRaffleForm: React.FC<MobileOptimizedRaffleFormProps> = ({
                                                             />
                                                         </div>
                                                         <div>
-                                                            <label className={labelClasses}>Precio (LPS)</label>
+                                                            <label className={labelClasses}>Precio ($ MXN)</label>
                                                             <input
                                                                 type="number"
                                                                 step="0.01"

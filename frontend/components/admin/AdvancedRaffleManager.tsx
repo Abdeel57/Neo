@@ -208,7 +208,7 @@ const AdvancedRaffleManager: React.FC<AdvancedRaffleManagerProps> = ({
                             <DollarSign className="w-5 h-5 text-purple-300" />
                             <span className="text-sm font-medium">Ingresos</span>
                         </div>
-                        <div className="text-2xl font-bold">LPS {stats.revenue.toLocaleString()}</div>
+                        <div className="text-2xl font-bold">${stats.revenue.toLocaleString()} MXN</div>
                     </div>
                     <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
                         <div className="flex items-center space-x-2 mb-2">

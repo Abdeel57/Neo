@@ -91,7 +91,7 @@ const PackSelector: React.FC<PackSelectorProps> = ({
                             <p className="text-sm text-slate-400">1 boleto</p>
                         </div>
                         <div className="text-right">
-                            <p className="font-bold text-accent text-lg">LPS {pricePerTicket.toFixed(2)}</p>
+                            <p className="font-bold text-accent text-lg">${pricePerTicket.toFixed(2)} MXN</p>
                             <p className="text-xs text-slate-400">por boleto</p>
                         </div>
                     </div>
@@ -120,9 +120,9 @@ const PackSelector: React.FC<PackSelectorProps> = ({
                                     <p className="text-sm text-slate-400">{pack.ticketCount} boletos</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="font-bold text-accent text-lg">LPS {pack.price.toFixed(2)}</p>
+                                    <p className="font-bold text-accent text-lg">${pack.price.toFixed(2)} MXN</p>
                                     <p className="text-xs text-slate-400">
-                                        LPS {(pack.pricePerTicketInPack || 0).toFixed(2)} por boleto
+                                        ${(pack.pricePerTicketInPack || 0).toFixed(2)} MXN por boleto
                                     </p>
                                 </div>
                             </div>
@@ -131,7 +131,7 @@ const PackSelector: React.FC<PackSelectorProps> = ({
                                 <div className="mt-2 pt-2 border-t border-slate-700/30">
                                     <div className="flex items-center justify-between">
                                         <span className="text-xs text-green-400 font-medium">
-                                            Ahorras LPS {pack.discount.toFixed(2)}
+                                            Ahorras ${pack.discount.toFixed(2)} MXN
                                         </span>
                                         <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded-full font-semibold">
                                             {pack.discountPercent.toFixed(0)}% OFF
@@ -154,7 +154,7 @@ const PackSelector: React.FC<PackSelectorProps> = ({
                     <p className="text-sm text-slate-300">
                         <span className="font-semibold text-white">Paquete seleccionado:</span>{' '}
                         {selectedPack.name || `Pack de ${selectedPack.tickets || selectedPack.q || 1} boletos`} - 
-                        <span className="text-accent font-bold"> LPS {selectedPack.price.toFixed(2)}</span>
+                        <span className="text-accent font-bold"> ${selectedPack.price.toFixed(2)} MXN</span>
                     </p>
                 </motion.div>
             )}

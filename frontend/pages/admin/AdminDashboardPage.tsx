@@ -274,7 +274,7 @@ const AdminDashboardPage: React.FC = () => {
                                                 </div>
                                                 <div className="text-right flex-shrink-0 ml-2">
                                                     <p className="text-xs sm:text-sm font-bold text-gray-900 whitespace-nowrap">
-                                                        L. {order.total?.toFixed(2) || order.totalAmount?.toFixed(2) || '0.00'}
+                                                        ${order.total?.toFixed(2) || order.totalAmount?.toFixed(2) || '0.00'} MXN
                                                     </p>
                                                     <p className="text-xs text-gray-500 whitespace-nowrap">
                                                         {formatDate(order.createdAt)}
@@ -353,7 +353,7 @@ const AdminDashboardPage: React.FC = () => {
                                 <StatCard
                                     icon={DollarSign}
                                     title="Ventas de Hoy"
-                                    value={`LPS ${stats?.todaySales?.toLocaleString() || 0}`}
+                                    value={`$${stats?.todaySales?.toLocaleString() || 0} MXN`}
                                     subtitle="Ingresos del día actual"
                                     color="bg-gradient-to-r from-green-500 to-green-600"
                                 />
@@ -429,7 +429,7 @@ const AdminDashboardPage: React.FC = () => {
                                                     </div>
                                                     <div className="text-right flex-shrink-0 ml-2">
                                                         <p className="text-xs sm:text-sm font-bold text-gray-900 whitespace-nowrap">
-                                                            L. {order.total?.toFixed(2) || order.totalAmount?.toFixed(2) || '0.00'}
+                                                            ${order.total?.toFixed(2) || order.totalAmount?.toFixed(2) || '0.00'} MXN
                                                         </p>
                                                         <p className="text-xs text-gray-500 whitespace-nowrap">
                                                             {formatDate(order.createdAt)}
@@ -489,7 +489,7 @@ const AdminDashboardPage: React.FC = () => {
                                                     </div>
                                                     <div className="text-right flex-shrink-0 ml-2">
                                                         <p className="text-xs sm:text-sm font-bold text-gray-900 whitespace-nowrap">
-                                                            L. {raffle.price?.toFixed(2) || '0.00'}
+                                                            ${raffle.price?.toFixed(2) || '0.00'} MXN
                                                         </p>
                                                         <div className={`text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full inline-block ${
                                                             raffle.status === 'active' 

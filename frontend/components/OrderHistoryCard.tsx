@@ -29,7 +29,7 @@ const OrderHistoryCard: React.FC<{ order: Order }> = ({ order }) => {
             <div className="space-y-3 text-sm">
                 <p className="text-white"><span className="font-semibold text-slate-300">Rifa:</span> {order.raffleTitle}</p>
                 <p className="text-white"><span className="font-semibold text-slate-300">Nombre:</span> {order.name}</p>
-                <p className="text-white"><span className="font-semibold text-slate-300">Total:</span> LPS {order.total.toFixed(2)}</p>
+                <p className="text-white"><span className="font-semibold text-slate-300">Total:</span> ${order.total.toFixed(2)} MXN</p>
                 <p className="text-white"><span className="font-semibold text-slate-300">Boletos:</span> <span className="font-mono bg-background-primary px-2 py-1 rounded">{order.tickets.join(', ')}</span></p>
                 <p className="text-slate-400"><span className="font-semibold">Fecha de apartado:</span> {format(order.createdAt, "dd 'de' MMMM, yyyy 'a las' HH:mm", { locale: es })}</p>
                 {order.status === OrderStatus.PENDING && (

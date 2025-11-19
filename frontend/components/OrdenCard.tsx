@@ -46,7 +46,7 @@ const OrdenCard: React.FC<OrdenCardProps> = ({ orden, isExpanded, onToggle }) =>
                             🎫 <span className="font-semibold text-white">{orden.cantidadBoletos}</span> boletos
                         </span>
                         <span className="flex items-center gap-1">
-                            💰 L. <span className="font-semibold text-white">{orden.monto.toFixed(2)}</span>
+                            💰 $<span className="font-semibold text-white">{orden.monto.toFixed(2)} MXN</span>
                         </span>
                         {orden.fechaPago && (
                             <span className="flex items-center gap-1">

@@ -276,7 +276,7 @@ const VerifierPage = () => {
                                         </div>
                                         {cliente.totalPagado > 0 && (
                                             <p className="text-green-400 font-semibold mt-3">
-                                                💰 Total pagado: L. {cliente.totalPagado.toFixed(2)}
+                                                💰 Total pagado: ${cliente.totalPagado.toFixed(2)} MXN
                                             </p>
                                         )}
                                     </div>

@@ -127,7 +127,7 @@ const OptimizedAdminDashboardPage: React.FC = () => {
                 <OptimizedStatCard
                     icon={DollarSign}
                     title="Ventas de Hoy"
-                    value={`LPS ${stats?.todaySales?.toLocaleString() || 0}`}
+                    value={`$${stats?.todaySales?.toLocaleString() || 0} MXN`}
                     color="bg-gradient-to-r from-green-500 to-green-600"
                     subtitle="Ingresos del día actual"
                     trend={{ value: 12, isPositive: true }}
@@ -214,7 +214,7 @@ const OptimizedAdminDashboardPage: React.FC = () => {
                             </div>
                             <div className="flex-1">
                                 <p className="text-sm font-medium text-gray-900">Venta realizada</p>
-                                <p className="text-xs text-gray-500">LPS 500 - Hace 6 horas</p>
+                                <p className="text-xs text-gray-500">$500 MXN - Hace 6 horas</p>
                             </div>
                         </div>
                     </div>

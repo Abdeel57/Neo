@@ -265,7 +265,7 @@ const RaffleDetailPage = () => {
                                             <p className="text-slate-400 mb-2">Selecciona tus boletos de la tabla de abajo para comenzar.</p>
                                             <div className="bg-background-primary rounded-lg p-3 border border-slate-700/50 mb-4">
                                                 <p className="text-sm text-slate-300">Precio por boleto:</p>
-                                                <p className="text-xl font-bold text-accent">LPS {pricePerTicket.toFixed(2)}</p>
+                                                <p className="text-xl font-bold text-accent">${pricePerTicket.toFixed(2)} MXN</p>
                                             </div>
                                         </>
                                     )}
@@ -336,7 +336,7 @@ const RaffleDetailPage = () => {
                                                                 Descuento de Paquete Aplicado
                                                             </span>
                                                             <span className="text-green-400 font-bold text-sm">
-                                                                -LPS {savingsFromPack.toFixed(2)}
+                                                                -${savingsFromPack.toFixed(2)} MXN
                                                             </span>
                                                         </div>
                                                         <p className="text-green-300 text-xs">
@@ -347,7 +347,7 @@ const RaffleDetailPage = () => {
                                                 {!matchedPack && (
                                                     <div className="flex justify-between text-slate-300">
                                                         <span>Precio por boleto:</span>
-                                                        <span>LPS {pricePerTicket.toFixed(2)}</span>
+                                                        <span>${pricePerTicket.toFixed(2)} MXN</span>
                                                     </div>
                                                 )}
                                             </>
@@ -361,12 +361,12 @@ const RaffleDetailPage = () => {
                                         <div className="border-t border-slate-700/50 pt-2">
                                             <div className="flex justify-between text-white font-bold text-lg">
                                                 <span>Total:</span>
-                                                <span className="text-accent">LPS {totalPrice.toFixed(2)}</span>
+                                                <span className="text-accent">${totalPrice.toFixed(2)} MXN</span>
                                             </div>
                                             {matchedPack && savingsFromPack > 0 && (
                                                 <div className="flex justify-between text-green-400 text-sm mt-1">
                                                     <span>Ahorro:</span>
-                                                    <span>LPS {savingsFromPack.toFixed(2)}</span>
+                                                    <span>${savingsFromPack.toFixed(2)} MXN</span>
                                                 </div>
                                             )}
                                         </div>

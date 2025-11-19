@@ -92,13 +92,13 @@ const StickyPurchaseBar = ({
                                     </p>
                                     {matchedPack && savingsFromPack > 0 && (
                                         <p className="text-xs text-green-400 font-semibold mt-1">
-                                            🎁 Descuento aplicado: -LPS {savingsFromPack.toFixed(2)}
+                                            🎁 Descuento aplicado: -${savingsFromPack.toFixed(2)} MXN
                                         </p>
                                     )}
                                 </>
                             )}
                             <p className="font-bold text-white text-lg">
-                                LPS {totalPrice.toFixed(2)}
+                                ${totalPrice.toFixed(2)} MXN
                                 {boletosAdicionales > 0 && (
                                     <span className="text-xs text-green-400 block mt-1">
                                         Recibirás {totalBoletos} boletos en total

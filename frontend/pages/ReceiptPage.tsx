@@ -66,8 +66,8 @@ const ReceiptPage: React.FC = () => {
     };
 
     const formatCurrency = (amount?: number) => {
-        if (!amount) return 'LPS 0.00';
-        return `LPS ${amount.toFixed(2)}`;
+        if (!amount) return '$0.00 MXN';
+        return `$${amount.toFixed(2)} MXN`;
     };
 
     if (loading) {

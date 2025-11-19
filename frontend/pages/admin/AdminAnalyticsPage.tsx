@@ -162,7 +162,7 @@ const AdminAnalyticsPage: React.FC = () => {
                         </div>
                     </div>
                     <p className="text-lg sm:text-2xl font-bold text-gray-900">
-                        L. {roiMetrics?.totalRevenue?.toLocaleString('es-HN') || '0'}
+                        ${roiMetrics?.totalRevenue?.toLocaleString('es-MX') || '0'} MXN
                     </p>
                     <p className="text-xs sm:text-sm text-gray-600 mt-1">Ingresos Totales</p>
                 </motion.div>
@@ -266,11 +266,11 @@ const AdminAnalyticsPage: React.FC = () => {
                             </div>
                             <div className="flex justify-between items-center pb-2 sm:pb-3 border-b border-gray-200">
                                 <span className="text-xs sm:text-sm text-gray-600">Valor Promedio Orden</span>
-                                <span className="text-sm sm:text-base font-bold text-gray-900">L. {customerInsights.averageOrderValue.toFixed(2)}</span>
+                                <span className="text-sm sm:text-base font-bold text-gray-900">${customerInsights.averageOrderValue.toFixed(2)} MXN</span>
                             </div>
                             <div className="flex justify-between items-center">
                                 <span className="text-xs sm:text-sm text-gray-600">Valor de Vida Cliente</span>
-                                <span className="text-sm sm:text-base font-bold text-gray-900">L. {customerInsights.customerLifetimeValue.toFixed(2)}</span>
+                                <span className="text-sm sm:text-base font-bold text-gray-900">${customerInsights.customerLifetimeValue.toFixed(2)} MXN</span>
                             </div>
                         </div>
                     </div>
@@ -290,15 +290,15 @@ const AdminAnalyticsPage: React.FC = () => {
                             </div>
                             <div className="flex justify-between items-center pb-2 sm:pb-3 border-b border-gray-200">
                                 <span className="text-xs sm:text-sm text-gray-600">Costo por Adquisición</span>
-                                <span className="text-sm sm:text-base font-bold text-gray-900">L. {roiMetrics.costPerAcquisition.toFixed(2)}</span>
+                                <span className="text-sm sm:text-base font-bold text-gray-900">${roiMetrics.costPerAcquisition.toFixed(2)} MXN</span>
                             </div>
                             <div className="flex justify-between items-center pb-2 sm:pb-3 border-b border-gray-200">
                                 <span className="text-xs sm:text-sm text-gray-600">Ingreso por Cliente</span>
-                                <span className="text-sm sm:text-base font-bold text-gray-900">L. {roiMetrics.revenuePerCustomer.toFixed(2)}</span>
+                                <span className="text-sm sm:text-base font-bold text-gray-900">${roiMetrics.revenuePerCustomer.toFixed(2)} MXN</span>
                             </div>
                             <div className="flex justify-between items-center">
                                 <span className="text-xs sm:text-sm text-gray-600">Gasto en Publicidad</span>
-                                <span className="text-sm sm:text-base font-bold text-gray-900">L. {roiMetrics.totalAdSpend.toLocaleString('es-HN')}</span>
+                                <span className="text-sm sm:text-base font-bold text-gray-900">${roiMetrics.totalAdSpend.toLocaleString('es-MX')} MXN</span>
                             </div>
                         </div>
                     </div>
@@ -361,7 +361,7 @@ const AdminAnalyticsPage: React.FC = () => {
                                         <div className="flex gap-2 sm:gap-3 text-xs text-gray-500 mt-1">
                                             <span>{raffle.ticketsSold} boletos</span>
                                             <span>•</span>
-                                            <span>L. {raffle.revenue.toLocaleString('es-HN')}</span>
+                                            <span>${raffle.revenue.toLocaleString('es-MX')} MXN</span>
                                         </div>
                                     </div>
                                     <div className="text-right ml-2 sm:ml-4">

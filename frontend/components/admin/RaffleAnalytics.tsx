@@ -185,7 +185,7 @@ const RaffleAnalytics: React.FC<RaffleAnalyticsProps> = ({ raffles }) => {
                 />
                 <StatCard
                     title="Ingresos Totales"
-                    value={`LPS ${metrics.totalRevenue.toLocaleString()}`}
+                    value={`$${metrics.totalRevenue.toLocaleString()} MXN`}
                     icon={DollarSign}
                     color="bg-gradient-to-r from-purple-500 to-purple-600"
                     subtitle="Todas las rifas"
@@ -322,7 +322,7 @@ const RaffleAnalytics: React.FC<RaffleAnalyticsProps> = ({ raffles }) => {
                                     <td className="py-3 px-4 font-medium text-gray-900">{month}</td>
                                     <td className="py-3 px-4 text-gray-600">{stats.count}</td>
                                     <td className="py-3 px-4 text-gray-600">{stats.tickets.toLocaleString()}</td>
-                                    <td className="py-3 px-4 text-gray-600">LPS {stats.revenue.toLocaleString()}</td>
+                                    <td className="py-3 px-4 text-gray-600">${stats.revenue.toLocaleString()} MXN</td>
                                 </tr>
                             ))}
                         </tbody>

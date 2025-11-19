@@ -198,7 +198,7 @@ const PaymentConfirmationModal: React.FC<PaymentConfirmationModalProps> = ({
                                     </div>
                                     <p className="text-sm text-gray-700">
                                         Total: <span className="font-bold text-green-600">
-                                            LPS {(order.total || order.totalAmount || 0).toFixed(2)}
+                                            ${(order.total || order.totalAmount || 0).toFixed(2)} MXN
                                         </span>
                                     </p>
                                 </div>

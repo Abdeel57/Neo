@@ -13,7 +13,7 @@ import metaPixelService from '../services/metaPixel';
 type FormData = {
     name: string;
     phone: string;
-    department: string;
+    state: string;
 };
 
 const PurchasePage = () => {
@@ -35,26 +35,40 @@ const PurchasePage = () => {
     const selectedPackName = searchParams.get('pack');
     const packQuantity = parseInt(searchParams.get('quantity') || '1', 10);
 
-    // Lista de departamentos de Honduras
-    const honduranDepartments = [
-        'Atlántida',
-        'Choluteca',
-        'Colón',
-        'Comayagua',
-        'Copán',
-        'Cortés',
-        'El Paraíso',
-        'Francisco Morazán',
-        'Gracias a Dios',
-        'Intibucá',
-        'Islas de la Bahía',
-        'La Paz',
-        'Lempira',
-        'Ocotepeque',
-        'Olancho',
-        'Santa Bárbara',
-        'Valle',
-        'Yoro'
+    // Lista de estados de México
+    const mexicanStates = [
+        'Aguascalientes',
+        'Baja California',
+        'Baja California Sur',
+        'Campeche',
+        'Chiapas',
+        'Chihuahua',
+        'Ciudad de México',
+        'Coahuila',
+        'Colima',
+        'Durango',
+        'Estado de México',
+        'Guanajuato',
+        'Guerrero',
+        'Hidalgo',
+        'Jalisco',
+        'Michoacán',
+        'Morelos',
+        'Nayarit',
+        'Nuevo León',
+        'Oaxaca',
+        'Puebla',
+        'Querétaro',
+        'Quintana Roo',
+        'San Luis Potosí',
+        'Sinaloa',
+        'Sonora',
+        'Tabasco',
+        'Tamaulipas',
+        'Tlaxcala',
+        'Veracruz',
+        'Yucatán',
+        'Zacatecas'
     ];
 
     const { register, handleSubmit, formState: { errors } } = useForm<FormData>();
@@ -93,7 +107,7 @@ Acabo de realizar mi pago y quiero enviarte mi comprobante para confirmar mi apa
 🎫 *Información del apartado:*
 • Rifa: ${raffleTitle}
 • Boletos: ${ticketsText}
-• Total pagado: L. ${totalFormatted}
+• Total pagado: $${totalFormatted} MXN
 
 Adjunto el comprobante de pago. Gracias! 🙏`;
     };
@@ -300,7 +314,7 @@ Adjunto el comprobante de pago. Gracias! 🙏`;
                 name: data.name,
                 phone: data.phone,
                 email: '',
-                district: data.department
+                district: data.state
             };
             
             // Crear usuario temporal (en una app real esto sería más complejo)
@@ -390,7 +404,7 @@ Adjunto el comprobante de pago. Gracias! 🙏`;
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-slate-300">Total:</span>
-                                        <span className="text-accent font-bold text-lg">LPS {total.toFixed(2)}</span>
+                                        <span className="text-accent font-bold text-lg">${total.toFixed(2)} MXN</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-slate-300">Estado:</span>
@@ -500,7 +514,7 @@ Adjunto el comprobante de pago. Gracias! 🙏`;
                                 <div className="space-y-3 text-sm text-slate-300">
                                     <div className="flex items-start">
                                         <span className="bg-accent text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold mr-3 mt-0.5">1</span>
-                                        <span>Realiza una transferencia bancaria por el monto exacto: <strong className="text-accent">LPS {total.toFixed(2)}</strong></span>
+                                        <span>Realiza una transferencia bancaria por el monto exacto: <strong className="text-accent">${total.toFixed(2)} MXN</strong></span>
                                     </div>
                                     <div className="flex items-start">
                                         <span className="bg-accent text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold mr-3 mt-0.5">2</span>
@@ -569,7 +583,7 @@ Adjunto el comprobante de pago. Gracias! 🙏`;
                                 </div>
                                 <div className="bg-background-primary/50 p-3 rounded-lg">
                                     <p className="text-slate-400">Precio por boleto</p>
-                                    <p className="text-accent font-bold text-lg">LPS {pricePerTicket.toFixed(2)}</p>
+                                    <p className="text-accent font-bold text-lg">${pricePerTicket.toFixed(2)} MXN</p>
                                 </div>
                             </div>
                         </div>
@@ -634,7 +648,7 @@ Adjunto el comprobante de pago. Gracias! 🙏`;
                                                     Descuento de Paquete Aplicado
                                                 </span>
                                                 <span className="text-green-400 font-bold text-sm">
-                                                    -LPS {savingsFromPack.toFixed(2)}
+                                                    -${savingsFromPack.toFixed(2)} MXN
                                                 </span>
                                             </div>
                                             <p className="text-green-300 text-xs">
@@ -691,7 +705,7 @@ Adjunto el comprobante de pago. Gracias! 🙏`;
                                         {!matchedPack && (
                                             <div className="flex justify-between items-center mb-3">
                                                 <span className="text-slate-300">Precio unitario:</span>
-                                                <span className="text-accent font-bold">LPS {pricePerTicket.toFixed(2)}</span>
+                                                <span className="text-accent font-bold">${pricePerTicket.toFixed(2)} MXN</span>
                                             </div>
                                         )}
                                     </>
@@ -705,12 +719,12 @@ Adjunto el comprobante de pago. Gracias! 🙏`;
                                 <div className="border-t border-slate-700/50 pt-3">
                                     <div className="flex justify-between items-center">
                                         <span className="text-white font-bold text-xl">Total a pagar:</span>
-                                        <span className="text-accent font-bold text-2xl">LPS {total.toFixed(2)}</span>
+                                        <span className="text-accent font-bold text-2xl">${total.toFixed(2)} MXN</span>
                                     </div>
                                     {matchedPack && savingsFromPack > 0 && (
                                         <div className="flex justify-between items-center mt-2">
                                             <span className="text-green-400 text-sm">Ahorro:</span>
-                                            <span className="text-green-400 font-bold text-sm">LPS {savingsFromPack.toFixed(2)}</span>
+                                            <span className="text-green-400 font-bold text-sm">${savingsFromPack.toFixed(2)} MXN</span>
                                         </div>
                                     )}
                                 </div>
@@ -761,22 +775,22 @@ Adjunto el comprobante de pago. Gracias! 🙏`;
                                 </div>
                                 
                                 <div>
-                                    <label htmlFor="department" className="block text-sm font-medium text-white mb-2">
-                                        Departamento *
+                                    <label htmlFor="state" className="block text-sm font-medium text-white mb-2">
+                                        Estado *
                                     </label>
                                     <select 
-                                        id="department" 
-                                        {...register('department', { required: 'El departamento es requerido' })} 
+                                        id="state" 
+                                        {...register('state', { required: 'El estado es requerido' })} 
                                         className="w-full bg-slate-800/50 border border-slate-600 rounded-lg py-3 px-4 text-white focus:ring-2 focus:ring-accent focus:border-accent transition-all duration-200"
                                     >
-                                        <option value="">Selecciona tu departamento</option>
-                                        {honduranDepartments.map(dept => (
-                                            <option key={dept} value={dept} className="bg-slate-800 text-white">
-                                                {dept}
+                                        <option value="">Selecciona tu estado</option>
+                                        {mexicanStates.map(state => (
+                                            <option key={state} value={state} className="bg-slate-800 text-white">
+                                                {state}
                                             </option>
                                         ))}
                                     </select>
-                                    {errors.department && <p className="text-red-400 text-sm mt-1">{errors.department.message}</p>}
+                                    {errors.state && <p className="text-red-400 text-sm mt-1">{errors.state.message}</p>}
                                 </div>
                                 
                                 {/* Botón mejorado */}
@@ -799,7 +813,7 @@ Adjunto el comprobante de pago. Gracias! 🙏`;
                                                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                                                 </svg>
-                                                Generar Folio - LPS {total.toFixed(2)}
+                                                Generar Folio - ${total.toFixed(2)} MXN
                                             </div>
                                         )}
                                     </button>

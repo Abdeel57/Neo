@@ -361,7 +361,7 @@ const AdvancedRaffleForm: React.FC<AdvancedRaffleFormProps> = ({
                                             <div>
                                                 <label className={labelClasses}>
                                                     <DollarSign className="w-4 h-4 inline mr-2" />
-                                                    Precio por Boleto (LPS)
+                                                    Precio por Boleto ($ MXN)
                                                 </label>
                                                 <input
                                                     type="number"
@@ -486,7 +486,7 @@ const AdvancedRaffleForm: React.FC<AdvancedRaffleFormProps> = ({
                                                             />
                                                         </div>
                                                         <div>
-                                                            <label className={labelClasses}>Precio (LPS)</label>
+                                                            <label className={labelClasses}>Precio ($ MXN)</label>
                                                             <input
                                                                 type="number"
                                                                 step="0.01"
