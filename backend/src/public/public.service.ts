@@ -139,9 +139,6 @@ export class PublicService {
   }
 
   async getOccupiedTickets(
-    // Asegurar que orders existe
-    await this.ensureOrdersTable();
-    
     raffleId: string,
     options?: {
       offset?: number;
@@ -149,6 +146,9 @@ export class PublicService {
       sortDirection?: 'asc' | 'desc';
     },
   ) {
+    // Asegurar que orders existe
+    await this.ensureOrdersTable();
+    
     const offset = Math.max(0, options?.offset ?? 0);
     const rawLimit = options?.limit;
     const limit = typeof rawLimit === 'number' && rawLimit > 0 ? Math.min(rawLimit, 2000) : undefined;
