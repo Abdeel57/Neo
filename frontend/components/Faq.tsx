@@ -17,13 +17,12 @@ const Faq = () => {
     const accentColor = appearance?.colors?.accent || '#ec4899';
     const backgroundColor = appearance?.colors?.backgroundPrimary || '#111827';
     
-    // Función helper para contraste inteligente
+    // Función helper para contraste inteligente (solo para título)
     const getTextColor = (bgColor: string): string => {
         return DesignSystemUtils.getContrastText(bgColor);
     };
     
     const titleColor = getTextColor(backgroundColor);
-    const descriptionColor = getTextColor(backgroundColor);
 
     useEffect(() => {
         getSettings().then(settings => setFaqs(settings.faqs));
@@ -57,12 +56,6 @@ const Faq = () => {
                 >
                     Preguntas Frecuentes
                 </h2>
-                <p 
-                    className="text-lg md:text-xl max-w-2xl mx-auto"
-                    style={{ color: descriptionColor }}
-                >
-                    Encuentra respuestas rápidas a las dudas más comunes sobre nuestros sorteos
-                </p>
             </motion.div>
 
             {/* Grid mejorado con diseño más atractivo */}
