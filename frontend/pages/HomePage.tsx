@@ -273,26 +273,6 @@ const HomePage = () => {
                     </div>
                 </section>
             )}
-
-            {/* Empty Winners State */}
-            {!loading && winners.length === 0 && (
-                <section className="py-8 md:py-12 bg-tertiary">
-                    <div className="container mx-auto px-4 max-w-4xl text-center">
-                        <div className="card max-w-2xl mx-auto">
-                            <div className="text-8xl mb-8">🏆</div>
-                            <h2 className="text-3xl md:text-4xl font-bold text-primary mb-6">
-                                ¡Sé el Primer Ganador!
-                            </h2>
-                            <p className="text-lg md:text-xl text-secondary mb-8 leading-relaxed">
-                                Aún no tenemos ganadores, pero eso puede cambiar pronto.
-                            </p>
-                            <p className="text-muted">
-                                ¡Participa en nuestros sorteos y podrías ser el primero!
-                            </p>
-                        </div>
-                    </div>
-                </section>
-            )}
             
             {/* FAQ Section */}
             <section 
