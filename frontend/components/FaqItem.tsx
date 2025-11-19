@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useTheme } from '../contexts/ThemeContext';
 import { isMobile } from '../utils/deviceDetection';
 
@@ -72,26 +72,23 @@ const FaqItem: React.FC<FaqItemProps> = ({ question, answer, isOpen, onClick }) 
                 </motion.div>
             </button>
             
-            <AnimatePresence>
-                {isOpen && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: mobile ? 0.15 : 0.2 }}
-                        className="overflow-hidden relative z-10"
-                        style={{ willChange: 'opacity' }}
-                    >
-                        <div className="px-6 md:px-8 pb-6 md:pb-8 pt-0">
-                            <div className="border-t border-action/20 pt-6">
-                                <p className="text-base md:text-lg text-slate-200 leading-relaxed whitespace-pre-line">
-                                    {answer}
-                                </p>
-                            </div>
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            {/* Respuesta con animación simple y reutilizable */}
+            <div 
+                className="overflow-hidden relative z-10 transition-all duration-200 ease-out"
+                style={{
+                    maxHeight: isOpen ? '1000px' : '0',
+                    opacity: isOpen ? 1 : 0,
+                    willChange: 'max-height, opacity'
+                }}
+            >
+                <div className="px-6 md:px-8 pb-6 md:pb-8 pt-0">
+                    <div className="border-t border-action/20 pt-6">
+                        <p className="text-base md:text-lg text-slate-200 leading-relaxed whitespace-pre-line">
+                            {answer}
+                        </p>
+                    </div>
+                </div>
+            </div>
         </motion.div>
     );
 };
