@@ -173,10 +173,26 @@ export class AdminService {
     }
   }
 
-  // Helper para asegurar que la tabla users existe
+  // Helper para asegurar que la tabla users existe y tiene todas las columnas
   private async ensureUsersTable() {
     try {
+      // Verificar si la tabla existe
       await this.prisma.$queryRaw`SELECT 1 FROM "users" LIMIT 1`;
+      
+      // Verificar columnas necesarias
+      const columnsToCheck = ['phone', 'district'];
+      for (const col of columnsToCheck) {
+        const colResult = await this.prisma.$queryRaw<Array<{column_name: string}>>`
+          SELECT column_name 
+          FROM information_schema.columns 
+          WHERE table_name = 'users' AND column_name = ${col}
+        `;
+        
+        if (colResult.length === 0) {
+          console.warn(`⚠️ users table missing ${col} column, adding it...`);
+          await this.prisma.$executeRawUnsafe(`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "${col}" TEXT;`);
+        }
+      }
     } catch (error: any) {
       const isTableError = error.code === 'P2021' || 
                           error.code === '42P01' || 
