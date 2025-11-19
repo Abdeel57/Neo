@@ -139,6 +139,9 @@ export class PublicService {
   }
 
   async getOccupiedTickets(
+    // Asegurar que orders existe
+    await this.ensureOrdersTable();
+    
     raffleId: string,
     options?: {
       offset?: number;
