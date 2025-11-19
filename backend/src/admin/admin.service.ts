@@ -1372,22 +1372,152 @@ export class AdminService {
       
       console.log('🔧 Settings data to save:', settingsData);
       
-      const result = await this.prisma.settings.upsert({
-        where: { id: 'main_settings' },
-        update: settingsData,
-        create: {
-          id: 'main_settings',
-          ...settingsData,
-        },
-      });
-      
-      console.log('✅ Settings updated successfully:', result);
-      
-      // Formatear la respuesta igual que en publicService
-      return this.formatSettingsResponse(result);
-    } catch (error) {
+      // Verificar si la tabla settings existe, si no, intentar crearla
+      try {
+        const result = await this.prisma.settings.upsert({
+          where: { id: 'main_settings' },
+          update: settingsData,
+          create: {
+            id: 'main_settings',
+            ...settingsData,
+          },
+        });
+        
+        console.log('✅ Settings updated successfully:', result);
+        
+        // Formatear la respuesta igual que en publicService
+        return this.formatSettingsResponse(result);
+      } catch (prismaError: any) {
+        // Si el error es que la tabla no existe o Prisma no la reconoce, usar SQL directo
+        const isTableError = prismaError.code === 'P2021' || 
+                            prismaError.code === '42P01' || 
+                            prismaError.message?.includes('does not exist') ||
+                            prismaError.message?.includes('Unknown table') ||
+                            prismaError.message?.includes('relation') && prismaError.message?.includes('does not exist');
+        
+        if (isTableError) {
+          console.warn('⚠️ Settings table issue detected, using SQL direct method...');
+          
+          // Crear la tabla si no existe
+          await this.prisma.$executeRaw`
+            CREATE TABLE IF NOT EXISTS "settings" (
+                "id" TEXT NOT NULL,
+                "siteName" TEXT NOT NULL DEFAULT 'Lucky Snap',
+                "logo" TEXT,
+                "favicon" TEXT,
+                "logoAnimation" TEXT NOT NULL DEFAULT 'rotate',
+                "primaryColor" TEXT NOT NULL DEFAULT '#111827',
+                "secondaryColor" TEXT NOT NULL DEFAULT '#1f2937',
+                "accentColor" TEXT NOT NULL DEFAULT '#ec4899',
+                "actionColor" TEXT NOT NULL DEFAULT '#0ea5e9',
+                "whatsapp" TEXT,
+                "email" TEXT,
+                "emailFromName" TEXT,
+                "emailReplyTo" TEXT,
+                "emailSubject" TEXT,
+                "facebookUrl" TEXT,
+                "instagramUrl" TEXT,
+                "tiktokUrl" TEXT,
+                "paymentAccounts" JSONB,
+                "faqs" JSONB,
+                "displayPreferences" JSONB,
+                "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT "settings_pkey" PRIMARY KEY ("id")
+            );
+          `;
+          
+          // Usar SQL directo para insertar/actualizar
+          const paymentAccountsJson = typeof settingsData.paymentAccounts === 'string' 
+            ? settingsData.paymentAccounts 
+            : JSON.stringify(settingsData.paymentAccounts || []);
+          const faqsJson = typeof settingsData.faqs === 'string' 
+            ? settingsData.faqs 
+            : JSON.stringify(settingsData.faqs || []);
+          const displayPreferencesJson = typeof settingsData.displayPreferences === 'string' 
+            ? settingsData.displayPreferences 
+            : JSON.stringify(settingsData.displayPreferences || {});
+          
+          // Insertar o actualizar usando SQL directo
+          await this.prisma.$executeRaw`
+            INSERT INTO "settings" (
+              "id", "siteName", "logo", "favicon", "logoAnimation",
+              "primaryColor", "secondaryColor", "accentColor", "actionColor",
+              "whatsapp", "email", "emailFromName", "emailReplyTo", "emailSubject",
+              "facebookUrl", "instagramUrl", "tiktokUrl",
+              "paymentAccounts", "faqs", "displayPreferences",
+              "createdAt", "updatedAt"
+            ) VALUES (
+              'main_settings',
+              ${settingsData.siteName},
+              ${settingsData.logo},
+              ${settingsData.favicon},
+              ${settingsData.logoAnimation},
+              ${settingsData.primaryColor},
+              ${settingsData.secondaryColor},
+              ${settingsData.accentColor},
+              ${settingsData.actionColor},
+              ${settingsData.whatsapp},
+              ${settingsData.email},
+              ${settingsData.emailFromName},
+              ${settingsData.emailReplyTo},
+              ${settingsData.emailSubject},
+              ${settingsData.facebookUrl},
+              ${settingsData.instagramUrl},
+              ${settingsData.tiktokUrl},
+              ${paymentAccountsJson}::jsonb,
+              ${faqsJson}::jsonb,
+              ${displayPreferencesJson}::jsonb,
+              CURRENT_TIMESTAMP,
+              CURRENT_TIMESTAMP
+            )
+            ON CONFLICT ("id") DO UPDATE SET
+              "siteName" = EXCLUDED."siteName",
+              "logo" = EXCLUDED."logo",
+              "favicon" = EXCLUDED."favicon",
+              "logoAnimation" = EXCLUDED."logoAnimation",
+              "primaryColor" = EXCLUDED."primaryColor",
+              "secondaryColor" = EXCLUDED."secondaryColor",
+              "accentColor" = EXCLUDED."accentColor",
+              "actionColor" = EXCLUDED."actionColor",
+              "whatsapp" = EXCLUDED."whatsapp",
+              "email" = EXCLUDED."email",
+              "emailFromName" = EXCLUDED."emailFromName",
+              "emailReplyTo" = EXCLUDED."emailReplyTo",
+              "emailSubject" = EXCLUDED."emailSubject",
+              "facebookUrl" = EXCLUDED."facebookUrl",
+              "instagramUrl" = EXCLUDED."instagramUrl",
+              "tiktokUrl" = EXCLUDED."tiktokUrl",
+              "paymentAccounts" = EXCLUDED."paymentAccounts",
+              "faqs" = EXCLUDED."faqs",
+              "displayPreferences" = EXCLUDED."displayPreferences",
+              "updatedAt" = CURRENT_TIMESTAMP;
+          `;
+          
+          // Obtener el registro actualizado usando SQL directo
+          const result = await this.prisma.$queryRaw<any[]>`
+            SELECT * FROM "settings" WHERE "id" = 'main_settings'
+          `;
+          
+          if (result && result.length > 0) {
+            console.log('✅ Settings created/updated successfully using SQL direct');
+            return this.formatSettingsResponse(result[0]);
+          } else {
+            throw new Error('Failed to retrieve settings after creation');
+          }
+        }
+        
+        // Si es otro error, re-lanzarlo
+        throw prismaError;
+      }
+    } catch (error: any) {
       console.error('❌ Error updating settings:', error);
-      throw new Error('Failed to update settings');
+      console.error('❌ Error details:', {
+        message: error.message,
+        code: error.code,
+        stack: error.stack
+      });
+      throw new Error(`Failed to update settings: ${error.message || 'Unknown error'}`);
     }
   }
 

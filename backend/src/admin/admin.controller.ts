@@ -413,7 +413,15 @@ export class AdminController {
   
   // Settings
   @Post('settings')
-  updateSettings(@Body() data: any) {
-    return this.adminService.updateSettings(data);
+  async updateSettings(@Body() data: any) {
+    try {
+      return await this.adminService.updateSettings(data);
+    } catch (error: any) {
+      console.error('❌ Controller error updating settings:', error);
+      throw new HttpException(
+        error.message || 'Error al actualizar configuración',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
   }
 }
