@@ -51,39 +51,6 @@ const Faq = () => {
                 transition={reduceAnimations ? {} : { duration: 0.6 }}
                 className="text-center mb-8 md:mb-10"
             >
-                <div className="inline-flex items-center justify-center gap-3 mb-4 md:mb-5">
-                    {/* Icono de interrogación moderno y futurista */}
-                    <svg 
-                        className="w-8 h-8 md:w-10 md:h-10" 
-                        viewBox="0 0 24 24" 
-                        fill="none" 
-                        xmlns="http://www.w3.org/2000/svg"
-                    >
-                        <defs>
-                            <linearGradient id="questionGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stopColor={accentColor} stopOpacity="1" />
-                                <stop offset="100%" stopColor={accentColor} stopOpacity="0.8" />
-                            </linearGradient>
-                            <filter id="glow">
-                                <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-                                <feMerge>
-                                    <feMergeNode in="coloredBlur"/>
-                                    <feMergeNode in="SourceGraphic"/>
-                                </feMerge>
-                            </filter>
-                        </defs>
-                        <path 
-                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z" 
-                            fill={`url(#questionGradient)`}
-                            filter="url(#glow)"
-                            style={{ 
-                                stroke: accentColor,
-                                strokeWidth: '0.5',
-                                strokeLinejoin: 'round'
-                            }}
-                        />
-                    </svg>
-                </div>
                 <h2 
                     className="text-4xl md:text-5xl lg:text-6xl font-black mb-4"
                     style={{ color: titleColor }}
