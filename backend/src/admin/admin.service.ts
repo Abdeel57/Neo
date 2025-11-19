@@ -48,45 +48,40 @@ export class AdminService {
   // Helper para asegurar que la tabla raffles tiene todas las columnas necesarias
   private async ensureRafflesTable() {
     try {
-      // Verificar si la columna gallery existe
-      const result = await this.prisma.$queryRaw<Array<{column_name: string}>>`
-        SELECT column_name 
-        FROM information_schema.columns 
-        WHERE table_name = 'raffles' AND column_name = 'gallery'
-      `;
+      // Lista completa de columnas necesarias según el schema de Prisma
+      const columnsToCheck = [
+        { name: 'gallery', type: 'JSONB', nullable: true },
+        { name: 'sold', type: 'INTEGER', nullable: false, defaultValue: '0' },
+        { name: 'status', type: 'TEXT', nullable: false, defaultValue: "'draft'" },
+        { name: 'slug', type: 'TEXT', nullable: true },
+        { name: 'packs', type: 'JSONB', nullable: true },
+        { name: 'bonuses', type: 'TEXT[]', nullable: true, defaultValue: "'{}'" },
+        { name: 'boletosConOportunidades', type: 'BOOLEAN', nullable: false, defaultValue: 'false' },
+        { name: 'numeroOportunidades', type: 'INTEGER', nullable: false, defaultValue: '1' },
+        { name: 'giftTickets', type: 'INTEGER', nullable: true },
+      ];
       
-      if (result.length === 0) {
-        console.warn('⚠️ raffles table missing gallery column, adding it...');
-        await this.prisma.$executeRaw`
-          ALTER TABLE "raffles" 
-          ADD COLUMN IF NOT EXISTS "gallery" JSONB;
-        `;
-      }
-      
-      // Verificar otras columnas necesarias
-      const columnsToCheck = ['sold', 'packs', 'bonuses', 'boletosConOportunidades', 'numeroOportunidades', 'giftTickets'];
       for (const col of columnsToCheck) {
         const colResult = await this.prisma.$queryRaw<Array<{column_name: string}>>`
           SELECT column_name 
           FROM information_schema.columns 
-          WHERE table_name = 'raffles' AND column_name = ${col}
+          WHERE table_name = 'raffles' AND column_name = ${col.name}
         `;
         
         if (colResult.length === 0) {
-          console.warn(`⚠️ raffles table missing ${col} column, adding it...`);
-          if (col === 'sold') {
-            await this.prisma.$executeRaw`ALTER TABLE "raffles" ADD COLUMN IF NOT EXISTS "sold" INTEGER NOT NULL DEFAULT 0;`;
-          } else if (col === 'packs') {
-            await this.prisma.$executeRaw`ALTER TABLE "raffles" ADD COLUMN IF NOT EXISTS "packs" JSONB;`;
-          } else if (col === 'bonuses') {
-            await this.prisma.$executeRaw`ALTER TABLE "raffles" ADD COLUMN IF NOT EXISTS "bonuses" TEXT[] DEFAULT '{}';`;
-          } else if (col === 'boletosConOportunidades') {
-            await this.prisma.$executeRaw`ALTER TABLE "raffles" ADD COLUMN IF NOT EXISTS "boletosConOportunidades" BOOLEAN DEFAULT false;`;
-          } else if (col === 'numeroOportunidades') {
-            await this.prisma.$executeRaw`ALTER TABLE "raffles" ADD COLUMN IF NOT EXISTS "numeroOportunidades" INTEGER DEFAULT 1;`;
-          } else if (col === 'giftTickets') {
-            await this.prisma.$executeRaw`ALTER TABLE "raffles" ADD COLUMN IF NOT EXISTS "giftTickets" INTEGER;`;
+          console.warn(`⚠️ raffles table missing ${col.name} column, adding it...`);
+          
+          let alterStatement = `ALTER TABLE "raffles" ADD COLUMN IF NOT EXISTS "${col.name}" ${col.type}`;
+          
+          if (col.defaultValue) {
+            alterStatement += ` DEFAULT ${col.defaultValue}`;
           }
+          
+          if (!col.nullable) {
+            alterStatement += ` NOT NULL`;
+          }
+          
+          await this.prisma.$executeRawUnsafe(alterStatement);
         }
       }
       
