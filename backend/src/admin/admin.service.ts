@@ -1016,6 +1016,8 @@ export class AdminService {
 
   async deleteRaffle(id: string) {
     try {
+      await this.ensureRafflesTable();
+      
       // Verificar que la rifa existe
       const existingRaffle = await this.prisma.raffle.findUnique({ 
         where: { id },
