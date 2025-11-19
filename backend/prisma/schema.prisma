@@ -127,6 +127,11 @@ model Settings {
   accentColor     String   @default("#ec4899")
   actionColor     String   @default("#0ea5e9")
   
+  // Text color settings (opcionales - si no están configurados, se calculan automáticamente)
+  titleColor      String?  // Color para títulos principales
+  subtitleColor   String?  // Color para subtítulos
+  descriptionColor String? // Color para descripciones y textos secundarios
+  
   // Contact info
   whatsapp        String?
   email           String?
