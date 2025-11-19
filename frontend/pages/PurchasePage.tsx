@@ -592,9 +592,9 @@ Adjunto el comprobante de pago. Gracias! 🙏`;
                                     }}
                                 >
                                     <div
-                                        className="absolute inset-0 opacity-30 blur-xl"
+                                        className="absolute inset-0 opacity-20"
                                         style={{
-                                            background: `radial-gradient(circle at center, ${appearance?.colors?.accent || '#00ff00'} 0%, transparent 70%)`
+                                            background: `radial-gradient(circle at center, ${appearance?.colors?.accent || '#00ff00'}40 0%, transparent 70%)`
                                         }}
                                     />
                                     <p 
@@ -619,9 +619,9 @@ Adjunto el comprobante de pago. Gracias! 🙏`;
                                     }}
                                 >
                                     <div
-                                        className="absolute inset-0 opacity-20 blur-xl"
+                                        className="absolute inset-0 opacity-15"
                                         style={{
-                                            background: `radial-gradient(circle at center, ${appearance?.colors?.accent || '#00ff00'} 0%, transparent 70%)`
+                                            background: `radial-gradient(circle at center, ${appearance?.colors?.accent || '#00ff00'}40 0%, transparent 70%)`
                                         }}
                                     />
                                     <p 

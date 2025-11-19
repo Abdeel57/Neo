@@ -192,14 +192,6 @@ const TicketSelector = ({ totalTickets, occupiedTickets, selectedTickets, onTick
 
         const ticketContent = (
             <>
-                {!isOccupied && !isSelected && (
-                    <div
-                        className="absolute inset-0 opacity-20 blur-xl"
-                        style={{
-                            background: `radial-gradient(circle at center, ${accentColor} 0%, transparent 70%)`
-                        }}
-                    />
-                )}
                 {isSelected && (
                     <div className="absolute inset-0 flex items-center justify-center z-10">
                         <Check size={16} style={{ color: textStyle.color }} />
@@ -355,13 +347,14 @@ const TicketSelector = ({ totalTickets, occupiedTickets, selectedTickets, onTick
             className="p-4 rounded-lg shadow-lg relative overflow-hidden"
             style={{
                 background: containerBgColor,
-                border: `1px solid ${appearance?.colors?.accent || '#00ff00'}40`
+                border: `1px solid ${appearance?.colors?.accent || '#00ff00'}40`,
+                boxShadow: `0 0 40px -10px ${appearance?.colors?.accent || '#00ff00'}30`
             }}
         >
             <div
-                className="absolute inset-0 opacity-20 blur-2xl pointer-events-none"
+                className="absolute inset-0 opacity-10 pointer-events-none"
                 style={{
-                    background: `radial-gradient(circle at center, ${appearance?.colors?.accent || '#00ff00'} 0%, transparent 70%)`
+                    background: `radial-gradient(circle at top, ${appearance?.colors?.accent || '#00ff00'}20 0%, transparent 50%)`
                 }}
             />
             <div className="relative z-10">
