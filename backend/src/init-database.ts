@@ -171,6 +171,13 @@ export class InitDatabaseService {
         CREATE INDEX IF NOT EXISTS "orders_status_idx" ON "orders"("status");
       `;
 
+      // Crear registro inicial de settings si no existe
+      await this.prisma.$executeRaw`
+        INSERT INTO "settings" ("id", "siteName", "createdAt", "updatedAt")
+        VALUES ('default-settings', 'Lucky Snap', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        ON CONFLICT ("id") DO NOTHING;
+      `;
+
       console.log('✅ Base de datos inicializada exitosamente');
       return { success: true, message: 'Base de datos inicializada' };
       
