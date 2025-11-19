@@ -8,6 +8,51 @@ import * as bcrypt from 'bcrypt';
 export class AdminService {
   constructor(private prisma: PrismaService) {}
 
+  // Helper para asegurar que la tabla admin_users existe
+  private async ensureAdminUsersTable() {
+    try {
+      // Intentar una consulta simple para verificar si la tabla existe
+      await this.prisma.$queryRaw`SELECT 1 FROM "admin_users" LIMIT 1`;
+    } catch (error: any) {
+      // Si la tabla no existe, crearla
+      const isTableError = error.code === 'P2021' || 
+                          error.code === '42P01' || 
+                          error.message?.includes('does not exist') ||
+                          error.message?.includes('Unknown table') ||
+                          (error.message?.includes('relation') && error.message?.includes('does not exist'));
+      
+      if (isTableError) {
+        console.warn('⚠️ admin_users table does not exist, creating it...');
+        await this.prisma.$executeRaw`
+          CREATE TABLE IF NOT EXISTS "admin_users" (
+              "id" TEXT NOT NULL,
+              "name" TEXT NOT NULL,
+              "username" TEXT NOT NULL,
+              "email" TEXT,
+              "password" TEXT NOT NULL,
+              "role" TEXT NOT NULL DEFAULT 'ventas',
+              "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              CONSTRAINT "admin_users_pkey" PRIMARY KEY ("id")
+          );
+        `;
+        
+        // Crear índices únicos
+        await this.prisma.$executeRaw`
+          CREATE UNIQUE INDEX IF NOT EXISTS "admin_users_username_key" ON "admin_users"("username");
+        `;
+        
+        await this.prisma.$executeRaw`
+          CREATE UNIQUE INDEX IF NOT EXISTS "admin_users_email_key" ON "admin_users"("email") WHERE "email" IS NOT NULL;
+        `;
+        
+        console.log('✅ admin_users table created successfully');
+      } else {
+        throw error;
+      }
+    }
+  }
+
   // Dashboard
   async getDashboardStats() {
     const today = new Date();
@@ -1091,6 +1136,8 @@ export class AdminService {
   // Users
   async login(username: string, password: string) {
     try {
+      await this.ensureAdminUsersTable();
+      
       // Buscar usuario por username
       const user = await this.prisma.adminUser.findUnique({
         where: { username }
@@ -1121,24 +1168,38 @@ export class AdminService {
   }
 
   async getUsers() {
-    // ✅ NUNCA devolver passwords en las respuestas por seguridad
-    const users = await this.prisma.adminUser.findMany({
-      select: {
-        id: true,
-        name: true,
-        username: true,
-        email: true,
-        // password: false - NO incluir nunca
-        role: true,
-        createdAt: true,
-        updatedAt: true
+    try {
+      await this.ensureAdminUsersTable();
+      
+      // ✅ NUNCA devolver passwords en las respuestas por seguridad
+      const users = await this.prisma.adminUser.findMany({
+        select: {
+          id: true,
+          name: true,
+          username: true,
+          email: true,
+          // password: false - NO incluir nunca
+          role: true,
+          createdAt: true,
+          updatedAt: true
+        }
+      });
+      return users;
+    } catch (error: any) {
+      console.error('❌ Error getting users:', error);
+      // Si es un error de tabla, intentar crear y retornar vacío
+      if (error.code === 'P2021' || error.code === '42P01' || error.message?.includes('does not exist')) {
+        await this.ensureAdminUsersTable();
+        return [];
       }
-    });
-    return users;
+      throw error;
+    }
   }
 
   async createUser(data: Prisma.AdminUserCreateInput) {
     try {
+      await this.ensureAdminUsersTable();
+      
       // ✅ Validar campos requeridos
       if (!data.username || !data.name || !data.password) {
         throw new BadRequestException('Username, name, and password are required');
@@ -1204,6 +1265,8 @@ export class AdminService {
   async updateUser(id: string, data: Prisma.AdminUserUpdateInput) {
     console.log('🔧 Actualizando usuario:', id, 'con datos:', JSON.stringify(data, null, 2));
     try {
+      await this.ensureAdminUsersTable();
+      
       // ✅ Verificar que el usuario existe
       const existingUser = await this.prisma.adminUser.findUnique({
         where: { id }
@@ -1285,6 +1348,8 @@ export class AdminService {
 
   async deleteUser(id: string) {
     try {
+      await this.ensureAdminUsersTable();
+      
       // ✅ Verificar que el usuario existe
       const user = await this.prisma.adminUser.findUnique({
         where: { id }
