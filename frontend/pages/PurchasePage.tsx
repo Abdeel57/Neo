@@ -769,12 +769,13 @@ Adjunto el comprobante de pago. Gracias! 🙏`;
                                     <input 
                                         id="phone" 
                                         type="tel" 
+                                        maxLength={10}
                                         {...register('phone', { 
                                             required: 'El teléfono es requerido', 
-                                            pattern: {value: /^\d{8}$/, message: 'Ingresa un teléfono válido de 8 dígitos'} 
+                                            pattern: {value: /^\d{10}$/, message: 'Ingresa un teléfono válido de 10 dígitos'} 
                                         })} 
                                         className="w-full bg-slate-800/50 border border-slate-600 rounded-lg py-3 px-4 text-white focus:ring-2 focus:ring-accent focus:border-accent transition-all duration-200" 
-                                        placeholder="12345678"
+                                        placeholder="1234567890"
                                     />
                                     {errors.phone && <p className="text-red-400 text-sm mt-1">{errors.phone.message}</p>}
                                 </div>
