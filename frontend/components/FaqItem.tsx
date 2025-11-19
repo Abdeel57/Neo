@@ -52,35 +52,37 @@ const FaqItem: React.FC<FaqItemProps> = ({ question, answer, isOpen, onClick }) 
                 className="w-full flex items-center gap-4 text-left p-6 md:p-8 relative z-10 group"
             >
                 {/* Icono de interrogación moderno y futurista - Sin animación, más grande */}
-                <div className={`flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-xl flex items-center justify-center ${isOpen ? 'bg-gradient-to-br from-action/20 to-accent/20' : 'bg-transparent'}`}>
+                <div className={`flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-xl flex items-center justify-center ${mobile ? (isOpen ? 'bg-action/10' : 'bg-transparent') : (isOpen ? 'bg-gradient-to-br from-action/20 to-accent/20' : 'bg-transparent')}`}>
                     {questionIcon}
                 </div>
                 
                 <div className="flex-1">
-                    <h3 className={`font-bold text-lg md:text-xl mb-1 transition-colors ${isOpen ? 'text-white' : 'text-white group-hover:text-action/80'}`}>
+                    <h3 className={`font-bold text-lg md:text-xl mb-1 ${mobile ? '' : 'transition-colors'} ${isOpen ? 'text-white' : 'text-white'} ${!mobile && 'group-hover:text-action/80'}`}>
                         {question}
                     </h3>
                 </div>
                 
                 <div 
-                    className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 ${isOpen ? 'bg-action/20 text-action' : 'text-slate-400'} ${!mobile && 'group-hover:text-white'}`}
+                    className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${isOpen ? 'bg-action/20 text-action' : 'text-slate-400'} ${!mobile && 'group-hover:text-white transition-colors'}`}
                     style={{
                         transform: `rotate(${isOpen ? 180 : 0}deg)`,
-                        transition: 'transform 0.2s ease-out, background-color 0.2s ease-out, color 0.2s ease-out'
+                        transition: mobile 
+                            ? 'transform 0.1s ease-out'
+                            : 'transform 0.2s ease-out, background-color 0.2s ease-out, color 0.2s ease-out'
                     }}
                 >
                     <ChevronDown className="w-5 h-5" />
                 </div>
             </button>
             
-            {/* Respuesta con animación simple y reutilizable - Optimizada para móviles */}
+            {/* Respuesta con animación simple y reutilizable - Ultra optimizada para móviles */}
             <div 
                 className="overflow-hidden relative z-10"
                 style={{
                     maxHeight: isOpen ? '1000px' : '0',
                     opacity: isOpen ? 1 : 0,
                     transition: mobile 
-                        ? 'max-height 0.15s ease-out, opacity 0.15s ease-out'
+                        ? 'max-height 0.1s ease-out, opacity 0.1s ease-out'
                         : 'max-height 0.2s ease-out, opacity 0.2s ease-out'
                 }}
             >

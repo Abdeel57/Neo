@@ -1,28 +1,25 @@
-import React, { useState, useEffect, memo } from 'react';
+import React, { useState, useEffect, memo, useMemo } from 'react';
 import { getSettings } from '../services/api';
 import { FaqItemData } from '../types';
 import FaqItem from './FaqItem';
-import { motion } from 'framer-motion';
-import { useOptimizedAnimations } from '../utils/deviceDetection';
 import { useTheme } from '../contexts/ThemeContext';
 import DesignSystemUtils from '../utils/design-system-utils';
+import { isMobile } from '../utils/deviceDetection';
 
 const Faq = () => {
     const [faqs, setFaqs] = useState<FaqItemData[]>([]);
     const [openFaqId, setOpenFaqId] = useState<string | null>(null);
-    const reduceAnimations = useOptimizedAnimations();
     const { appearance } = useTheme();
+    const mobile = isMobile();
     
     // Obtener colores del tema
     const accentColor = appearance?.colors?.accent || '#ec4899';
     const backgroundColor = appearance?.colors?.backgroundPrimary || '#111827';
     
-    // Función helper para contraste inteligente (solo para título)
-    const getTextColor = (bgColor: string): string => {
-        return DesignSystemUtils.getContrastText(bgColor);
-    };
-    
-    const titleColor = getTextColor(backgroundColor);
+    // Memoizar el cálculo de contraste para evitar recalcular en cada render
+    const titleColor = useMemo(() => {
+        return DesignSystemUtils.getContrastText(backgroundColor);
+    }, [backgroundColor]);
 
     useEffect(() => {
         getSettings().then(settings => setFaqs(settings.faqs));
@@ -42,23 +39,17 @@ const Faq = () => {
 
     return (
         <div className="container mx-auto px-4 py-8 md:py-12 max-w-6xl">
-            {/* Header mejorado */}
-            <motion.div
-                initial={reduceAnimations ? {} : { opacity: 0, y: 20 }}
-                whileInView={reduceAnimations ? {} : { opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={reduceAnimations ? {} : { duration: 0.6 }}
-                className="text-center mb-8 md:mb-10"
-            >
+            {/* Header - Sin animaciones para mejor rendimiento */}
+            <div className="text-center mb-8 md:mb-10">
                 <h2 
                     className="text-4xl md:text-5xl lg:text-6xl font-black mb-4"
                     style={{ color: titleColor }}
                 >
                     Preguntas Frecuentes
                 </h2>
-            </motion.div>
+            </div>
 
-            {/* Grid mejorado con diseño más atractivo */}
+            {/* Grid - Sin animaciones de entrada */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                 {faqs.map((faq, index) => {
                     // Asegurar que cada FAQ tenga un ID único
@@ -66,35 +57,23 @@ const Faq = () => {
                     const isCurrentlyOpen = openFaqId === faqId;
                     
                     return (
-                    <motion.div
-                        key={faqId}
-                        initial={reduceAnimations ? {} : { opacity: 0, y: 30 }}
-                        whileInView={reduceAnimations ? {} : { opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={reduceAnimations ? {} : { duration: 0.5, delay: index * 0.1 }}
-                    >
+                        <div key={faqId}>
                             <FaqItem 
                                 question={faq.question} 
                                 answer={faq.answer} 
                                 isOpen={isCurrentlyOpen}
                                 onClick={() => toggleFaq(faqId)}
                             />
-                        </motion.div>
+                        </div>
                     );
                 })}
             </div>
 
-            {/* Footer informativo optimizado */}
+            {/* Footer informativo - Simplificado en móviles */}
             {faqs.length > 0 && (
-                <motion.div
-                    initial={reduceAnimations ? {} : { opacity: 0, y: 20 }}
-                    whileInView={reduceAnimations ? {} : { opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={reduceAnimations ? {} : { duration: 0.5, delay: 0.3 }}
-                    className="mt-8 md:mt-10 text-center"
-                >
-                    <div className="inline-flex items-center gap-2 px-4 py-2 md:px-5 md:py-2.5 bg-gradient-to-r from-action/15 to-accent/15 rounded-xl border border-action/20 backdrop-blur-sm">
-                        {/* Icono de interrogación pequeño */}
+                <div className="mt-8 md:mt-10 text-center">
+                    <div className={`inline-flex items-center gap-2 px-4 py-2 md:px-5 md:py-2.5 rounded-xl border border-action/20 ${mobile ? 'bg-background-secondary' : 'bg-gradient-to-r from-action/15 to-accent/15'}`}>
+                        {/* Icono de interrogación pequeño - Sin filtros en móviles */}
                         <svg 
                             className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" 
                             viewBox="0 0 24 24" 
@@ -104,14 +83,13 @@ const Faq = () => {
                             <path 
                                 d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z" 
                                 fill={accentColor}
-                                style={{ filter: 'drop-shadow(0 0 4px currentColor)' }}
                             />
                         </svg>
                         <p className="text-xs md:text-sm text-slate-300">
                             ¿No encuentras lo que buscas? <span className="text-accent font-semibold">Contáctanos</span>
                         </p>
                     </div>
-                </motion.div>
+                </div>
             )}
         </div>
     );
