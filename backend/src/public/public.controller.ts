@@ -171,26 +171,34 @@ export class PublicController {
 
   @Post('orders')
   async createOrder(@Body() orderData: Prisma.OrderUncheckedCreateInput, @Req() req: any) {
-    // Track InitiateCheckout event
-    await this.trackingService.trackInitiateCheckout(
-      orderData.raffleId,
-      orderData.tickets as number[],
-      orderData.total,
-      orderData.userId
-    );
+    try {
+      // Track InitiateCheckout event
+      await this.trackingService.trackInitiateCheckout(
+        orderData.raffleId,
+        orderData.tickets as number[],
+        orderData.total,
+        orderData.userId
+      );
 
-    const order = await this.publicService.createOrder(orderData);
-    
-    // Track Purchase event
-    await this.trackingService.trackPurchase(
-      order.id,
-      orderData.raffleId,
-      orderData.tickets as number[],
-      orderData.total,
-      orderData.userId
-    );
+      const order = await this.publicService.createOrder(orderData);
+      
+      // Track Purchase event
+      await this.trackingService.trackPurchase(
+        order.id,
+        orderData.raffleId,
+        orderData.tickets as number[],
+        orderData.total,
+        orderData.userId
+      );
 
-    return order;
+      return order;
+    } catch (error: any) {
+      console.error('❌ Controller error creating order:', error);
+      throw new HttpException(
+        error.message || 'Error al crear la orden',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
   }
 
   @Post('verificar-boleto')

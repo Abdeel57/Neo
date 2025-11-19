@@ -336,6 +336,16 @@ export class PublicService {
   }
 
   async createOrder(orderData: any) {
+    // Asegurar que las tablas necesarias existen PRIMERO
+    try {
+      await this.ensureOrdersTable();
+      await this.ensureUsersTable();
+      await this.ensureRafflesTable();
+    } catch (error: any) {
+      console.error('❌ Error ensuring tables:', error);
+      throw new Error(`Error al inicializar tablas: ${error.message}`);
+    }
+    
     try {
       console.log('📝 Creating order with data:', orderData);
       
