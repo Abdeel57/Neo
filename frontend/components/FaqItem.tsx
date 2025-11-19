@@ -1,6 +1,7 @@
 import React from 'react';
-import { ChevronDown, HelpCircle } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface FaqItemProps {
     question: string;
@@ -11,6 +12,9 @@ interface FaqItemProps {
 
 // FIX: Explicitly type as React.FC to handle special props like 'key'.
 const FaqItem: React.FC<FaqItemProps> = ({ question, answer, isOpen, onClick }) => {
+    const { appearance } = useTheme();
+    const accentColor = appearance?.colors?.accent || '#ec4899';
+    
     return (
         <motion.div 
             className={`relative bg-gradient-to-br ${isOpen ? 'from-action/40 to-accent/40' : 'from-background-secondary to-slate-800/50'} rounded-2xl border-2 ${isOpen ? 'border-action/50 shadow-lg shadow-action/20' : 'border-slate-700/50'} overflow-hidden transition-all duration-300 hover:shadow-xl`}
@@ -25,9 +29,39 @@ const FaqItem: React.FC<FaqItemProps> = ({ question, answer, isOpen, onClick }) 
                 onClick={onClick}
                 className="w-full flex items-center gap-4 text-left p-6 md:p-8 relative z-10 group"
             >
-                {/* Icono decorativo */}
-                <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 ${isOpen ? 'bg-gradient-to-br from-action to-accent' : 'bg-slate-700/50 group-hover:bg-slate-600/50'}`}>
-                    <HelpCircle className={`w-6 h-6 transition-colors ${isOpen ? 'text-white' : 'text-slate-400'}`} />
+                {/* Icono de interrogación moderno y futurista */}
+                <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 ${isOpen ? 'bg-gradient-to-br from-action/20 to-accent/20' : 'bg-transparent group-hover:bg-slate-600/20'}`}>
+                    <svg 
+                        className="w-6 h-6 transition-all duration-300" 
+                        viewBox="0 0 24 24" 
+                        fill="none" 
+                        xmlns="http://www.w3.org/2000/svg"
+                    >
+                        <defs>
+                            <linearGradient id={`questionGradient-${isOpen ? 'open' : 'closed'}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stopColor={accentColor} stopOpacity={isOpen ? "1" : "0.7"} />
+                                <stop offset="100%" stopColor={accentColor} stopOpacity={isOpen ? "0.9" : "0.5"} />
+                            </linearGradient>
+                            <filter id={`glow-${isOpen ? 'open' : 'closed'}`}>
+                                <feGaussianBlur stdDeviation={isOpen ? "2" : "1"} result="coloredBlur"/>
+                                <feMerge>
+                                    <feMergeNode in="coloredBlur"/>
+                                    <feMergeNode in="SourceGraphic"/>
+                                </feMerge>
+                            </filter>
+                        </defs>
+                        <path 
+                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z" 
+                            fill={`url(#questionGradient-${isOpen ? 'open' : 'closed'})`}
+                            filter={`url(#glow-${isOpen ? 'open' : 'closed'})`}
+                            style={{ 
+                                stroke: accentColor,
+                                strokeWidth: '0.5',
+                                strokeLinejoin: 'round',
+                                transition: 'all 0.3s ease'
+                            }}
+                        />
+                    </svg>
                 </div>
                 
                 <div className="flex-1">
