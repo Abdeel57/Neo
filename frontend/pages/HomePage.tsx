@@ -180,8 +180,23 @@ const HomePage = () => {
             )}
 
             {/* How It Works Section */}
-            <section className="py-8 md:py-12 bg-secondary/5 relative z-10 overflow-visible">
-                <HowItWorks />
+            <section 
+                className="py-8 md:py-12 relative z-10 overflow-visible"
+                style={{
+                    backgroundColor: appearance?.colors?.backgroundPrimary || '#111827'
+                }}
+            >
+                {/* Difuminado con color de acento */}
+                <div 
+                    className="absolute inset-0 opacity-30 pointer-events-none"
+                    style={{
+                        background: `radial-gradient(circle at 50% 50%, ${accentColor}20 0%, transparent 70%)`,
+                        filter: 'blur(60px)'
+                    }}
+                />
+                <div className="relative z-10">
+                    <HowItWorks />
+                </div>
             </section>
 
             {/* Past Winners */}
@@ -261,8 +276,23 @@ const HomePage = () => {
             )}
             
             {/* FAQ Section */}
-            <section className="py-8 md:py-12 bg-secondary/5">
-                <Faq />
+            <section 
+                className="py-8 md:py-12 relative"
+                style={{
+                    backgroundColor: appearance?.colors?.backgroundPrimary || '#111827'
+                }}
+            >
+                {/* Difuminado con color de acento */}
+                <div 
+                    className="absolute inset-0 opacity-30 pointer-events-none"
+                    style={{
+                        background: `radial-gradient(circle at 50% 50%, ${accentColor}20 0%, transparent 70%)`,
+                        filter: 'blur(60px)'
+                    }}
+                />
+                <div className="relative z-10">
+                    <Faq />
+                </div>
             </section>
 
         </PageAnimator>
