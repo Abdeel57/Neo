@@ -64,7 +64,7 @@ export class AdminService {
       }
       
       // Verificar otras columnas necesarias
-      const columnsToCheck = ['packs', 'bonuses', 'boletosConOportunidades', 'numeroOportunidades', 'giftTickets'];
+      const columnsToCheck = ['sold', 'packs', 'bonuses', 'boletosConOportunidades', 'numeroOportunidades', 'giftTickets'];
       for (const col of columnsToCheck) {
         const colResult = await this.prisma.$queryRaw<Array<{column_name: string}>>`
           SELECT column_name 
@@ -74,7 +74,9 @@ export class AdminService {
         
         if (colResult.length === 0) {
           console.warn(`⚠️ raffles table missing ${col} column, adding it...`);
-          if (col === 'packs') {
+          if (col === 'sold') {
+            await this.prisma.$executeRaw`ALTER TABLE "raffles" ADD COLUMN IF NOT EXISTS "sold" INTEGER NOT NULL DEFAULT 0;`;
+          } else if (col === 'packs') {
             await this.prisma.$executeRaw`ALTER TABLE "raffles" ADD COLUMN IF NOT EXISTS "packs" JSONB;`;
           } else if (col === 'bonuses') {
             await this.prisma.$executeRaw`ALTER TABLE "raffles" ADD COLUMN IF NOT EXISTS "bonuses" TEXT[] DEFAULT '{}';`;
