@@ -30,10 +30,13 @@ const HomePage = () => {
     const accentColor = appearance?.colors?.accent || '#ec4899';
     const backgroundColor = appearance?.colors?.backgroundPrimary || '#111827';
     
-    // Función helper para contraste inteligente
-    const getTextColor = (bgColor: string): string => {
+    // Función helper para contraste inteligente - Memoizada para evitar recreaciones
+    const getTextColor = React.useCallback((bgColor: string): string => {
         return DesignSystemUtils.getContrastText(bgColor);
-    };
+    }, []);
+    
+    // Calcular colores de texto una vez
+    const textColor = React.useMemo(() => getTextColor(backgroundColor), [backgroundColor, getTextColor]);
 
     useEffect(() => {
         setLoading(true);
@@ -137,7 +140,7 @@ const HomePage = () => {
                             </h2>
                             <p 
                                 className="text-lg md:text-xl max-w-2xl mx-auto"
-                                style={{ color: getTextColor(backgroundColor) }}
+                                style={{ color: textColor }}
                             >
                                 Explora todos nuestros sorteos activos y encuentra el premio perfecto para ti
                             </p>
@@ -236,13 +239,13 @@ const HomePage = () => {
                             </div>
                             <h2 
                                 className="text-4xl md:text-5xl lg:text-6xl font-black mb-4"
-                                style={{ color: getTextColor(backgroundColor) }}
+                                style={{ color: textColor }}
                             >
                                 Nuestros Últimos Ganadores
                             </h2>
                             <p 
                                 className="text-lg md:text-xl max-w-2xl mx-auto"
-                                style={{ color: getTextColor(backgroundColor) }}
+                                style={{ color: textColor }}
                             >
                                 Conoce a las personas afortunadas que ya han ganado increíbles premios
                             </p>
