@@ -1817,8 +1817,11 @@ export class AdminService {
       
       console.log('🔧 Settings data to save:', settingsData);
       
-      // Verificar si la tabla settings existe, si no, intentar crearla
+      // Verificar si la tabla settings existe y tiene las columnas necesarias
       try {
+        // Verificar y agregar columnas de color de texto si no existen
+        await this.ensureSettingsTableColumns();
+        
         const result = await this.prisma.settings.upsert({
           where: { id: 'main_settings' },
           update: settingsData,
