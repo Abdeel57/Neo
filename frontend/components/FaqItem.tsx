@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { useTheme } from '../contexts/ThemeContext';
 import { isMobile } from '../utils/deviceDetection';
 
@@ -36,12 +35,13 @@ const FaqItem: React.FC<FaqItemProps> = ({ question, answer, isOpen, onClick }) 
         );
     }, [accentColor, isOpen]);
     
+    // En móviles: usar div normal, en desktop: mantener efectos visuales
+    const containerClass = mobile 
+        ? `relative ${isOpen ? 'bg-background-secondary' : 'bg-background-secondary'} rounded-2xl border-2 ${isOpen ? 'border-action/50' : 'border-slate-700/50'} overflow-hidden`
+        : `relative bg-gradient-to-br ${isOpen ? 'from-action/40 to-accent/40' : 'from-background-secondary to-slate-800/50'} rounded-2xl border-2 ${isOpen ? 'border-action/50 shadow-lg shadow-action/20' : 'border-slate-700/50'} overflow-hidden transition-all duration-200 hover:shadow-xl`;
+    
     return (
-        <motion.div 
-            className={`relative bg-gradient-to-br ${isOpen ? 'from-action/40 to-accent/40' : 'from-background-secondary to-slate-800/50'} rounded-2xl border-2 ${isOpen ? 'border-action/50 shadow-lg shadow-action/20' : 'border-slate-700/50'} overflow-hidden transition-all duration-200`}
-            whileHover={mobile ? {} : { scale: 1.02 }}
-            style={{ willChange: 'transform' }}
-        >
+        <div className={containerClass}>
             {/* Efecto de brillo cuando está abierto - deshabilitado en móviles */}
             {isOpen && !mobile && (
                 <div className="absolute inset-0 bg-gradient-to-r from-action/10 via-accent/10 to-action/10" />
@@ -62,23 +62,26 @@ const FaqItem: React.FC<FaqItemProps> = ({ question, answer, isOpen, onClick }) 
                     </h3>
                 </div>
                 
-                <motion.div 
-                    animate={{ rotate: isOpen ? 180 : 0 }}
-                    transition={{ duration: mobile ? 0.15 : 0.2, ease: 'easeOut' }}
-                    className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-200 ${isOpen ? 'bg-action/20 text-action' : 'text-slate-400'} ${!mobile && 'group-hover:text-white'}`}
-                    style={{ willChange: 'transform' }}
+                <div 
+                    className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 ${isOpen ? 'bg-action/20 text-action' : 'text-slate-400'} ${!mobile && 'group-hover:text-white'}`}
+                    style={{
+                        transform: `rotate(${isOpen ? 180 : 0}deg)`,
+                        transition: 'transform 0.2s ease-out, background-color 0.2s ease-out, color 0.2s ease-out'
+                    }}
                 >
                     <ChevronDown className="w-5 h-5" />
-                </motion.div>
+                </div>
             </button>
             
-            {/* Respuesta con animación simple y reutilizable */}
+            {/* Respuesta con animación simple y reutilizable - Optimizada para móviles */}
             <div 
-                className="overflow-hidden relative z-10 transition-all duration-200 ease-out"
+                className="overflow-hidden relative z-10"
                 style={{
                     maxHeight: isOpen ? '1000px' : '0',
                     opacity: isOpen ? 1 : 0,
-                    willChange: 'max-height, opacity'
+                    transition: mobile 
+                        ? 'max-height 0.15s ease-out, opacity 0.15s ease-out'
+                        : 'max-height 0.2s ease-out, opacity 0.2s ease-out'
                 }}
             >
                 <div className="px-6 md:px-8 pb-6 md:pb-8 pt-0">
@@ -89,7 +92,7 @@ const FaqItem: React.FC<FaqItemProps> = ({ question, answer, isOpen, onClick }) 
                     </div>
                 </div>
             </div>
-        </motion.div>
+        </div>
     );
 };
 
