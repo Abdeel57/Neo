@@ -471,9 +471,29 @@ export class PublicService {
       console.log('✅ Raffle updated with sold tickets');
 
       return newOrder;
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error creating order:', error);
-      throw error;
+      console.error('❌ Error details:', {
+        message: error.message,
+        code: error.code,
+        stack: error.stack
+      });
+      
+      // Si es un error de tabla, intentar crear las tablas y reintentar
+      if (error.code === 'P2021' || error.code === '42P01' || error.message?.includes('does not exist')) {
+        console.warn('⚠️ Table error detected, attempting to fix...');
+        try {
+          await this.ensureOrdersTable();
+          await this.ensureUsersTable();
+          await this.ensureRafflesTable();
+          // No reintentar automáticamente, solo loguear
+          console.log('✅ Tables ensured, but order creation failed. Please retry.');
+        } catch (ensureError) {
+          console.error('❌ Error ensuring tables:', ensureError);
+        }
+      }
+      
+      throw new Error(`Error al crear la orden: ${error.message || 'Error desconocido'}`);
     }
   }
 
