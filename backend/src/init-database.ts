@@ -13,7 +13,7 @@ export class InitDatabaseService {
       await this.prisma.$executeRaw`
         -- Create enum type for OrderStatus
         DO $$ BEGIN
-          CREATE TYPE "OrderStatus" AS ENUM ('PENDING', 'PAID', 'CANCELLED', 'EXPIRED');
+          CREATE TYPE "OrderStatus" AS ENUM ('PENDING', 'PAID', 'CANCELLED', 'EXPIRED', 'RELEASED');
         EXCEPTION
           WHEN duplicate_object THEN null;
         END $$;
@@ -70,10 +70,13 @@ export class InitDatabaseService {
             "folio" TEXT NOT NULL,
             "raffleId" TEXT NOT NULL,
             "userId" TEXT NOT NULL,
-            "tickets" INTEGER[],
+            "tickets" INTEGER[] NOT NULL DEFAULT '{}',
             "total" DOUBLE PRECISION NOT NULL,
             "status" "OrderStatus" NOT NULL DEFAULT 'PENDING',
+            "paymentMethod" TEXT,
+            "notes" TEXT,
             "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
             "expiresAt" TIMESTAMP(3) NOT NULL,
             CONSTRAINT "orders_pkey" PRIMARY KEY ("id")
         );
@@ -95,24 +98,42 @@ export class InitDatabaseService {
         -- Create AdminUsers table
         CREATE TABLE IF NOT EXISTS "admin_users" (
             "id" TEXT NOT NULL,
-            "email" TEXT NOT NULL,
             "name" TEXT NOT NULL,
+            "username" TEXT NOT NULL,
+            "email" TEXT,
             "password" TEXT NOT NULL,
+            "role" TEXT NOT NULL DEFAULT 'ventas',
             "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            "updatedAt" TIMESTAMP(3) NOT NULL,
+            "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
             CONSTRAINT "admin_users_pkey" PRIMARY KEY ("id")
         );
       `;
 
       await this.prisma.$executeRaw`
-        -- Create Settings table
+        -- Create Settings table (versión completa)
         CREATE TABLE IF NOT EXISTS "settings" (
             "id" TEXT NOT NULL,
             "siteName" TEXT NOT NULL DEFAULT 'Lucky Snap',
+            "logo" TEXT,
+            "favicon" TEXT,
+            "logoAnimation" TEXT NOT NULL DEFAULT 'rotate',
+            "primaryColor" TEXT NOT NULL DEFAULT '#111827',
+            "secondaryColor" TEXT NOT NULL DEFAULT '#1f2937',
+            "accentColor" TEXT NOT NULL DEFAULT '#ec4899',
+            "actionColor" TEXT NOT NULL DEFAULT '#0ea5e9',
+            "whatsapp" TEXT,
+            "email" TEXT,
+            "emailFromName" TEXT,
+            "emailReplyTo" TEXT,
+            "emailSubject" TEXT,
+            "facebookUrl" TEXT,
+            "instagramUrl" TEXT,
+            "tiktokUrl" TEXT,
             "paymentAccounts" JSONB,
             "faqs" JSONB,
+            "displayPreferences" JSONB,
             "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            "updatedAt" TIMESTAMP(3) NOT NULL,
+            "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
             CONSTRAINT "settings_pkey" PRIMARY KEY ("id")
         );
       `;
@@ -131,7 +152,23 @@ export class InitDatabaseService {
       `;
       
       await this.prisma.$executeRaw`
-        CREATE UNIQUE INDEX IF NOT EXISTS "admin_users_email_key" ON "admin_users"("email");
+        CREATE UNIQUE INDEX IF NOT EXISTS "admin_users_username_key" ON "admin_users"("username");
+      `;
+      
+      await this.prisma.$executeRaw`
+        CREATE UNIQUE INDEX IF NOT EXISTS "admin_users_email_key" ON "admin_users"("email") WHERE "email" IS NOT NULL;
+      `;
+      
+      await this.prisma.$executeRaw`
+        CREATE INDEX IF NOT EXISTS "orders_raffleId_idx" ON "orders"("raffleId");
+      `;
+      
+      await this.prisma.$executeRaw`
+        CREATE INDEX IF NOT EXISTS "orders_userId_idx" ON "orders"("userId");
+      `;
+      
+      await this.prisma.$executeRaw`
+        CREATE INDEX IF NOT EXISTS "orders_status_idx" ON "orders"("status");
       `;
 
       console.log('✅ Base de datos inicializada exitosamente');
