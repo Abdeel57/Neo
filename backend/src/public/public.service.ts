@@ -8,6 +8,123 @@ import { add } from 'date-fns';
 export class PublicService {
   constructor(private prisma: PrismaService) {}
 
+  // Helper para asegurar que la tabla users existe
+  private async ensureUsersTable() {
+    try {
+      await this.prisma.$queryRaw`SELECT 1 FROM "users" LIMIT 1`;
+    } catch (error: any) {
+      const isTableError = error.code === 'P2021' || 
+                          error.code === '42P01' || 
+                          error.message?.includes('does not exist') ||
+                          error.message?.includes('Unknown table') ||
+                          (error.message?.includes('relation') && error.message?.includes('does not exist'));
+      
+      if (isTableError) {
+        console.warn('⚠️ users table does not exist, creating it...');
+        await this.prisma.$executeRaw`
+          CREATE TABLE IF NOT EXISTS "users" (
+              "id" TEXT NOT NULL,
+              "email" TEXT NOT NULL,
+              "name" TEXT,
+              "phone" TEXT,
+              "district" TEXT,
+              "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              CONSTRAINT "users_pkey" PRIMARY KEY ("id")
+          );
+        `;
+        
+        await this.prisma.$executeRaw`
+          CREATE UNIQUE INDEX IF NOT EXISTS "users_email_key" ON "users"("email");
+        `;
+        
+        console.log('✅ users table created successfully');
+      } else {
+        throw error;
+      }
+    }
+  }
+
+  // Helper para asegurar que la tabla raffles existe (versión simplificada)
+  private async ensureRafflesTable() {
+    try {
+      await this.prisma.$queryRaw`SELECT 1 FROM "raffles" LIMIT 1`;
+    } catch (error: any) {
+      // Si la tabla no existe, solo loguear el error pero no crear (debe ser creada por AdminService)
+      console.warn('⚠️ raffles table does not exist');
+    }
+  }
+
+  // Helper para asegurar que la tabla orders existe
+  private async ensureOrdersTable() {
+    try {
+      // Primero asegurar que OrderStatus enum existe
+      await this.prisma.$executeRaw`
+        DO $$ 
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'OrderStatus') THEN
+                CREATE TYPE "OrderStatus" AS ENUM ('PENDING', 'PAID', 'CANCELLED', 'EXPIRED', 'RELEASED');
+                RAISE NOTICE 'Enum OrderStatus creado';
+            END IF;
+        END $$;
+      `;
+      
+      await this.prisma.$queryRaw`SELECT 1 FROM "orders" LIMIT 1`;
+    } catch (error: any) {
+      const isTableError = error.code === 'P2021' || 
+                          error.code === '42P01' || 
+                          error.message?.includes('does not exist') ||
+                          error.message?.includes('Unknown table') ||
+                          (error.message?.includes('relation') && error.message?.includes('does not exist'));
+      
+      if (isTableError) {
+        console.warn('⚠️ orders table does not exist, creating it...');
+        
+        // Asegurar que users existe primero
+        await this.ensureUsersTable();
+        await this.ensureRafflesTable();
+        
+        await this.prisma.$executeRaw`
+          CREATE TABLE IF NOT EXISTS "orders" (
+              "id" TEXT NOT NULL,
+              "folio" TEXT NOT NULL,
+              "raffleId" TEXT NOT NULL,
+              "userId" TEXT NOT NULL,
+              "tickets" INTEGER[] NOT NULL DEFAULT '{}',
+              "total" DOUBLE PRECISION NOT NULL,
+              "status" "OrderStatus" NOT NULL DEFAULT 'PENDING',
+              "paymentMethod" TEXT,
+              "notes" TEXT,
+              "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              "expiresAt" TIMESTAMP(3) NOT NULL,
+              CONSTRAINT "orders_pkey" PRIMARY KEY ("id")
+          );
+        `;
+        
+        await this.prisma.$executeRaw`
+          CREATE UNIQUE INDEX IF NOT EXISTS "orders_folio_key" ON "orders"("folio");
+        `;
+        
+        await this.prisma.$executeRaw`
+          CREATE INDEX IF NOT EXISTS "orders_raffleId_idx" ON "orders"("raffleId");
+        `;
+        
+        await this.prisma.$executeRaw`
+          CREATE INDEX IF NOT EXISTS "orders_userId_idx" ON "orders"("userId");
+        `;
+        
+        await this.prisma.$executeRaw`
+          CREATE INDEX IF NOT EXISTS "orders_status_idx" ON "orders"("status");
+        `;
+        
+        console.log('✅ orders table created successfully');
+      } else {
+        throw error;
+      }
+    }
+  }
+
   async getActiveRaffles() {
     return this.prisma.raffle.findMany({
       where: { status: 'active' },
