@@ -15,6 +15,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { Trophy, Gift, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useOptimizedAnimations } from '../utils/deviceDetection';
+import DesignSystemUtils from '../utils/design-system-utils';
 
 const HomePage = () => {
     const [raffles, setRaffles] = useState<Raffle[]>([]);
@@ -27,6 +28,12 @@ const HomePage = () => {
     // Obtener colores del tema o usar valores por defecto
     const primaryColor = appearance?.colors?.action || '#0ea5e9';
     const accentColor = appearance?.colors?.accent || '#ec4899';
+    const backgroundColor = appearance?.colors?.backgroundPrimary || '#111827';
+    
+    // Función helper para contraste inteligente
+    const getTextColor = (bgColor: string): string => {
+        return DesignSystemUtils.getContrastText(bgColor);
+    };
 
     useEffect(() => {
         setLoading(true);
@@ -128,7 +135,10 @@ const HomePage = () => {
                             >
                                 Más Sorteos Disponibles
                             </h2>
-                            <p className="text-lg md:text-xl text-slate-300 max-w-2xl mx-auto">
+                            <p 
+                                className="text-lg md:text-xl max-w-2xl mx-auto"
+                                style={{ color: getTextColor(backgroundColor) }}
+                            >
                                 Explora todos nuestros sorteos activos y encuentra el premio perfecto para ti
                             </p>
                         </motion.div>
@@ -224,10 +234,16 @@ const HomePage = () => {
                                     <Trophy className="w-8 h-8 md:w-10 md:h-10 text-white" />
                                 </div>
                             </div>
-                            <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-4">
+                            <h2 
+                                className="text-4xl md:text-5xl lg:text-6xl font-black mb-4"
+                                style={{ color: getTextColor(backgroundColor) }}
+                            >
                                 Nuestros Últimos Ganadores
                             </h2>
-                            <p className="text-lg md:text-xl text-slate-300 max-w-2xl mx-auto">
+                            <p 
+                                className="text-lg md:text-xl max-w-2xl mx-auto"
+                                style={{ color: getTextColor(backgroundColor) }}
+                            >
                                 Conoce a las personas afortunadas que ya han ganado increíbles premios
                             </p>
                         </motion.div>

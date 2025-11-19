@@ -1,10 +1,23 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { List, MousePointerClick, Trophy, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useOptimizedAnimations } from '../utils/deviceDetection';
+import { useTheme } from '../contexts/ThemeContext';
+import DesignSystemUtils from '../utils/design-system-utils';
 
 const HowItWorks = () => {
     const reduceAnimations = useOptimizedAnimations();
+    const { appearance } = useTheme();
+    const backgroundColor = appearance?.colors?.backgroundPrimary || '#111827';
+    
+    // Función helper para contraste inteligente
+    const getTextColor = (bgColor: string): string => {
+        return DesignSystemUtils.getContrastText(bgColor);
+    };
+    
+    const titleColor = useMemo(() => getTextColor(backgroundColor), [backgroundColor]);
+    const descriptionColor = useMemo(() => getTextColor(backgroundColor), [backgroundColor]);
+    
     const steps = [
         {
             icon: List,
@@ -35,10 +48,16 @@ const HowItWorks = () => {
     return (
         <div className="container mx-auto px-4 max-w-7xl relative z-10">
             <div className="text-center mb-8 md:mb-10">
-                <h2 className="text-3xl md:text-5xl font-bold text-primary mb-3 md:mb-4">
+                <h2 
+                    className="text-3xl md:text-5xl font-bold mb-3 md:mb-4"
+                    style={{ color: titleColor }}
+                >
                     ¿Cómo Funciona?
                 </h2>
-                <p className="text-base md:text-lg lg:text-xl text-secondary max-w-2xl mx-auto">
+                <p 
+                    className="text-base md:text-lg lg:text-xl max-w-2xl mx-auto"
+                    style={{ color: descriptionColor }}
+                >
                     Participar es súper fácil. Solo sigue estos 3 simples pasos
                 </p>
             </div>
@@ -68,11 +87,17 @@ const HowItWorks = () => {
                                         <step.icon size={40} className="text-white" />
                                     </div>
                                     
-                                    <h3 className="text-2xl lg:text-3xl font-black text-primary mb-4 group-hover:text-link transition-colors">
+                                    <h3 
+                                        className="text-2xl lg:text-3xl font-black mb-4 group-hover:text-link transition-colors"
+                                        style={{ color: titleColor }}
+                                    >
                                         {step.title}
                                     </h3>
                                     
-                                    <p className="text-base lg:text-lg text-secondary leading-relaxed">
+                                    <p 
+                                        className="text-base lg:text-lg leading-relaxed"
+                                        style={{ color: descriptionColor }}
+                                    >
                                         {step.description}
                                     </p>
                                 </div>
@@ -127,11 +152,17 @@ const HowItWorks = () => {
                                     <step.icon size={36} className="text-white" />
                                 </div>
                                 
-                                <h3 className="text-xl font-black text-primary mb-3">
+                                <h3 
+                                    className="text-xl font-black mb-3"
+                                    style={{ color: titleColor }}
+                                >
                                     {step.title}
                                 </h3>
                                 
-                                <p className="text-sm text-secondary leading-relaxed px-2">
+                                <p 
+                                    className="text-sm leading-relaxed px-2"
+                                    style={{ color: descriptionColor }}
+                                >
                                     {step.description}
                                 </p>
                             </div>
