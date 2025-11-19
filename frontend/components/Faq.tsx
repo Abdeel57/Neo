@@ -28,16 +28,16 @@ const Faq = () => {
     if (faqs.length === 0) return null;
 
     return (
-        <div className="container mx-auto px-4 py-16 md:py-24 max-w-6xl">
+        <div className="container mx-auto px-4 py-8 md:py-12 max-w-6xl">
             {/* Header mejorado */}
             <motion.div
                 initial={reduceAnimations ? {} : { opacity: 0, y: 20 }}
                 whileInView={reduceAnimations ? {} : { opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={reduceAnimations ? {} : { duration: 0.6 }}
-                className="text-center mb-12 md:mb-16"
+                className="text-center mb-8 md:mb-10"
             >
-                <div className="inline-flex items-center justify-center gap-3 mb-6">
+                <div className="inline-flex items-center justify-center gap-3 mb-4 md:mb-5">
                     <div className="p-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl shadow-lg">
                         <HelpCircle className="w-8 h-8 md:w-10 md:h-10 text-white" />
                     </div>

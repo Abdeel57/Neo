@@ -89,7 +89,7 @@ const HomePage = () => {
 
             {/* Other Active Raffles */}
             {!loading && otherRaffles.length > 0 && (
-                <section className="relative py-16 md:py-24 overflow-hidden">
+                <section className="relative py-8 md:py-12 overflow-hidden">
                     {/* Fondo con efectos decorativos */}
                     <div className="absolute inset-0 bg-gradient-to-b from-background-primary via-action/5 to-background-primary" />
                     {!reduceAnimations && (
@@ -106,9 +106,9 @@ const HomePage = () => {
                             whileInView={reduceAnimations ? {} : { opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={reduceAnimations ? {} : { duration: 0.6 }}
-                            className="text-center mb-16"
+                            className="text-center mb-8 md:mb-10"
                         >
-                            <div className="inline-flex items-center justify-center gap-3 mb-6">
+                            <div className="inline-flex items-center justify-center gap-3 mb-4 md:mb-5">
                                 <div className="p-3 bg-gradient-to-br from-action to-accent rounded-2xl shadow-lg">
                                     <Gift className="w-8 h-8 md:w-10 md:h-10 text-white" />
                                 </div>
@@ -161,7 +161,7 @@ const HomePage = () => {
             
             {/* Empty State */}
             {!loading && raffles.length === 0 && (
-                <section className="py-16 md:py-24">
+                <section className="py-8 md:py-12">
                     <div className="container mx-auto px-4 max-w-4xl text-center">
                         <div className="card max-w-2xl mx-auto">
                             <div className="text-8xl mb-8">🎯</div>
@@ -180,13 +180,13 @@ const HomePage = () => {
             )}
 
             {/* How It Works Section */}
-            <section className="py-12 md:py-16 lg:py-24 bg-secondary/5 relative z-10 overflow-visible">
+            <section className="py-8 md:py-12 bg-secondary/5 relative z-10 overflow-visible">
                 <HowItWorks />
             </section>
 
             {/* Past Winners */}
             {!loading && winners.length > 0 && (
-                <section className="relative py-16 md:py-24 overflow-visible z-10">
+                <section className="relative py-8 md:py-12 overflow-visible z-10">
                     {/* Fondo con efecto - reducido en móviles */}
                     <div className="absolute inset-0 bg-gradient-to-b from-background-primary via-purple-900/10 to-background-primary pointer-events-none z-0" />
                     {!reduceAnimations && (
@@ -202,9 +202,9 @@ const HomePage = () => {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ duration: 0.3 }}
-                            className="text-center mb-16"
+                            className="text-center mb-8 md:mb-10"
                         >
-                            <div className="inline-flex items-center justify-center gap-3 mb-6">
+                            <div className="inline-flex items-center justify-center gap-3 mb-4 md:mb-5">
                                 <div className="p-3 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl shadow-lg">
                                     <Trophy className="w-8 h-8 md:w-10 md:h-10 text-white" />
                                 </div>
@@ -242,7 +242,7 @@ const HomePage = () => {
 
             {/* Empty Winners State */}
             {!loading && winners.length === 0 && (
-                <section className="py-16 md:py-24 bg-tertiary">
+                <section className="py-8 md:py-12 bg-tertiary">
                     <div className="container mx-auto px-4 max-w-4xl text-center">
                         <div className="card max-w-2xl mx-auto">
                             <div className="text-8xl mb-8">🏆</div>
@@ -261,7 +261,7 @@ const HomePage = () => {
             )}
             
             {/* FAQ Section */}
-            <section className="py-16 md:py-24 bg-secondary/5">
+            <section className="py-8 md:py-12 bg-secondary/5">
                 <Faq />
             </section>
 

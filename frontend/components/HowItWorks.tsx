@@ -34,8 +34,8 @@ const HowItWorks = () => {
 
     return (
         <div className="container mx-auto px-4 max-w-7xl relative z-10">
-            <div className="text-center mb-12 md:mb-16">
-                <h2 className="text-3xl md:text-5xl font-bold text-primary mb-4 md:mb-6">
+            <div className="text-center mb-8 md:mb-10">
+                <h2 className="text-3xl md:text-5xl font-bold text-primary mb-3 md:mb-4">
                     ¿Cómo Funciona?
                 </h2>
                 <p className="text-base md:text-lg lg:text-xl text-secondary max-w-2xl mx-auto">
