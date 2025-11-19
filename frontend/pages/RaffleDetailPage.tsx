@@ -286,13 +286,13 @@ const RaffleDetailPage = () => {
                                                 />
                                                 <p 
                                                     className="text-sm relative z-10"
-                                                    style={{ color: DesignSystemUtils.getContrastText(appearance?.colors?.accent || '#00ff00') }}
+                                                    style={{ color: preCalculatedTextColors.description }}
                                                 >
                                                     Precio por boleto:
                                                 </p>
                                                 <p 
                                                     className="text-xl font-bold relative z-10"
-                                                    style={{ color: DesignSystemUtils.getContrastText(appearance?.colors?.accent || '#00ff00') }}
+                                                    style={{ color: preCalculatedTextColors.title }}
                                                 >
                                                     ${pricePerTicket.toFixed(2)} MXN
                                                 </p>

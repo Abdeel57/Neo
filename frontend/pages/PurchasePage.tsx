@@ -626,13 +626,13 @@ Adjunto el comprobante de pago. Gracias! 🙏`;
                                     />
                                     <p 
                                         className="relative z-10"
-                                        style={{ color: DesignSystemUtils.getContrastText(appearance?.colors?.accent || '#00ff00') }}
+                                        style={{ color: preCalculatedTextColors.description }}
                                     >
                                         Precio por boleto
                                     </p>
                                     <p 
                                         className="relative z-10 font-bold text-lg"
-                                        style={{ color: DesignSystemUtils.getContrastText(appearance?.colors?.accent || '#00ff00') }}
+                                        style={{ color: preCalculatedTextColors.title }}
                                     >
                                         ${pricePerTicket.toFixed(2)} MXN
                                     </p>

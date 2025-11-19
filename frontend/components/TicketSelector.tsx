@@ -173,7 +173,8 @@ const TicketSelector = ({ totalTickets, occupiedTickets, selectedTickets, onTick
             textStyle = { color: 'rgba(150, 150, 150, 0.5)' };
         } else if (isSelected) {
             bgStyle = { background: accentColor };
-            textStyle = { color: DesignSystemUtils.getContrastText(accentColor) };
+            // Usar color pre-calculado para boletos seleccionados
+            textStyle = { color: preCalculatedTextColors.title };
         } else {
             bgStyle = {
                 background: backgroundColor,
@@ -404,7 +405,7 @@ const TicketSelector = ({ totalTickets, occupiedTickets, selectedTickets, onTick
                         className="px-3 py-1 rounded-md disabled:opacity-50"
                         style={{
                             background: appearance?.colors?.action || '#0066ff',
-                            color: DesignSystemUtils.getContrastText(appearance?.colors?.action || '#0066ff')
+                            color: preCalculatedTextColors.title
                         }}
                     >
                         Anterior
@@ -418,7 +419,7 @@ const TicketSelector = ({ totalTickets, occupiedTickets, selectedTickets, onTick
                         className="px-3 py-1 rounded-md disabled:opacity-50"
                         style={{
                             background: appearance?.colors?.action || '#0066ff',
-                            color: DesignSystemUtils.getContrastText(appearance?.colors?.action || '#0066ff')
+                            color: preCalculatedTextColors.title
                         }}
                     >
                         Siguiente
