@@ -3,6 +3,11 @@ import { Response } from 'express';
 import { Throttle } from '@nestjs/throttler';
 import { AdminService } from './admin.service';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
+import { LoginDto } from './dto/login.dto';
+import { CreateRaffleDto, UpdateRaffleDto } from './dto/create-raffle.dto';
+import { CreateUserDto, UpdateUserDto } from './dto/create-user.dto';
+import { CreateWinnerDto } from './dto/create-winner.dto';
+import { EditOrderDto, MarkOrderPaidDto } from './dto/update-order.dto';
 // FIX: Using `import type` for types/namespaces and value import for the enum to fix module resolution.
 import { type Raffle, type Winner, type Prisma } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -79,10 +84,10 @@ export class AdminController {
   @Put('orders/:id/mark-paid')
   async markOrderPaid(
     @Param('id') id: string,
-    @Body() body: { paymentMethod?: string; notes?: string }
+    @Body() markOrderPaidDto: MarkOrderPaidDto
   ) {
     try {
-      return await this.adminService.markOrderPaid(id, body.paymentMethod, body.notes);
+      return await this.adminService.markOrderPaid(id, markOrderPaidDto.paymentMethod, markOrderPaidDto.notes);
     } catch (error) {
       console.error('Error marking order as paid:', error);
       throw new HttpException('Error al marcar la orden como pagada', HttpStatus.INTERNAL_SERVER_ERROR);
@@ -107,10 +112,10 @@ export class AdminController {
   @Put('orders/:id/edit')
   async editOrder(
     @Param('id') id: string,
-    @Body() body: { customer?: any; tickets?: number[]; notes?: string }
+    @Body() editOrderDto: EditOrderDto
   ) {
     try {
-      return await this.adminService.editOrder(id, body);
+      return await this.adminService.editOrder(id, editOrderDto);
     } catch (error) {
       console.error('Error editing order:', error);
       throw new HttpException('Error al editar la orden', HttpStatus.BAD_REQUEST);
@@ -167,9 +172,9 @@ export class AdminController {
   @Throttle({ default: { limit: 20, ttl: 60000 } })
   @Roles('admin', 'superadmin')
   @Post('raffles')
-  async createRaffle(@Body() data: Omit<Raffle, 'id' | 'sold' | 'createdAt' | 'updatedAt'>) {
+  async createRaffle(@Body() createRaffleDto: CreateRaffleDto) {
     try {
-      const raffle = await this.adminService.createRaffle(data);
+      const raffle = await this.adminService.createRaffle(createRaffleDto);
       return {
         success: true,
         message: 'Rifa creada exitosamente',
@@ -186,19 +191,19 @@ export class AdminController {
 
   @Roles('admin', 'superadmin')
   @Patch('raffles/:id')
-  async updateRaffle(@Param('id') id: string, @Body() data: Raffle) {
+  async updateRaffle(@Param('id') id: string, @Body() updateRaffleDto: UpdateRaffleDto) {
     try {
       console.log('📥 Controller received update request:', {
         id,
-        packs: data.packs,
-        bonuses: data.bonuses,
-        packsType: typeof data.packs,
-        bonusesType: typeof data.bonuses,
-        packsIsArray: Array.isArray(data.packs),
-        bonusesIsArray: Array.isArray(data.bonuses)
+        packs: updateRaffleDto.packs,
+        bonuses: updateRaffleDto.bonuses,
+        packsType: typeof updateRaffleDto.packs,
+        bonusesType: typeof updateRaffleDto.bonuses,
+        packsIsArray: Array.isArray(updateRaffleDto.packs),
+        bonusesIsArray: Array.isArray(updateRaffleDto.bonuses)
       });
       
-      const raffle = await this.adminService.updateRaffle(id, data);
+      const raffle = await this.adminService.updateRaffle(id, updateRaffleDto);
       
       console.log('✅ Controller returning updated raffle:', {
         id: raffle.id,
@@ -334,8 +339,8 @@ export class AdminController {
 
   @Roles('admin', 'superadmin')
   @Post('winners')
-  saveWinner(@Body() data: Omit<Winner, 'id' | 'createdAt' | 'updatedAt'>) {
-    return this.adminService.saveWinner(data);
+  saveWinner(@Body() createWinnerDto: CreateWinnerDto) {
+    return this.adminService.saveWinner(createWinnerDto);
   }
 
   @Roles('admin', 'superadmin')
@@ -349,12 +354,9 @@ export class AdminController {
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Public()
   @Post('login')
-  async login(@Body() data: { username: string; password: string }) {
+  async login(@Body() loginDto: LoginDto) {
     try {
-      if (!data.username || !data.password) {
-        throw new BadRequestException('Username and password are required');
-      }
-      const user = await this.adminService.login(data.username, data.password);
+      const user = await this.adminService.login(loginDto.username, loginDto.password);
       return {
         success: true,
         message: 'Login exitoso',
@@ -391,9 +393,9 @@ export class AdminController {
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Roles('admin', 'superadmin')
   @Post('users')
-  async createUser(@Body() data: Prisma.AdminUserCreateInput) {
+  async createUser(@Body() createUserDto: CreateUserDto) {
     try {
-      const user = await this.adminService.createUser(data);
+      const user = await this.adminService.createUser(createUserDto);
       return {
         success: true,
         message: 'Usuario creado exitosamente',
@@ -419,9 +421,9 @@ export class AdminController {
   
   @Roles('admin', 'superadmin')
   @Patch('users/:id')
-  async updateUser(@Param('id') id: string, @Body() data: Prisma.AdminUserUpdateInput) {
+  async updateUser(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     try {
-      const user = await this.adminService.updateUser(id, data);
+      const user = await this.adminService.updateUser(id, updateUserDto);
       return {
         success: true,
         message: 'Usuario actualizado exitosamente',

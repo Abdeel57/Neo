@@ -5,6 +5,10 @@ import { type Prisma, type Raffle, type Winner } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { DatabaseSetupService } from './database-setup.service';
 import { AuthService } from '../auth/auth.service';
+import { CreateRaffleDto, UpdateRaffleDto } from './dto/create-raffle.dto';
+import { CreateUserDto, UpdateUserDto } from './dto/create-user.dto';
+import { CreateWinnerDto } from './dto/create-winner.dto';
+import { EditOrderDto } from './dto/update-order.dto';
 
 @Injectable()
 export class AdminService {
@@ -359,7 +363,7 @@ export class AdminService {
     };
   }
 
-  async editOrder(id: string, body: { customer?: any; tickets?: number[]; notes?: string }) {
+  async editOrder(id: string, editOrderDto: EditOrderDto) {
     await this.dbSetup.ensureOrdersTable();
     await this.dbSetup.ensureUsersTable();
     await this.dbSetup.ensureRafflesTable();
@@ -370,29 +374,29 @@ export class AdminService {
     const dataToUpdate: any = { updatedAt: new Date() };
 
     // Validar y actualizar tickets
-    if (body.tickets) {
+    if (editOrderDto.tickets) {
       // Validación básica: no duplicados en la misma orden
-      const uniqueTickets = Array.from(new Set(body.tickets));
-      if (uniqueTickets.length !== body.tickets.length) {
+      const uniqueTickets = Array.from(new Set(editOrderDto.tickets));
+      if (uniqueTickets.length !== editOrderDto.tickets.length) {
         throw new BadRequestException('Boletos duplicados en la misma orden');
       }
       dataToUpdate.tickets = uniqueTickets;
     }
 
     // Notas
-    if (body.notes !== undefined) {
-      dataToUpdate.notes = body.notes;
+    if (editOrderDto.notes !== undefined) {
+      dataToUpdate.notes = editOrderDto.notes;
     }
 
     // Actualizar datos del cliente (en tabla user)
-    if (body.customer && Object.keys(body.customer).length > 0) {
+    if (editOrderDto.customer && Object.keys(editOrderDto.customer).length > 0) {
       await this.prisma.user.update({
         where: { id: order.userId },
         data: {
-          name: body.customer.name ?? order.user.name,
-          phone: body.customer.phone ?? order.user.phone,
-          email: body.customer.email ?? order.user.email,
-          district: body.customer.district ?? order.user.district,
+          name: editOrderDto.customer.name ?? order.user.name,
+          phone: editOrderDto.customer.phone ?? order.user.phone,
+          email: editOrderDto.customer.email ?? order.user.email,
+          district: editOrderDto.customer.district ?? order.user.district,
         },
       });
     }
@@ -608,26 +612,13 @@ export class AdminService {
     }
   }
   
-  async createRaffle(data: Omit<Raffle, 'id' | 'sold' | 'createdAt' | 'updatedAt'>) {
+  async createRaffle(createRaffleDto: CreateRaffleDto) {
     try {
       await this.dbSetup.ensureRafflesTable();
       
-      // Validar campos requeridos
-      if (!data.title || data.title.trim() === '') {
-        throw new Error('El título es requerido');
-      }
-      if (!data.tickets || data.tickets < 1) {
-        throw new Error('El número de boletos debe ser mayor a 0');
-      }
-      if (!data.price || data.price <= 0) {
-        throw new Error('El precio debe ser mayor a 0');
-      }
-      if (!data.drawDate) {
-        throw new Error('La fecha del sorteo es requerida');
-      }
-
+      // Los DTOs ya validan los campos requeridos, pero mantenemos validaciones adicionales de negocio
       // Generar slug automático si no existe
-      const autoSlug = data.slug || data.title
+      const autoSlug = createRaffleDto.slug || createRaffleDto.title
         .toLowerCase()
         .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Quitar acentos
         .replace(/[^a-z0-9]+/g, '-') // Reemplazar caracteres especiales con guiones
@@ -639,47 +630,22 @@ export class AdminService {
       
       // Filtrar solo los campos que existen en el esquema de Prisma
       const raffleData = {
-        title: data.title.trim(),
-        description: data.description || null,
-        imageUrl: data.imageUrl || defaultImage,
-        gallery: data.gallery || null,
-        price: Number(data.price),
-        tickets: Number(data.tickets),
+        title: createRaffleDto.title.trim(),
+        description: createRaffleDto.description || null,
+        imageUrl: createRaffleDto.imageUrl || defaultImage,
+        gallery: createRaffleDto.gallery || null,
+        price: Number(createRaffleDto.price),
+        tickets: Number(createRaffleDto.tickets),
         sold: 0,
-        drawDate: new Date(data.drawDate),
-        status: data.status || 'draft',
+        drawDate: new Date(createRaffleDto.drawDate),
+        status: createRaffleDto.status || 'draft',
         slug: autoSlug,
-        boletosConOportunidades: data.boletosConOportunidades || false,
-        numeroOportunidades: data.numeroOportunidades || 1,
-        packs: data.packs && Array.isArray(data.packs) && data.packs.length > 0 
-          ? JSON.parse(JSON.stringify(data.packs)) 
+        boletosConOportunidades: createRaffleDto.boletosConOportunidades || false,
+        numeroOportunidades: createRaffleDto.numeroOportunidades || 1,
+        packs: createRaffleDto.packs && Array.isArray(createRaffleDto.packs) && createRaffleDto.packs.length > 0 
+          ? JSON.parse(JSON.stringify(createRaffleDto.packs)) 
           : null,
-        bonuses: (() => {
-          // Asegurar que bonuses sea siempre un array de strings
-          // Force rebuild v2: Using hasOwnProperty for robust type checking
-          if (!data.bonuses) return [];
-          if (Array.isArray(data.bonuses)) {
-            return data.bonuses
-              .map(b => {
-                // Si es null o undefined, o no es un objeto, no se puede acceder a 'value'
-                if (b && typeof b === 'object' && Object.prototype.hasOwnProperty.call(b, 'value')) {
-                  const value = (b as any).value;
-                  return value ? String(value).trim() : '';
-                }
-                // Si ya es un string, usarlo directamente
-                if (typeof b === 'string') {
-                  return b.trim();
-                }
-                // Para cualquier otro caso (null, undefined, etc.), se filtrará
-                return '';
-              })
-              .filter(b => b !== '');
-          }
-          // Si no es un array, tratarlo como un posible string
-          const bonusString = String(data.bonuses || '');
-          const trimmed = bonusString.trim();
-          return trimmed !== '' ? [trimmed] : [];
-        })(),
+        bonuses: createRaffleDto.bonuses || [],
       };
 
       this.logger.log(`📝 Creating raffle with data: ${raffleData.title}`);
@@ -699,7 +665,7 @@ export class AdminService {
     }
   }
 
-  async updateRaffle(id: string, data: Raffle) {
+  async updateRaffle(id: string, updateRaffleDto: UpdateRaffleDto) {
     try {
       await this.dbSetup.ensureRafflesTable();
       
@@ -723,95 +689,55 @@ export class AdminService {
       const raffleData: any = {};
       
       // Campos siempre editables
-      if (data.title !== undefined) {
-        if (!data.title.trim()) {
-          throw new Error('El título es requerido');
-        }
-        raffleData.title = data.title.trim();
+      if (updateRaffleDto.title !== undefined) {
+        raffleData.title = updateRaffleDto.title.trim();
       }
       
-      if (data.description !== undefined) {
-        raffleData.description = data.description;
+      if (updateRaffleDto.description !== undefined) {
+        raffleData.description = updateRaffleDto.description;
       }
       
-      if (data.imageUrl !== undefined) {
-        raffleData.imageUrl = data.imageUrl;
+      if (updateRaffleDto.imageUrl !== undefined) {
+        raffleData.imageUrl = updateRaffleDto.imageUrl;
       }
       
-      if (data.gallery !== undefined) {
-        raffleData.gallery = data.gallery;
+      if (updateRaffleDto.gallery !== undefined) {
+        raffleData.gallery = updateRaffleDto.gallery;
       }
       
-      if (data.drawDate !== undefined) {
-        raffleData.drawDate = new Date(data.drawDate);
+      if (updateRaffleDto.drawDate !== undefined) {
+        raffleData.drawDate = new Date(updateRaffleDto.drawDate);
       }
       
-      if (data.status !== undefined) {
-        raffleData.status = data.status;
+      if (updateRaffleDto.status !== undefined) {
+        raffleData.status = updateRaffleDto.status;
       }
       
-      if (data.slug !== undefined) {
-        raffleData.slug = data.slug;
+      if (updateRaffleDto.slug !== undefined) {
+        raffleData.slug = updateRaffleDto.slug;
       }
 
-      if (data.boletosConOportunidades !== undefined) {
-        raffleData.boletosConOportunidades = data.boletosConOportunidades;
+      if (updateRaffleDto.boletosConOportunidades !== undefined) {
+        raffleData.boletosConOportunidades = updateRaffleDto.boletosConOportunidades;
       }
 
-      if (data.numeroOportunidades !== undefined) {
-        if (data.numeroOportunidades < 1 || data.numeroOportunidades > 10) {
-          throw new Error('El número de oportunidades debe estar entre 1 y 10');
-        }
-        raffleData.numeroOportunidades = Number(data.numeroOportunidades);
+      if (updateRaffleDto.numeroOportunidades !== undefined) {
+        raffleData.numeroOportunidades = Number(updateRaffleDto.numeroOportunidades);
       }
 
       // Campos packs y bonuses siempre editables
-      // IMPORTANTE: Aceptar tanto undefined como null explícito
-      if (data.packs !== undefined) {
-        if (data.packs === null) {
+      if (updateRaffleDto.packs !== undefined) {
+        if (updateRaffleDto.packs === null || (Array.isArray(updateRaffleDto.packs) && updateRaffleDto.packs.length === 0)) {
           raffleData.packs = null;
-        } else if (Array.isArray(data.packs) && data.packs.length > 0) {
-          // Si es un array válido, guardarlo
-          raffleData.packs = JSON.parse(JSON.stringify(data.packs));
-        } else if (typeof data.packs === 'string') {
-          // Si viene como string, parsearlo
-          try {
-            const parsed = JSON.parse(data.packs);
-            raffleData.packs = Array.isArray(parsed) && parsed.length > 0 ? parsed : null;
-          } catch (e) {
-            this.logger.warn('Error parsing packs string:', e);
-            raffleData.packs = null;
-          }
+        } else if (Array.isArray(updateRaffleDto.packs) && updateRaffleDto.packs.length > 0) {
+          raffleData.packs = JSON.parse(JSON.stringify(updateRaffleDto.packs));
         } else {
           raffleData.packs = null;
         }
       }
 
-      if (data.bonuses !== undefined) {
-        if (data.bonuses === null) {
-          raffleData.bonuses = [];
-        } else if (Array.isArray(data.bonuses)) {
-          raffleData.bonuses = data.bonuses
-            .map(b => {
-              // Si es null, undefined, o no es un objeto, no se puede acceder a 'value'
-              if (b && typeof b === 'object' && Object.prototype.hasOwnProperty.call(b, 'value')) {
-                const value = (b as any).value;
-                return value ? String(value).trim() : '';
-              }
-               // Si ya es un string, usarlo directamente
-              if (typeof b === 'string') {
-                return b.trim();
-              }
-              // Para cualquier otro caso, se filtrará
-              return '';
-            })
-            .filter(b => b !== '');
-        } else {
-           // Si no es un array, tratarlo como un posible string
-          const bonusString = String(data.bonuses || '');
-          const trimmed = bonusString.trim();
-          raffleData.bonuses = trimmed !== '' ? [trimmed] : [];
-        }
+      if (updateRaffleDto.bonuses !== undefined) {
+        raffleData.bonuses = updateRaffleDto.bonuses || [];
       }
 
       // Campos editables solo si NO tiene boletos vendidos/pagados
@@ -819,27 +745,21 @@ export class AdminService {
         this.logger.warn('⚠️ Rifa tiene boletos vendidos/pagados - limitando edición');
         
         // Solo rechazar cambios si el valor REALMENTE cambió
-        if (data.price !== undefined && data.price !== existingRaffle.price) {
+        if (updateRaffleDto.price !== undefined && updateRaffleDto.price !== existingRaffle.price) {
           throw new Error('No se puede cambiar el precio cuando ya hay boletos vendidos');
         }
         
-        if (data.tickets !== undefined && data.tickets !== existingRaffle.tickets) {
+        if (updateRaffleDto.tickets !== undefined && updateRaffleDto.tickets !== existingRaffle.tickets) {
           throw new Error('No se puede cambiar el número total de boletos cuando ya hay boletos vendidos');
         }
       } else {
         // Sin boletos vendidos - permitir editar todo
-        if (data.price !== undefined) {
-          if (data.price <= 0) {
-            throw new Error('El precio debe ser mayor a 0');
-          }
-          raffleData.price = Number(data.price);
+        if (updateRaffleDto.price !== undefined) {
+          raffleData.price = Number(updateRaffleDto.price);
         }
         
-        if (data.tickets !== undefined) {
-          if (data.tickets < 1) {
-            throw new Error('El número de boletos debe ser mayor a 0');
-          }
-          raffleData.tickets = Number(data.tickets);
+        if (updateRaffleDto.tickets !== undefined) {
+          raffleData.tickets = Number(updateRaffleDto.tickets);
         }
       }
       
@@ -1139,26 +1059,21 @@ export class AdminService {
     return { ticket: winningTicket, order: formattedOrder };
   }
 
-  async saveWinner(data: Omit<Winner, 'id' | 'createdAt' | 'updatedAt'>) {
-    this.logger.log(`💾 Saving winner with data: ${data.name}`);
+  async saveWinner(createWinnerDto: CreateWinnerDto) {
+    this.logger.log(`💾 Saving winner with data: ${createWinnerDto.name}`);
     
     await this.dbSetup.ensureWinnersTable();
     
-    // Validar que el campo 'name' existe y no está vacío
-    if (!data.name || data.name.trim() === '') {
-      throw new BadRequestException('El campo "name" es requerido para guardar un ganador');
-    }
-    
     const winnerData = {
-      name: data.name.trim(),
-      prize: data.prize,
-      imageUrl: data.imageUrl,
-      raffleTitle: data.raffleTitle,
-      drawDate: data.drawDate,
-      ticketNumber: data.ticketNumber || null,
-      testimonial: data.testimonial || null,
-      phone: data.phone || null,
-      city: data.city || null,
+      name: createWinnerDto.name.trim(),
+      prize: createWinnerDto.prize,
+      imageUrl: createWinnerDto.imageUrl,
+      raffleTitle: createWinnerDto.raffleTitle,
+      drawDate: new Date(createWinnerDto.drawDate),
+      ticketNumber: createWinnerDto.ticketNumber || null,
+      testimonial: createWinnerDto.testimonial || null,
+      phone: createWinnerDto.phone || null,
+      city: createWinnerDto.city || null,
     };
     
     try {
@@ -1292,43 +1207,30 @@ export class AdminService {
     }
   }
 
-  async createUser(data: Prisma.AdminUserCreateInput) {
+  async createUser(createUserDto: CreateUserDto) {
     try {
       await this.dbSetup.ensureAdminUsersTable();
       
-      // ✅ Validar campos requeridos
-      if (!data.username || !data.name || !data.password) {
-        throw new BadRequestException('Username, name, and password are required');
-      }
-      
-      // ✅ Validar que el password tenga mínimo 6 caracteres
-      if (typeof data.password === 'string' && data.password.length < 6) {
-        throw new BadRequestException('Password must be at least 6 characters long');
-      }
-      
-      // ✅ Validar que el rol sea válido
-      const validRoles = ['admin', 'ventas', 'superadmin'];
-      if (data.role && !validRoles.includes(data.role)) {
-        throw new BadRequestException(`Role must be one of: ${validRoles.join(', ')}`);
-      }
-      
+      // Los DTOs ya validan los campos requeridos
       // ✅ Validar que el username sea único
       const existingUser = await this.prisma.adminUser.findUnique({
-        where: { username: data.username as string }
+        where: { username: createUserDto.username }
       });
       if (existingUser) {
         throw new BadRequestException('Username already exists');
       }
       
       // ✅ Hash de contraseña antes de guardar
-      const hashedPassword = await bcrypt.hash(data.password as string, 10);
+      const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
       
       // ✅ Crear usuario con password hasheada
       const newUser = await this.prisma.adminUser.create({
         data: {
-          ...data,
+          name: createUserDto.name,
+          username: createUserDto.username,
+          email: createUserDto.email || null,
           password: hashedPassword,
-          role: (data.role as string) || 'ventas' // Default role
+          role: createUserDto.role || 'ventas' // Default role
         },
         select: {
           id: true,
@@ -1358,7 +1260,7 @@ export class AdminService {
     }
   }
 
-  async updateUser(id: string, data: Prisma.AdminUserUpdateInput) {
+  async updateUser(id: string, updateUserDto: UpdateUserDto) {
     this.logger.log(`🔧 Actualizando usuario: ${id}`);
     try {
       await this.dbSetup.ensureAdminUsersTable();
@@ -1372,10 +1274,10 @@ export class AdminService {
       }
       
       // ✅ Validar username único si se está actualizando
-      if (data.username) {
+      if (updateUserDto.username) {
         const usernameTaken = await this.prisma.adminUser.findFirst({
           where: {
-            username: data.username as string,
+            username: updateUserDto.username,
             NOT: { id }
           }
         });
@@ -1384,27 +1286,16 @@ export class AdminService {
         }
       }
       
-      // ✅ Validar rol si se está actualizando
-      const validRoles = ['admin', 'ventas', 'superadmin'];
-      if (data.role && !validRoles.includes(data.role as string)) {
-        throw new BadRequestException(`Role must be one of: ${validRoles.join(', ')}`);
-      }
-      
-      // ✅ Validar longitud de password si se proporciona
-      if (data.password && typeof data.password === 'string') {
-        if (data.password.length < 6) {
-          throw new BadRequestException('Password must be at least 6 characters long');
-        }
-      }
-      
       // ✅ Hash de contraseña solo si se proporciona una nueva
-      const updateData: any = { ...data };
-      if (data.password && typeof data.password === 'string' && data.password.trim() !== '') {
-        updateData.password = await bcrypt.hash(data.password, 10);
+      const updateData: any = {};
+      if (updateUserDto.name !== undefined) updateData.name = updateUserDto.name;
+      if (updateUserDto.username !== undefined) updateData.username = updateUserDto.username;
+      if (updateUserDto.email !== undefined) updateData.email = updateUserDto.email;
+      if (updateUserDto.role !== undefined) updateData.role = updateUserDto.role;
+      
+      if (updateUserDto.password && updateUserDto.password.trim() !== '') {
+        updateData.password = await bcrypt.hash(updateUserDto.password, 10);
         this.logger.log('🔑 Password será actualizada (hasheada)');
-      } else {
-        // Si no se proporciona password, no actualizarla
-        delete updateData.password;
       }
       
       // ✅ Actualizar usuario
