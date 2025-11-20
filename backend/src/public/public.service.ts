@@ -1,12 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { CacheService } from '../cache/cache.service';
 // FIX: Using `import type` for Prisma namespace and a value import for the OrderStatus enum.
 import { type Prisma } from '@prisma/client';
 import { add } from 'date-fns';
 
 @Injectable()
 export class PublicService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private cacheService: CacheService,
+  ) {}
 
   // Helper para asegurar que la tabla users existe y tiene todas las columnas
   private async ensureUsersTable() {
@@ -142,16 +146,50 @@ export class PublicService {
   }
 
   async getActiveRaffles() {
-    return this.prisma.raffle.findMany({
+    const cacheKey = 'raffles:active';
+    
+    // Intentar obtener del cache
+    const cached = await this.cacheService.get<any[]>(cacheKey);
+    if (cached) {
+      console.log('✅ Rifas activas obtenidas del cache');
+      return cached;
+    }
+
+    // Si no está en cache, obtener de DB
+    const raffles = await this.prisma.raffle.findMany({
       where: { status: 'active' },
       orderBy: { drawDate: 'asc' }, // Ordenar por fecha de sorteo (más próximas primero)
     });
+
+    // Guardar en cache (TTL: 5 minutos = 300 segundos)
+    await this.cacheService.set(cacheKey, raffles, 300);
+    console.log('💾 Rifas activas guardadas en cache');
+
+    return raffles;
   }
 
   async getRaffleBySlug(slug: string) {
-    return this.prisma.raffle.findUnique({
+    const cacheKey = `raffle:slug:${slug}`;
+    
+    // Intentar obtener del cache
+    const cached = await this.cacheService.get<any>(cacheKey);
+    if (cached) {
+      console.log(`✅ Rifa ${slug} obtenida del cache`);
+      return cached;
+    }
+
+    // Si no está en cache, obtener de DB
+    const raffle = await this.prisma.raffle.findUnique({
       where: { slug },
     });
+
+    if (raffle) {
+      // Guardar en cache (TTL: 5 minutos)
+      await this.cacheService.set(cacheKey, raffle, 300);
+      console.log(`💾 Rifa ${slug} guardada en cache`);
+    }
+
+    return raffle;
   }
 
   async getOccupiedTickets(
@@ -209,13 +247,38 @@ export class PublicService {
   }
 
   async getPastWinners() {
-    return this.prisma.winner.findMany({
-        orderBy: { createdAt: 'desc' }
+    const cacheKey = 'winners:all';
+    
+    // Intentar obtener del cache
+    const cached = await this.cacheService.get<any[]>(cacheKey);
+    if (cached) {
+      console.log('✅ Ganadores obtenidos del cache');
+      return cached;
+    }
+
+    // Si no está en cache, obtener de DB
+    const winners = await this.prisma.winner.findMany({
+      orderBy: { createdAt: 'desc' }
     });
+
+    // Guardar en cache (TTL: 15 minutos = 900 segundos)
+    await this.cacheService.set(cacheKey, winners, 900);
+    console.log('💾 Ganadores guardados en cache');
+
+    return winners;
   }
 
   async getSettings() {
+    const cacheKey = 'settings:main';
+    
     try {
+      // Intentar obtener del cache
+      const cached = await this.cacheService.get<any>(cacheKey);
+      if (cached) {
+        console.log('✅ Settings obtenidos del cache');
+        return this.formatSettingsResponse(cached);
+      }
+
       console.log('🔧 Getting settings from database...');
       
       const settings = await this.prisma.settings.findUnique({
@@ -239,8 +302,16 @@ export class PublicService {
           },
         });
         
+        // Guardar en cache (TTL: 30 minutos = 1800 segundos)
+        await this.cacheService.set(cacheKey, newSettings, 1800);
+        console.log('💾 Settings guardados en cache');
+        
         return this.formatSettingsResponse(newSettings);
       }
+
+      // Guardar en cache (TTL: 30 minutos = 1800 segundos)
+      await this.cacheService.set(cacheKey, settings, 1800);
+      console.log('💾 Settings guardados en cache');
       
       console.log('✅ Settings found:', settings);
       return this.formatSettingsResponse(settings);

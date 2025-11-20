@@ -5,6 +5,7 @@ import { type Prisma, type Raffle, type Winner } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { DatabaseSetupService } from './database-setup.service';
 import { AuthService } from '../auth/auth.service';
+import { CacheService } from '../cache/cache.service';
 import { CreateRaffleDto, UpdateRaffleDto } from './dto/create-raffle.dto';
 import { CreateUserDto, UpdateUserDto } from './dto/create-user.dto';
 import { CreateWinnerDto } from './dto/create-winner.dto';
@@ -17,7 +18,8 @@ export class AdminService {
   constructor(
     private prisma: PrismaService,
     private dbSetup: DatabaseSetupService,
-    private authService: AuthService
+    private authService: AuthService,
+    private cacheService: CacheService
   ) {}
 
   // --- INICIO: Lógica de reparación de tabla winners ---
@@ -654,6 +656,9 @@ export class AdminService {
         data: raffleData 
       });
       
+      // Invalidar cache de rifas
+      await this.cacheService.invalidateRaffles();
+      
       this.logger.log(`✅ Raffle created successfully: ${createdRaffle.id}`);
       return createdRaffle;
     } catch (error) {
@@ -768,6 +773,10 @@ export class AdminService {
         data: raffleData 
       });
       
+      // Invalidar cache
+      await this.cacheService.invalidateRaffle(updatedRaffle.slug || id);
+      await this.cacheService.invalidateRaffles();
+      
       this.logger.log('✅ Raffle updated successfully');
       
       return updatedRaffle;
@@ -806,6 +815,9 @@ export class AdminService {
       
       // Eliminar la rifa
       await this.prisma.raffle.delete({ where: { id } });
+      
+      // Invalidar cache
+      await this.cacheService.invalidateRaffles();
       
       this.logger.log('✅ Raffle deleted successfully');
       return { message: 'Rifa eliminada exitosamente' };
@@ -1078,6 +1090,10 @@ export class AdminService {
     
     try {
       const result = await this.prisma.winner.create({ data: winnerData });
+      
+      // Invalidar cache de ganadores
+      await this.cacheService.invalidateWinners();
+      
       this.logger.log(`✅ Winner created successfully: ${result.id}`);
       return result;
     } catch (error) {
@@ -1088,7 +1104,12 @@ export class AdminService {
 
   async deleteWinner(id: string) {
     await this.dbSetup.ensureWinnersTable();
-    return this.prisma.winner.delete({ where: { id } });
+    const result = await this.prisma.winner.delete({ where: { id } });
+    
+    // Invalidar cache de ganadores
+    await this.cacheService.invalidateWinners();
+    
+    return result;
   }
 
   // Users
@@ -1518,6 +1539,9 @@ export class AdminService {
             ...settingsData,
           },
         });
+        
+        // Invalidar cache de settings
+        await this.cacheService.invalidateSettings();
         
         this.logger.log('✅ Settings updated successfully');
         

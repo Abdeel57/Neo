@@ -4,9 +4,10 @@ import { AdminService } from './admin.service';
 import { DatabaseSetupService } from './database-setup.service';
 import { PrismaModule } from '../prisma/prisma.module';
 import { AuthModule } from '../auth/auth.module';
+import { CacheModule } from '../cache/cache.module';
 
 @Module({
-  imports: [PrismaModule, AuthModule],
+  imports: [PrismaModule, AuthModule, CacheModule],
   controllers: [AdminController],
   providers: [AdminService, DatabaseSetupService],
 })
