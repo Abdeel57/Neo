@@ -43,11 +43,12 @@ async function bootstrap() {
   const allowedOrigins = [
     /^http:\/\/localhost:5173$/, // Vite dev server
     /\.onrender\.com$/, // Any Render subdomain
-    /\.netlify\.app$/, // Any Netlify subdomain
+    /\.netlify\.app$/, // Any Netlify subdomain (incluye neodemo.netlify.app)
     /dashboard\.render\.com$/, // Render dashboard
     'https://luckysnaphn.com',
     'https://www.luckysnaphn.com',
     'https://luckysnap.netlify.app', // optional legacy domain
+    'https://neodemo.netlify.app', // Dominio actual
   ];
 
   app.enableCors({
