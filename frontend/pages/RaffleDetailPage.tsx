@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getRaffleBySlug, getOccupiedTickets, getSettings } from '../services/api';
 import { Raffle, Pack } from '../types';
 import PageAnimator from '../components/PageAnimator';
@@ -20,6 +20,7 @@ import { DesignSystemUtils } from '../utils/design-system-utils';
 
 const RaffleDetailPage = () => {
     const { slug } = useParams<{ slug: string }>();
+    const navigate = useNavigate();
     const { appearance, preCalculatedTextColors } = useTheme();
     const [raffle, setRaffle] = useState<Raffle | null>(null);
     const [occupiedTickets, setOccupiedTickets] = useState<number[]>([]);
@@ -253,9 +254,8 @@ const RaffleDetailPage = () => {
     const handleBuyRandom = useCallback(() => {
         if (!raffle) return;
         const url = `/comprar/${raffle.slug}?tickets=${selectedTickets.join(',')}`;
-        // Navegar directamente a la página de compra
-        window.location.href = url; // Usamos window.location para asegurar navegación completa, o useNavigate si estuviera disponible aquí
-    }, [raffle, selectedTickets]);
+        navigate(url);
+    }, [raffle, selectedTickets, navigate]);
 
     // AHORA SÍ podemos hacer returns condicionales después de todos los hooks
     if (loading) return <div className="w-full h-screen flex items-center justify-center bg-background-primary"><Spinner /></div>;
@@ -490,7 +490,8 @@ const RaffleDetailPage = () => {
             <AnimatePresence>
                 {showSpinResult && (
                     <CasinoSpinResult
-                        selectedCount={selectedTickets.length}
+                        selectedTickets={selectedTickets}
+                        totalPrice={selectedTickets.length * pricePerTicket}
                         onBuy={handleBuyRandom}
                         onSpinAgain={handleSpinAgain}
                         onClose={() => setShowSpinResult(false)}
