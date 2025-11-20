@@ -1,82 +1,28 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { getActiveRaffles, getPastWinners } from '../services/api';
-import { Raffle, Winner } from '../types';
+import React from 'react';
 import PageAnimator from '../components/PageAnimator';
 import RaffleCard from '../components/RaffleCard';
 import Spinner from '../components/Spinner';
 import WinnerCard from '../components/WinnerCard';
 import HowItWorks from '../components/HowItWorks';
 import Faq from '../components/Faq';
-import CountdownTimer from '../components/CountdownTimer';
 import HeroRaffle from '../components/HeroRaffle';
-import { useAnalytics } from '../contexts/AnalyticsContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { Trophy, Gift, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useOptimizedAnimations } from '../utils/deviceDetection';
-import DesignSystemUtils from '../utils/design-system-utils';
+import { useHomeData } from '../hooks/useHomeData';
 
 const HomePage = () => {
-    const [raffles, setRaffles] = useState<Raffle[]>([]);
-    const [winners, setWinners] = useState<Winner[]>([]);
-    const [loading, setLoading] = useState(true);
-    const { trackPageView } = useAnalytics();
+    const { raffles, winners, loading, mainRaffle, otherRaffles } = useHomeData();
     const reduceAnimations = useOptimizedAnimations();
     const { appearance, preCalculatedTextColors } = useTheme();
     
     // Obtener colores del tema o usar valores por defecto
     const primaryColor = appearance?.colors?.action || '#0ea5e9';
     const accentColor = appearance?.colors?.accent || '#ec4899';
-    const backgroundColor = appearance?.colors?.backgroundPrimary || '#111827';
     
     // Usar colores pre-calculados (optimización de rendimiento)
     // Ya no necesitamos calcular getTextColor en cada render
-
-    useEffect(() => {
-        setLoading(true);
-        trackPageView('/');
-        
-        // CRÍTICO: Cargar datos de forma secuencial en móviles (no paralelo)
-        // Promise.all puede sobrecargar móviles de gama baja
-        const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-        
-        if (isMobile) {
-            // Móviles: Cargar secuencialmente (más lento pero más estable)
-            getActiveRaffles()
-                .then(raffleData => {
-                    setRaffles(raffleData);
-                    return getPastWinners();
-                })
-                .then(winnerData => {
-                    setWinners(winnerData);
-                })
-                .catch(err => {
-                    setRaffles([]);
-                    setWinners([]);
-                })
-                .finally(() => {
-                    setLoading(false);
-                });
-        } else {
-            // Desktop: Cargar en paralelo (más rápido)
-            Promise.all([
-                getActiveRaffles(),
-                getPastWinners()
-            ]).then(([raffleData, winnerData]) => {
-                setRaffles(raffleData);
-                setWinners(winnerData);
-            }).catch(err => {
-                setRaffles([]);
-                setWinners([]);
-            }).finally(() => {
-                setLoading(false);
-            });
-        }
-    }, [trackPageView]);
-
-    const mainRaffle = raffles.length > 0 ? raffles[0] : null;
-    const otherRaffles = raffles.length > 1 ? raffles.slice(1) : [];
 
     return (
         <PageAnimator>
