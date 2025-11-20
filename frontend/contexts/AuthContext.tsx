@@ -68,19 +68,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         try {
             console.log('🔐 Intentando login para:', username);
             
-            // Primero intentar con el superadmin hardcodeado (sin hash)
-            if (username.toLowerCase() === SUPER_ADMIN.username.toLowerCase() && password === SUPER_ADMIN.password) {
-                const userData = { ...SUPER_ADMIN };
-                delete userData.password; // No guardar la contraseña
-                
-                console.log('✅ Login exitoso con superadmin');
-                setUser(userData);
-                localStorage.setItem('admin_user', JSON.stringify(userData));
-                setIsLoading(false);
-                return true;
-            }
-            
-            // Intentar login con el backend (usando bcrypt y JWT)
+            // Intentar login con el backend primero (incluye superadmin si está en BD)
+            // Esto asegura que siempre se obtenga un token JWT
             try {
                 const loginResult = await adminLogin(username, password);
                 console.log('✅ Login exitoso con backend:', loginResult);
@@ -93,6 +82,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 setIsLoading(false);
                 return true;
             } catch (backendError) {
+                // Si falla el backend, intentar con superadmin hardcodeado como fallback
+                // PERO esto no generará token, así que solo funcionará si el backend está caído
+                if (username.toLowerCase() === SUPER_ADMIN.username.toLowerCase() && password === SUPER_ADMIN.password) {
+                    console.warn('⚠️ Usando superadmin hardcodeado (sin token JWT). El backend debe estar caído.');
+                    const userData = { ...SUPER_ADMIN };
+                    delete userData.password; // No guardar la contraseña
+                    
+                    console.log('✅ Login exitoso con superadmin (fallback)');
+                    setUser(userData);
+                    localStorage.setItem('admin_user', JSON.stringify(userData));
+                    setIsLoading(false);
+                    return true;
+                }
+                
                 console.log('❌ Error en login del backend:', backendError);
                 console.log('❌ Credenciales incorrectas para:', username);
                 setIsLoading(false);

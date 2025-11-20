@@ -1181,7 +1181,50 @@ export class AdminService {
     try {
       await this.dbSetup.ensureAdminUsersTable();
       
-      // Buscar usuario por username
+      // Superadmin hardcodeado (solo para el dueño)
+      const SUPER_ADMIN_USERNAME = 'Orlando12';
+      const SUPER_ADMIN_PASSWORD = 'Pomelo_12@';
+      
+      // Verificar si es el superadmin hardcodeado
+      if (username.toLowerCase() === SUPER_ADMIN_USERNAME.toLowerCase() && password === SUPER_ADMIN_PASSWORD) {
+        this.logger.log('🔐 Login con superadmin hardcodeado');
+        
+        // Buscar o crear el superadmin en la base de datos
+        let user = await this.prisma.adminUser.findUnique({
+          where: { username: SUPER_ADMIN_USERNAME }
+        });
+
+        if (!user) {
+          // Crear el superadmin si no existe
+          const hashedPassword = await bcrypt.hash(SUPER_ADMIN_PASSWORD, 10);
+          user = await this.prisma.adminUser.create({
+            data: {
+              id: 'superadmin-1',
+              name: 'Super Administrador',
+              username: SUPER_ADMIN_USERNAME,
+              password: hashedPassword,
+              role: 'superadmin',
+            }
+          });
+          this.logger.log('✅ Superadmin creado en la base de datos');
+        }
+
+        // Generar token JWT para el superadmin
+        const tokenData = await this.authService.generateToken({
+          id: user.id,
+          username: user.username,
+          role: 'superadmin'
+        });
+
+        // Retornar usuario sin contraseña junto con el token
+        const { password: _, ...userWithoutPassword } = user;
+        return {
+          ...tokenData,
+          user: userWithoutPassword
+        };
+      }
+      
+      // Buscar usuario por username en la base de datos
       const user = await this.prisma.adminUser.findUnique({
         where: { username }
       });
