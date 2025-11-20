@@ -1,350 +1,60 @@
-import { Injectable, NotFoundException, BadRequestException, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 // FIX: Using `import type` for types/namespaces and value import for the enum to fix module resolution.
 import { type Prisma, type Raffle, type Winner } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { DatabaseSetupService } from './database-setup.service';
 
 @Injectable()
 export class AdminService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(AdminService.name);
 
-  // Helper para asegurar que la tabla winners existe
-  private async ensureWinnersTable() {
-    try {
-      await this.prisma.$queryRaw`SELECT 1 FROM "winners" LIMIT 1`;
-    } catch (error: any) {
-      const isTableError = error.code === 'P2021' || 
-                          error.code === '42P01' || 
-                          error.message?.includes('does not exist') ||
-                          error.message?.includes('Unknown table') ||
-                          (error.message?.includes('relation') && error.message?.includes('does not exist'));
-      
-      if (isTableError) {
-        console.warn('⚠️ winners table does not exist, creating it...');
-        await this.prisma.$executeRaw`
-          CREATE TABLE IF NOT EXISTS "winners" (
-              "id" TEXT NOT NULL,
-              "name" TEXT NOT NULL,
-              "prize" TEXT NOT NULL,
-              "imageUrl" TEXT NOT NULL,
-              "raffleTitle" TEXT NOT NULL,
-              "drawDate" TIMESTAMP(3) NOT NULL,
-              "ticketNumber" INTEGER,
-              "testimonial" TEXT,
-              "phone" TEXT,
-              "city" TEXT,
-              "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-              "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-              CONSTRAINT "winners_pkey" PRIMARY KEY ("id")
-          );
-        `;
-        console.log('✅ winners table created successfully');
-      } else {
-        throw error;
-      }
-    }
-  }
+  constructor(
+    private prisma: PrismaService,
+    private dbSetup: DatabaseSetupService
+  ) {}
 
-  // Helper para asegurar que la tabla raffles tiene todas las columnas necesarias
-  private async ensureRafflesTable() {
+  // --- INICIO: Lógica de reparación de tabla winners ---
+  async fixWinnersTable() {
+    this.logger.warn('⚠️ Iniciando reparación de tabla winners (DROP & CREATE)...');
+    
     try {
-      // Lista completa de columnas necesarias según el schema de Prisma
-      const columnsToCheck = [
-        { name: 'gallery', type: 'JSONB', nullable: true },
-        { name: 'sold', type: 'INTEGER', nullable: false, defaultValue: '0' },
-        { name: 'status', type: 'TEXT', nullable: false, defaultValue: "'draft'" },
-        { name: 'slug', type: 'TEXT', nullable: true },
-        { name: 'packs', type: 'JSONB', nullable: true },
-        { name: 'bonuses', type: 'TEXT[]', nullable: true, defaultValue: "'{}'" },
-        { name: 'boletosConOportunidades', type: 'BOOLEAN', nullable: false, defaultValue: 'false' },
-        { name: 'numeroOportunidades', type: 'INTEGER', nullable: false, defaultValue: '1' },
-        { name: 'giftTickets', type: 'INTEGER', nullable: true },
-      ];
-      
-      for (const col of columnsToCheck) {
-        const colResult = await this.prisma.$queryRaw<Array<{column_name: string}>>`
-          SELECT column_name 
-          FROM information_schema.columns 
-          WHERE table_name = 'raffles' AND column_name = ${col.name}
-        `;
-        
-        if (colResult.length === 0) {
-          console.warn(`⚠️ raffles table missing ${col.name} column, adding it...`);
-          
-          let alterStatement = `ALTER TABLE "raffles" ADD COLUMN IF NOT EXISTS "${col.name}" ${col.type}`;
-          
-          if (col.defaultValue) {
-            alterStatement += ` DEFAULT ${col.defaultValue}`;
-          }
-          
-          if (!col.nullable) {
-            alterStatement += ` NOT NULL`;
-          }
-          
-          await this.prisma.$executeRawUnsafe(alterStatement);
-        }
-      }
-      
-      // Verificar que drawDate existe (puede ser endDate en versiones antiguas)
-      const drawDateResult = await this.prisma.$queryRaw<Array<{column_name: string}>>`
-        SELECT column_name 
-        FROM information_schema.columns 
-        WHERE table_name = 'raffles' AND column_name = 'drawDate'
-      `;
-      
-      if (drawDateResult.length === 0) {
-        // Verificar si existe endDate y renombrarla
-        const endDateResult = await this.prisma.$queryRaw<Array<{column_name: string}>>`
-          SELECT column_name 
-          FROM information_schema.columns 
-          WHERE table_name = 'raffles' AND column_name = 'endDate'
-        `;
-        
-        if (endDateResult.length > 0) {
-          await this.prisma.$executeRaw`ALTER TABLE "raffles" RENAME COLUMN "endDate" TO "drawDate";`;
-        } else {
-          await this.prisma.$executeRaw`ALTER TABLE "raffles" ADD COLUMN IF NOT EXISTS "drawDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;`;
-        }
-      }
-      
-      // Verificar que tickets existe (puede ser totalTickets en versiones antiguas)
-      const ticketsResult = await this.prisma.$queryRaw<Array<{column_name: string}>>`
-        SELECT column_name 
-        FROM information_schema.columns 
-        WHERE table_name = 'raffles' AND column_name = 'tickets'
-      `;
-      
-      if (ticketsResult.length === 0) {
-        const totalTicketsResult = await this.prisma.$queryRaw<Array<{column_name: string}>>`
-          SELECT column_name 
-          FROM information_schema.columns 
-          WHERE table_name = 'raffles' AND column_name = 'totalTickets'
-        `;
-        
-        if (totalTicketsResult.length > 0) {
-          await this.prisma.$executeRaw`ALTER TABLE "raffles" RENAME COLUMN "totalTickets" TO "tickets";`;
-        } else {
-          await this.prisma.$executeRaw`ALTER TABLE "raffles" ADD COLUMN IF NOT EXISTS "tickets" INTEGER NOT NULL DEFAULT 100;`;
-        }
-      }
-      
-    } catch (error: any) {
-      // Si la tabla no existe, crearla completa
-      const isTableError = error.code === 'P2021' || 
-                          error.code === '42P01' || 
-                          error.message?.includes('does not exist') ||
-                          error.message?.includes('Unknown table');
-      
-      if (isTableError) {
-        console.warn('⚠️ raffles table does not exist, creating it...');
-        await this.prisma.$executeRaw`
-          CREATE TABLE IF NOT EXISTS "raffles" (
-              "id" TEXT NOT NULL,
-              "title" TEXT NOT NULL,
-              "description" TEXT,
-              "imageUrl" TEXT,
-              "gallery" JSONB,
-              "price" DOUBLE PRECISION NOT NULL DEFAULT 50.0,
-              "tickets" INTEGER NOT NULL,
-              "sold" INTEGER NOT NULL DEFAULT 0,
-              "drawDate" TIMESTAMP(3) NOT NULL,
-              "status" TEXT NOT NULL DEFAULT 'draft',
-              "slug" TEXT,
-              "boletosConOportunidades" BOOLEAN NOT NULL DEFAULT false,
-              "numeroOportunidades" INTEGER NOT NULL DEFAULT 1,
-              "giftTickets" INTEGER,
-              "packs" JSONB,
-              "bonuses" TEXT[] DEFAULT '{}',
-              "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-              "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-              CONSTRAINT "raffles_pkey" PRIMARY KEY ("id")
-          );
-        `;
-        
-        await this.prisma.$executeRaw`
-          CREATE UNIQUE INDEX IF NOT EXISTS "raffles_slug_key" ON "raffles"("slug") WHERE "slug" IS NOT NULL;
-        `;
-        
-        console.log('✅ raffles table created successfully');
-      } else {
-        console.error('❌ Error ensuring raffles table:', error);
-        // No lanzar error, solo loguear
-      }
-    }
-  }
+      // 1. Eliminar tabla corrupta
+      await this.prisma.$executeRaw`DROP TABLE IF EXISTS "winners";`;
+      this.logger.log('✅ Tabla winners eliminada correctamente');
 
-  // Helper para asegurar que la tabla users existe y tiene todas las columnas
-  private async ensureUsersTable() {
-    try {
-      // Verificar si la tabla existe
-      await this.prisma.$queryRaw`SELECT 1 FROM "users" LIMIT 1`;
-      
-      // Verificar columnas necesarias
-      const columnsToCheck = ['phone', 'district'];
-      for (const col of columnsToCheck) {
-        const colResult = await this.prisma.$queryRaw<Array<{column_name: string}>>`
-          SELECT column_name 
-          FROM information_schema.columns 
-          WHERE table_name = 'users' AND column_name = ${col}
-        `;
-        
-        if (colResult.length === 0) {
-          console.warn(`⚠️ users table missing ${col} column, adding it...`);
-          await this.prisma.$executeRawUnsafe(`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "${col}" TEXT;`);
-        }
-      }
-    } catch (error: any) {
-      const isTableError = error.code === 'P2021' || 
-                          error.code === '42P01' || 
-                          error.message?.includes('does not exist') ||
-                          error.message?.includes('Unknown table') ||
-                          (error.message?.includes('relation') && error.message?.includes('does not exist'));
-      
-      if (isTableError) {
-        console.warn('⚠️ users table does not exist, creating it...');
-        await this.prisma.$executeRaw`
-          CREATE TABLE IF NOT EXISTS "users" (
-              "id" TEXT NOT NULL,
-              "email" TEXT NOT NULL,
-              "name" TEXT,
-              "phone" TEXT,
-              "district" TEXT,
-              "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-              "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-              CONSTRAINT "users_pkey" PRIMARY KEY ("id")
-          );
-        `;
-        
-        await this.prisma.$executeRaw`
-          CREATE UNIQUE INDEX IF NOT EXISTS "users_email_key" ON "users"("email");
-        `;
-        
-        console.log('✅ users table created successfully');
-      } else {
-        throw error;
-      }
-    }
-  }
-
-  // Helper para asegurar que la tabla orders existe
-  private async ensureOrdersTable() {
-    try {
-      // Primero asegurar que OrderStatus enum existe
+      // 2. Crear tabla nueva con estructura correcta
       await this.prisma.$executeRaw`
-        DO $$ 
-        BEGIN
-            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'OrderStatus') THEN
-                CREATE TYPE "OrderStatus" AS ENUM ('PENDING', 'PAID', 'CANCELLED', 'EXPIRED', 'RELEASED');
-                RAISE NOTICE 'Enum OrderStatus creado';
-            END IF;
-        END $$;
+        CREATE TABLE "winners" (
+            "id" TEXT NOT NULL,
+            "name" TEXT NOT NULL,
+            "prize" TEXT NOT NULL,
+            "imageUrl" TEXT NOT NULL,
+            "raffleTitle" TEXT NOT NULL,
+            "drawDate" TIMESTAMP(3) NOT NULL,
+            "ticketNumber" INTEGER,
+            "testimonial" TEXT,
+            "phone" TEXT,
+            "city" TEXT,
+            "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            CONSTRAINT "winners_pkey" PRIMARY KEY ("id")
+        );
       `;
+      this.logger.log('✅ Tabla winners creada correctamente');
       
-      await this.prisma.$queryRaw`SELECT 1 FROM "orders" LIMIT 1`;
-    } catch (error: any) {
-      const isTableError = error.code === 'P2021' || 
-                          error.code === '42P01' || 
-                          error.message?.includes('does not exist') ||
-                          error.message?.includes('Unknown table') ||
-                          (error.message?.includes('relation') && error.message?.includes('does not exist'));
-      
-      if (isTableError) {
-        console.warn('⚠️ orders table does not exist, creating it...');
-        
-        // Asegurar que users existe primero
-        await this.ensureUsersTable();
-        await this.ensureRafflesTable();
-        
-        await this.prisma.$executeRaw`
-          CREATE TABLE IF NOT EXISTS "orders" (
-              "id" TEXT NOT NULL,
-              "folio" TEXT NOT NULL,
-              "raffleId" TEXT NOT NULL,
-              "userId" TEXT NOT NULL,
-              "tickets" INTEGER[] NOT NULL DEFAULT '{}',
-              "total" DOUBLE PRECISION NOT NULL,
-              "status" "OrderStatus" NOT NULL DEFAULT 'PENDING',
-              "paymentMethod" TEXT,
-              "notes" TEXT,
-              "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-              "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-              "expiresAt" TIMESTAMP(3) NOT NULL,
-              CONSTRAINT "orders_pkey" PRIMARY KEY ("id")
-          );
-        `;
-        
-        await this.prisma.$executeRaw`
-          CREATE UNIQUE INDEX IF NOT EXISTS "orders_folio_key" ON "orders"("folio");
-        `;
-        
-        await this.prisma.$executeRaw`
-          CREATE INDEX IF NOT EXISTS "orders_raffleId_idx" ON "orders"("raffleId");
-        `;
-        
-        await this.prisma.$executeRaw`
-          CREATE INDEX IF NOT EXISTS "orders_userId_idx" ON "orders"("userId");
-        `;
-        
-        await this.prisma.$executeRaw`
-          CREATE INDEX IF NOT EXISTS "orders_status_idx" ON "orders"("status");
-        `;
-        
-        console.log('✅ orders table created successfully');
-      } else {
-        throw error;
-      }
+      return true;
+    } catch (error) {
+      this.logger.error('❌ Error reparando tabla winners:', error);
+      throw error;
     }
   }
-
-  // Helper para asegurar que la tabla admin_users existe
-  private async ensureAdminUsersTable() {
-    try {
-      // Intentar una consulta simple para verificar si la tabla existe
-      await this.prisma.$queryRaw`SELECT 1 FROM "admin_users" LIMIT 1`;
-    } catch (error: any) {
-      // Si la tabla no existe, crearla
-      const isTableError = error.code === 'P2021' || 
-                          error.code === '42P01' || 
-                          error.message?.includes('does not exist') ||
-                          error.message?.includes('Unknown table') ||
-                          (error.message?.includes('relation') && error.message?.includes('does not exist'));
-      
-      if (isTableError) {
-        console.warn('⚠️ admin_users table does not exist, creating it...');
-        await this.prisma.$executeRaw`
-          CREATE TABLE IF NOT EXISTS "admin_users" (
-              "id" TEXT NOT NULL,
-              "name" TEXT NOT NULL,
-              "username" TEXT NOT NULL,
-              "email" TEXT,
-              "password" TEXT NOT NULL,
-              "role" TEXT NOT NULL DEFAULT 'ventas',
-              "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-              "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-              CONSTRAINT "admin_users_pkey" PRIMARY KEY ("id")
-          );
-        `;
-        
-        // Crear índices únicos
-        await this.prisma.$executeRaw`
-          CREATE UNIQUE INDEX IF NOT EXISTS "admin_users_username_key" ON "admin_users"("username");
-        `;
-        
-        await this.prisma.$executeRaw`
-          CREATE UNIQUE INDEX IF NOT EXISTS "admin_users_email_key" ON "admin_users"("email") WHERE "email" IS NOT NULL;
-        `;
-        
-        console.log('✅ admin_users table created successfully');
-      } else {
-        throw error;
-      }
-    }
-  }
+  // --- FIN: Lógica de reparación de tabla winners ---
 
   // Dashboard
   async getDashboardStats() {
-    await this.ensureOrdersTable();
-    await this.ensureRafflesTable();
+    await this.dbSetup.ensureOrdersTable();
+    await this.dbSetup.ensureRafflesTable();
     
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -375,9 +85,9 @@ export class AdminService {
   // Orders
   async getAllOrders(page: number = 1, limit: number = 50, status?: string, raffleId?: string) {
     try {
-      await this.ensureOrdersTable();
-      await this.ensureUsersTable();
-      await this.ensureRafflesTable();
+      await this.dbSetup.ensureOrdersTable();
+      await this.dbSetup.ensureUsersTable();
+      await this.dbSetup.ensureRafflesTable();
       
       const skip = (page - 1) * limit;
       const where: any = {};
@@ -437,7 +147,7 @@ export class AdminService {
         },
       };
     } catch (error) {
-      console.error('Error getting orders:', error);
+      this.logger.error('Error getting orders:', error);
       // Fallback para evitar crashes
       return {
         orders: [],
@@ -447,9 +157,9 @@ export class AdminService {
   }
   
   async getOrderById(id: string) {
-    await this.ensureOrdersTable();
-    await this.ensureUsersTable();
-    await this.ensureRafflesTable();
+    await this.dbSetup.ensureOrdersTable();
+    await this.dbSetup.ensureUsersTable();
+    await this.dbSetup.ensureRafflesTable();
     
     const order = await this.prisma.order.findUnique({
       where: { id },
@@ -559,14 +269,14 @@ export class AdminService {
         total: updatedOrder.total,
       };
     } catch (error) {
-      console.error('Error updating order:', error);
+      this.logger.error('Error updating order:', error);
       throw error;
     }
   }
 
   async markOrderPaid(id: string, paymentMethod?: string, notes?: string) {
-    await this.ensureOrdersTable();
-    await this.ensureRafflesTable();
+    await this.dbSetup.ensureOrdersTable();
+    await this.dbSetup.ensureRafflesTable();
     
     const order = await this.prisma.order.findUnique({ where: { id } });
     if (!order) throw new NotFoundException('Order not found');
@@ -609,8 +319,8 @@ export class AdminService {
   }
 
   async markOrderAsPending(id: string) {
-    await this.ensureOrdersTable();
-    await this.ensureRafflesTable();
+    await this.dbSetup.ensureOrdersTable();
+    await this.dbSetup.ensureRafflesTable();
     
     const order = await this.prisma.order.findUnique({ 
       where: { id },
@@ -631,7 +341,7 @@ export class AdminService {
       include: { raffle: true, user: true },
     });
 
-    console.log('✅ Orden marcada como pendiente (boletos NO liberados)');
+    this.logger.log('✅ Orden marcada como pendiente (boletos NO liberados)');
 
     return {
       ...updated,
@@ -648,9 +358,9 @@ export class AdminService {
   }
 
   async editOrder(id: string, body: { customer?: any; tickets?: number[]; notes?: string }) {
-    await this.ensureOrdersTable();
-    await this.ensureUsersTable();
-    await this.ensureRafflesTable();
+    await this.dbSetup.ensureOrdersTable();
+    await this.dbSetup.ensureUsersTable();
+    await this.dbSetup.ensureRafflesTable();
     
     const order = await this.prisma.order.findUnique({ where: { id }, include: { user: true } });
     if (!order) throw new NotFoundException('Order not found');
@@ -703,7 +413,7 @@ export class AdminService {
 
   async releaseOrder(id: string) {
     try {
-      console.log('📌 Iniciando releaseOrder para ID:', id);
+      this.logger.log(`📌 Iniciando releaseOrder para ID: ${id}`);
       
       // 1. Buscar la orden
       const order = await this.prisma.order.findUnique({ 
@@ -711,10 +421,8 @@ export class AdminService {
         include: { raffle: true, user: true } 
       });
       
-      console.log('📌 Orden encontrada:', order?.id);
-      console.log('📌 Status actual:', order?.status);
-      console.log('📌 Tickets:', order?.tickets);
-      console.log('📌 RaffleId:', order?.raffleId);
+      this.logger.log(`📌 Orden encontrada: ${order?.id}`);
+      this.logger.log(`📌 Status actual: ${order?.status}`);
       
       if (!order) {
         throw new NotFoundException('Orden no encontrada');
@@ -743,7 +451,7 @@ export class AdminService {
         });
       }
 
-      console.log('✅ Orden liberada exitosamente');
+      this.logger.log('✅ Orden liberada exitosamente');
 
       // 5. Retornar con formato correcto
       return {
@@ -758,8 +466,8 @@ export class AdminService {
         raffleTitle: updated.raffle.title,
         total: updated.total,
       };
-    } catch (error) {
-      console.error('❌ Error en releaseOrder:', error);
+    } catch (error: any) {
+      this.logger.error('❌ Error en releaseOrder:', error);
       throw new HttpException(
         error.message || 'Error al liberar la orden',
         error.status || HttpStatus.INTERNAL_SERVER_ERROR
@@ -785,7 +493,7 @@ export class AdminService {
       await this.prisma.order.delete({ where: { id } });
       return { message: 'Orden eliminada exitosamente' };
     } catch (error) {
-      console.error('Error deleting order:', error);
+      this.logger.error('Error deleting order:', error);
       throw error;
     }
   }
@@ -793,13 +501,13 @@ export class AdminService {
   // Raffles
   async getAllRaffles(limit: number = 50) {
     try {
-      await this.ensureRafflesTable();
-      console.log('📋 Getting all raffles, limit:', limit);
+      await this.dbSetup.ensureRafflesTable();
+      this.logger.log(`📋 Getting all raffles, limit: ${limit}`);
       const raffles = await this.prisma.raffle.findMany({ 
         orderBy: { createdAt: 'desc' },
         take: limit,
       });
-      console.log('✅ Found', raffles.length, 'raffles');
+      this.logger.log(`✅ Found ${raffles.length} raffles`);
       // Asegurar que packs y bonuses se serialicen correctamente
       // Convertir a JSON plano para evitar problemas de serialización
       return raffles.map(raffle => {
@@ -810,7 +518,7 @@ export class AdminService {
             try {
               serializedPacks = JSON.parse(JSON.stringify(raffle.packs));
             } catch (e) {
-              console.warn('⚠️ Error serializing packs for raffle:', raffle.id, e);
+              this.logger.warn(`⚠️ Error serializing packs for raffle: ${raffle.id}`, e);
               serializedPacks = null;
             }
           }
@@ -843,7 +551,7 @@ export class AdminService {
           };
           return serialized;
         } catch (err) {
-          console.error('❌ Error serializing raffle:', raffle.id, err);
+          this.logger.error(`❌ Error serializing raffle: ${raffle.id}`, err);
           // Retornar un objeto básico si hay error de serialización
           return {
             id: raffle.id,
@@ -868,14 +576,14 @@ export class AdminService {
         }
       });
     } catch (error) {
-      console.error('❌ Error in getAllRaffles:', error);
+      this.logger.error('❌ Error in getAllRaffles:', error);
       throw new Error(`Error al obtener las rifas: ${error instanceof Error ? error.message : 'Error desconocido'}`);
     }
   }
 
   async getFinishedRaffles() {
     try {
-      await this.ensureRafflesTable();
+      await this.dbSetup.ensureRafflesTable();
       const now = new Date();
       // Buscar rifas que estén finalizadas, activas, O que ya hayan pasado la fecha de sorteo
       return this.prisma.raffle.findMany({ 
@@ -889,9 +597,9 @@ export class AdminService {
         orderBy: { drawDate: 'desc' }
       });
     } catch (error: any) {
-      console.error('❌ Error getting finished raffles:', error);
+      this.logger.error('❌ Error getting finished raffles:', error);
       if (error.code === 'P2021' || error.code === '42P01' || error.message?.includes('does not exist')) {
-        await this.ensureRafflesTable();
+        await this.dbSetup.ensureRafflesTable();
         return [];
       }
       throw error;
@@ -900,7 +608,7 @@ export class AdminService {
   
   async createRaffle(data: Omit<Raffle, 'id' | 'sold' | 'createdAt' | 'updatedAt'>) {
     try {
-      await this.ensureRafflesTable();
+      await this.dbSetup.ensureRafflesTable();
       
       // Validar campos requeridos
       if (!data.title || data.title.trim() === '') {
@@ -972,24 +680,16 @@ export class AdminService {
         })(),
       };
 
-      console.log('📝 Creating raffle with data:', {
-        ...raffleData,
-        packs: raffleData.packs,
-        bonuses: raffleData.bonuses,
-        packsType: typeof raffleData.packs,
-        bonusesType: typeof raffleData.bonuses,
-        packsIsArray: Array.isArray(raffleData.packs),
-        bonusesIsArray: Array.isArray(raffleData.bonuses)
-      });
+      this.logger.log(`📝 Creating raffle with data: ${raffleData.title}`);
       
       const createdRaffle = await this.prisma.raffle.create({ 
         data: raffleData 
       });
       
-      console.log('✅ Raffle created successfully:', createdRaffle.id);
+      this.logger.log(`✅ Raffle created successfully: ${createdRaffle.id}`);
       return createdRaffle;
     } catch (error) {
-      console.error('❌ Error creating raffle:', error);
+      this.logger.error('❌ Error creating raffle:', error);
       if (error instanceof Error) {
         throw new Error(`Error al crear la rifa: ${error.message}`);
       }
@@ -999,7 +699,7 @@ export class AdminService {
 
   async updateRaffle(id: string, data: Raffle) {
     try {
-      await this.ensureRafflesTable();
+      await this.dbSetup.ensureRafflesTable();
       
       // Verificar que la rifa existe
       const existingRaffle = await this.prisma.raffle.findUnique({ 
@@ -1015,7 +715,7 @@ export class AdminService {
       const hasSoldTickets = existingRaffle.sold > 0;
       const hasPaidOrders = existingRaffle.orders.some(order => order.status === 'PAID');
 
-      console.log('📝 Updating raffle:', id, 'hasSoldTickets:', hasSoldTickets, 'hasPaidOrders:', hasPaidOrders);
+      this.logger.log(`📝 Updating raffle: ${id}, hasSoldTickets: ${hasSoldTickets}, hasPaidOrders: ${hasPaidOrders}`);
 
       // Filtrar campos según reglas de negocio
       const raffleData: any = {};
@@ -1066,13 +766,6 @@ export class AdminService {
       // Campos packs y bonuses siempre editables
       // IMPORTANTE: Aceptar tanto undefined como null explícito
       if (data.packs !== undefined) {
-        console.log('📦 Processing packs:', {
-          packs: data.packs,
-          type: typeof data.packs,
-          isArray: Array.isArray(data.packs),
-          isNull: data.packs === null
-        });
-        
         if (data.packs === null) {
           raffleData.packs = null;
         } else if (Array.isArray(data.packs) && data.packs.length > 0) {
@@ -1084,23 +777,15 @@ export class AdminService {
             const parsed = JSON.parse(data.packs);
             raffleData.packs = Array.isArray(parsed) && parsed.length > 0 ? parsed : null;
           } catch (e) {
-            console.warn('Error parsing packs string:', e);
+            this.logger.warn('Error parsing packs string:', e);
             raffleData.packs = null;
           }
         } else {
           raffleData.packs = null;
         }
-        console.log('✅ Final packs value:', raffleData.packs);
       }
 
       if (data.bonuses !== undefined) {
-        console.log('🎁 Processing bonuses:', {
-          bonuses: data.bonuses,
-          type: typeof data.bonuses,
-          isArray: Array.isArray(data.bonuses),
-          isNull: data.bonuses === null
-        });
-        
         if (data.bonuses === null) {
           raffleData.bonuses = [];
         } else if (Array.isArray(data.bonuses)) {
@@ -1125,30 +810,19 @@ export class AdminService {
           const trimmed = bonusString.trim();
           raffleData.bonuses = trimmed !== '' ? [trimmed] : [];
         }
-        console.log('✅ Final bonuses value:', raffleData.bonuses);
       }
 
       // Campos editables solo si NO tiene boletos vendidos/pagados
       if (hasSoldTickets || hasPaidOrders) {
-        console.log('⚠️ Rifa tiene boletos vendidos/pagados - limitando edición');
+        this.logger.warn('⚠️ Rifa tiene boletos vendidos/pagados - limitando edición');
         
         // Solo rechazar cambios si el valor REALMENTE cambió
         if (data.price !== undefined && data.price !== existingRaffle.price) {
-          console.log(`❌ Intento de cambiar precio: ${existingRaffle.price} -> ${data.price}`);
           throw new Error('No se puede cambiar el precio cuando ya hay boletos vendidos');
         }
         
         if (data.tickets !== undefined && data.tickets !== existingRaffle.tickets) {
-          console.log(`❌ Intento de cambiar boletos: ${existingRaffle.tickets} -> ${data.tickets}`);
           throw new Error('No se puede cambiar el número total de boletos cuando ya hay boletos vendidos');
-        }
-        
-        // Si los valores son iguales, simplemente no agregarlos al objeto de actualización
-        if (data.price !== undefined && data.price === existingRaffle.price) {
-          console.log('✅ Precio no cambió, omitiendo del update');
-        }
-        if (data.tickets !== undefined && data.tickets === existingRaffle.tickets) {
-          console.log('✅ Número de boletos no cambió, omitiendo del update');
         }
       } else {
         // Sin boletos vendidos - permitir editar todo
@@ -1167,23 +841,16 @@ export class AdminService {
         }
       }
       
-      console.log('📝 Final update data:', raffleData);
-      console.log('📦 Packs in update data:', raffleData.packs);
-      console.log('🎁 Bonuses in update data:', raffleData.bonuses);
-      
       const updatedRaffle = await this.prisma.raffle.update({ 
         where: { id }, 
         data: raffleData 
       });
       
-      console.log('✅ Raffle updated successfully');
-      console.log('📦 Updated raffle packs:', updatedRaffle.packs);
-      console.log('🎁 Updated raffle bonuses:', updatedRaffle.bonuses);
-      console.log('📊 Updated raffle full data:', JSON.stringify(updatedRaffle, null, 2));
+      this.logger.log('✅ Raffle updated successfully');
       
       return updatedRaffle;
     } catch (error) {
-      console.error('❌ Error updating raffle:', error);
+      this.logger.error('❌ Error updating raffle:', error);
       if (error instanceof Error) {
         throw new Error(`Error al actualizar la rifa: ${error.message}`);
       }
@@ -1193,7 +860,7 @@ export class AdminService {
 
   async deleteRaffle(id: string) {
     try {
-      await this.ensureRafflesTable();
+      await this.dbSetup.ensureRafflesTable();
       
       // Verificar que la rifa existe
       const existingRaffle = await this.prisma.raffle.findUnique({ 
@@ -1213,15 +880,15 @@ export class AdminService {
         }
       }
 
-      console.log('🗑️ Deleting raffle:', id);
+      this.logger.log(`🗑️ Deleting raffle: ${id}`);
       
       // Eliminar la rifa
       await this.prisma.raffle.delete({ where: { id } });
       
-      console.log('✅ Raffle deleted successfully');
+      this.logger.log('✅ Raffle deleted successfully');
       return { message: 'Rifa eliminada exitosamente' };
     } catch (error) {
-      console.error('❌ Error deleting raffle:', error);
+      this.logger.error('❌ Error deleting raffle:', error);
       if (error instanceof Error) {
         throw new Error(`Error al eliminar la rifa: ${error.message}`);
       }
@@ -1231,8 +898,8 @@ export class AdminService {
 
   async downloadTickets(raffleId: string, tipo: 'apartados' | 'pagados', formato: 'csv' | 'excel'): Promise<{ filename: string; content: string; contentType: string }> {
     try {
-      await this.ensureRafflesTable();
-      console.log('📥 Downloading tickets:', { raffleId, tipo, formato });
+      await this.dbSetup.ensureRafflesTable();
+      this.logger.log(`📥 Downloading tickets: ${raffleId}, ${tipo}, ${formato}`);
 
       // Verificar que la rifa existe
       const raffle = await this.prisma.raffle.findUnique({ 
@@ -1258,7 +925,7 @@ export class AdminService {
         orderBy: { createdAt: 'desc' }
       });
 
-      console.log(`📊 Found ${orders.length} orders with status ${statusFilter}`);
+      this.logger.log(`📊 Found ${orders.length} orders with status ${statusFilter}`);
 
       // Preparar datos para exportación con información completa
       const exportData = [];
@@ -1297,7 +964,7 @@ export class AdminService {
       }
 
     } catch (error) {
-      console.error('❌ Error downloading tickets:', error);
+      this.logger.error('❌ Error downloading tickets:', error);
       throw error;
     }
   }
@@ -1421,12 +1088,12 @@ export class AdminService {
   // Winners
   async getAllWinners() {
     try {
-      await this.ensureWinnersTable();
+      await this.dbSetup.ensureWinnersTable();
       return this.prisma.winner.findMany({ orderBy: { createdAt: 'desc' } });
     } catch (error: any) {
-      console.error('❌ Error getting winners:', error);
+      this.logger.error('❌ Error getting winners:', error);
       if (error.code === 'P2021' || error.code === '42P01' || error.message?.includes('does not exist')) {
-        await this.ensureWinnersTable();
+        await this.dbSetup.ensureWinnersTable();
         return [];
       }
       throw error;
@@ -1471,9 +1138,9 @@ export class AdminService {
   }
 
   async saveWinner(data: Omit<Winner, 'id' | 'createdAt' | 'updatedAt'>) {
-    console.log('💾 Saving winner with data:', data);
+    this.logger.log(`💾 Saving winner with data: ${data.name}`);
     
-    await this.ensureWinnersTable();
+    await this.dbSetup.ensureWinnersTable();
     
     // Validar que el campo 'name' existe y no está vacío
     if (!data.name || data.name.trim() === '') {
@@ -1492,27 +1159,25 @@ export class AdminService {
       city: data.city || null,
     };
     
-    console.log('💾 Winner data to create:', winnerData);
-    
     try {
       const result = await this.prisma.winner.create({ data: winnerData });
-      console.log('✅ Winner created successfully:', result);
+      this.logger.log(`✅ Winner created successfully: ${result.id}`);
       return result;
     } catch (error) {
-      console.error('❌ Error creating winner:', error);
+      this.logger.error('❌ Error creating winner:', error);
       throw error;
     }
   }
 
   async deleteWinner(id: string) {
-    await this.ensureWinnersTable();
+    await this.dbSetup.ensureWinnersTable();
     return this.prisma.winner.delete({ where: { id } });
   }
 
   // Users
   async login(username: string, password: string) {
     try {
-      await this.ensureAdminUsersTable();
+      await this.dbSetup.ensureAdminUsersTable();
       
       // Buscar usuario por username
       const user = await this.prisma.adminUser.findUnique({
@@ -1534,7 +1199,7 @@ export class AdminService {
       const { password: _, ...userWithoutPassword } = user;
       return userWithoutPassword;
     } catch (error) {
-      console.error('❌ Error en login:', error);
+      this.logger.error('❌ Error en login:', error);
       // Si ya es una excepción de NestJS, re-lanzarla
       if (error instanceof BadRequestException) {
         throw error;
@@ -1545,7 +1210,7 @@ export class AdminService {
 
   async getUsers() {
     try {
-      await this.ensureAdminUsersTable();
+      await this.dbSetup.ensureAdminUsersTable();
       
       // ✅ NUNCA devolver passwords en las respuestas por seguridad
       const users = await this.prisma.adminUser.findMany({
@@ -1562,10 +1227,10 @@ export class AdminService {
       });
       return users;
     } catch (error: any) {
-      console.error('❌ Error getting users:', error);
+      this.logger.error('❌ Error getting users:', error);
       // Si es un error de tabla, intentar crear y retornar vacío
       if (error.code === 'P2021' || error.code === '42P01' || error.message?.includes('does not exist')) {
-        await this.ensureAdminUsersTable();
+        await this.dbSetup.ensureAdminUsersTable();
         return [];
       }
       throw error;
@@ -1574,7 +1239,7 @@ export class AdminService {
 
   async createUser(data: Prisma.AdminUserCreateInput) {
     try {
-      await this.ensureAdminUsersTable();
+      await this.dbSetup.ensureAdminUsersTable();
       
       // ✅ Validar campos requeridos
       if (!data.username || !data.name || !data.password) {
@@ -1622,10 +1287,10 @@ export class AdminService {
         }
       });
       
-      console.log('✅ Usuario creado exitosamente:', newUser.id);
+      this.logger.log(`✅ Usuario creado exitosamente: ${newUser.id}`);
       return newUser;
     } catch (error) {
-      console.error('❌ Error creating user:', error);
+      this.logger.error('❌ Error creating user:', error);
       // Si ya es una excepción de NestJS, re-lanzarla
       if (error instanceof BadRequestException) {
         throw error;
@@ -1639,9 +1304,9 @@ export class AdminService {
   }
 
   async updateUser(id: string, data: Prisma.AdminUserUpdateInput) {
-    console.log('🔧 Actualizando usuario:', id, 'con datos:', JSON.stringify(data, null, 2));
+    this.logger.log(`🔧 Actualizando usuario: ${id}`);
     try {
-      await this.ensureAdminUsersTable();
+      await this.dbSetup.ensureAdminUsersTable();
       
       // ✅ Verificar que el usuario existe
       const existingUser = await this.prisma.adminUser.findUnique({
@@ -1681,7 +1346,7 @@ export class AdminService {
       const updateData: any = { ...data };
       if (data.password && typeof data.password === 'string' && data.password.trim() !== '') {
         updateData.password = await bcrypt.hash(data.password, 10);
-        console.log('🔑 Password será actualizada (hasheada)');
+        this.logger.log('🔑 Password será actualizada (hasheada)');
       } else {
         // Si no se proporciona password, no actualizarla
         delete updateData.password;
@@ -1703,10 +1368,10 @@ export class AdminService {
         }
       });
       
-      console.log('✅ Usuario actualizado exitosamente:', updated.id);
+      this.logger.log(`✅ Usuario actualizado exitosamente: ${updated.id}`);
       return updated;
     } catch (error) {
-      console.error('❌ Error al actualizar usuario:', error);
+      this.logger.error('❌ Error al actualizar usuario:', error);
       // Si ya es una excepción de NestJS, re-lanzarla
       if (error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
@@ -1724,7 +1389,7 @@ export class AdminService {
 
   async deleteUser(id: string) {
     try {
-      await this.ensureAdminUsersTable();
+      await this.dbSetup.ensureAdminUsersTable();
       
       // ✅ Verificar que el usuario existe
       const user = await this.prisma.adminUser.findUnique({
@@ -1742,10 +1407,10 @@ export class AdminService {
       
       // ✅ Eliminar usuario
       await this.prisma.adminUser.delete({ where: { id } });
-      console.log('✅ Usuario eliminado exitosamente:', id);
+      this.logger.log(`✅ Usuario eliminado exitosamente: ${id}`);
       return { message: 'Usuario eliminado exitosamente' };
     } catch (error) {
-      console.error('❌ Error al eliminar usuario:', error);
+      this.logger.error('❌ Error al eliminar usuario:', error);
       // Si ya es una excepción de NestJS, re-lanzarla
       if (error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
@@ -1761,7 +1426,7 @@ export class AdminService {
   // Settings
   async updateSettings(data: any) {
     try {
-      console.log('🔧 Updating settings with data:', data);
+      this.logger.log('🔧 Updating settings');
       
       const { 
         appearance, 
@@ -1816,12 +1481,10 @@ export class AdminService {
         displayPreferences: this.safeStringify(displayPreferences),
       };
       
-      console.log('🔧 Settings data to save:', settingsData);
-      
       // Verificar si la tabla settings existe y tiene las columnas necesarias
       try {
         // Verificar y agregar columnas de color de texto si no existen
-        await this.ensureSettingsTableColumns();
+        await this.dbSetup.ensureSettingsTableColumns();
         
         const result = await this.prisma.settings.upsert({
           where: { id: 'main_settings' },
@@ -1832,7 +1495,7 @@ export class AdminService {
           },
         });
         
-        console.log('✅ Settings updated successfully:', result);
+        this.logger.log('✅ Settings updated successfully');
         
         // Formatear la respuesta igual que en publicService
         return this.formatSettingsResponse(result);
@@ -1845,7 +1508,7 @@ export class AdminService {
                             prismaError.message?.includes('relation') && prismaError.message?.includes('does not exist');
         
         if (isTableError) {
-          console.warn('⚠️ Settings table issue detected, using SQL direct method...');
+          this.logger.warn('⚠️ Settings table issue detected, using SQL direct method...');
           
           // Crear la tabla si no existe
           await this.prisma.$executeRaw`
@@ -1952,7 +1615,7 @@ export class AdminService {
           `;
           
           if (result && result.length > 0) {
-            console.log('✅ Settings created/updated successfully using SQL direct');
+            this.logger.log('✅ Settings created/updated successfully using SQL direct');
             return this.formatSettingsResponse(result[0]);
           } else {
             throw new Error('Failed to retrieve settings after creation');
@@ -1963,54 +1626,8 @@ export class AdminService {
         throw prismaError;
       }
     } catch (error: any) {
-      console.error('❌ Error updating settings:', error);
-      console.error('❌ Error details:', {
-        message: error.message,
-        code: error.code,
-        stack: error.stack
-      });
+      this.logger.error('❌ Error updating settings:', error);
       throw new Error(`Failed to update settings: ${error.message || 'Unknown error'}`);
-    }
-  }
-
-  // Helper para asegurar que la tabla settings tiene las columnas de color de texto
-  private async ensureSettingsTableColumns() {
-    try {
-      // Verificar y agregar titleColor si no existe
-      const titleColorExists = await this.prisma.$queryRaw<Array<{column_name: string}>>`
-        SELECT column_name 
-        FROM information_schema.columns 
-        WHERE table_name = 'settings' AND column_name = 'titleColor'
-      `;
-      if (titleColorExists.length === 0) {
-        await this.prisma.$executeRawUnsafe(`ALTER TABLE "settings" ADD COLUMN IF NOT EXISTS "titleColor" TEXT;`);
-        console.log('✅ Added titleColor column to settings table');
-      }
-
-      // Verificar y agregar subtitleColor si no existe
-      const subtitleColorExists = await this.prisma.$queryRaw<Array<{column_name: string}>>`
-        SELECT column_name 
-        FROM information_schema.columns 
-        WHERE table_name = 'settings' AND column_name = 'subtitleColor'
-      `;
-      if (subtitleColorExists.length === 0) {
-        await this.prisma.$executeRawUnsafe(`ALTER TABLE "settings" ADD COLUMN IF NOT EXISTS "subtitleColor" TEXT;`);
-        console.log('✅ Added subtitleColor column to settings table');
-      }
-
-      // Verificar y agregar descriptionColor si no existe
-      const descriptionColorExists = await this.prisma.$queryRaw<Array<{column_name: string}>>`
-        SELECT column_name 
-        FROM information_schema.columns 
-        WHERE table_name = 'settings' AND column_name = 'descriptionColor'
-      `;
-      if (descriptionColorExists.length === 0) {
-        await this.prisma.$executeRawUnsafe(`ALTER TABLE "settings" ADD COLUMN IF NOT EXISTS "descriptionColor" TEXT;`);
-        console.log('✅ Added descriptionColor column to settings table');
-      }
-    } catch (error) {
-      console.warn('⚠️ Error checking/adding text color columns to settings table:', error);
-      // No lanzar error, solo loguear - las columnas se crearán en el SQL directo si es necesario
     }
   }
 
@@ -2031,7 +1648,7 @@ export class AdminService {
       // If it's an object/array, stringify it
       return JSON.stringify(data);
     } catch (error) {
-      console.error('❌ Error in safeStringify:', error);
+      this.logger.error('❌ Error in safeStringify:', error);
       return JSON.stringify([]);
     }
   }
@@ -2095,7 +1712,7 @@ export class AdminService {
       
       return field;
     } catch (error) {
-      console.error('❌ Error parsing JSON field:', error);
+      this.logger.error('❌ Error parsing JSON field:', error);
       return null;
     }
   }

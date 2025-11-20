@@ -1,11 +1,19 @@
 
 import { NestFactory } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     bodyParser: false, // Disable default body parser
   });
+  
+  // Enable Global Validation Pipe
+  app.useGlobalPipes(new ValidationPipe({
+    whitelist: true,
+    forbidNonWhitelisted: true,
+    transform: true,
+  }));
   
   // Configure body parser with increased limit for images
   const express = require('express');

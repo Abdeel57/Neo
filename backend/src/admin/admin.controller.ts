@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Patch, Put, Delete, Body, Param, Query, HttpException, HttpStatus, Res, BadRequestException, NotFoundException } from '@nestjs/common';
 import { Response } from 'express';
 import { AdminService } from './admin.service';
+import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 // FIX: Using `import type` for types/namespaces and value import for the enum to fix module resolution.
 import { type Raffle, type Winner, type Prisma } from '@prisma/client';
 
@@ -45,8 +46,8 @@ export class AdminController {
   }
   
   @Patch('orders/:folio/status')
-  updateOrderStatus(@Param('folio') folio: string, @Body('status') status: string) {
-    return this.adminService.updateOrderStatus(folio, status);
+  updateOrderStatus(@Param('folio') folio: string, @Body() updateStatusDto: UpdateOrderStatusDto) {
+    return this.adminService.updateOrderStatus(folio, updateStatusDto.status);
   }
 
   @Patch('orders/:id')
@@ -282,6 +283,19 @@ export class AdminController {
   @Post('winners/draw')
   drawWinner(@Body('raffleId') raffleId: string) {
     return this.adminService.drawWinner(raffleId);
+  }
+
+  @Get('fix-winners-table')
+  async fixWinnersTable() {
+    try {
+      await this.adminService.fixWinnersTable();
+      return { message: 'Tabla winners reparada exitosamente' };
+    } catch (error) {
+      throw new HttpException(
+        error instanceof Error ? error.message : 'Error al reparar tabla',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
   }
 
   @Post('winners')
