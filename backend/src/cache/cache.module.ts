@@ -1,6 +1,7 @@
 import { Module, Global } from '@nestjs/common';
 import { CacheModule as NestCacheModule } from '@nestjs/cache-manager';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { CacheService } from './cache.service';
 
 @Global()
 @Module({
@@ -21,7 +22,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       inject: [ConfigService],
     }),
   ],
-  exports: [NestCacheModule],
+  providers: [CacheService],
+  exports: [NestCacheModule, CacheService],
 })
 export class CacheModule {}
 
