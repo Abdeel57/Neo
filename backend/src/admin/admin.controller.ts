@@ -337,6 +337,25 @@ export class AdminController {
     }
   }
 
+  @Roles('superadmin') // Only superadmin can add indexes
+  @Get('add-indexes')
+  async addPerformanceIndexes() {
+    try {
+      const result = await this.adminService.addPerformanceIndexes();
+      return {
+        success: true,
+        message: result.message,
+        data: result
+      };
+    } catch (error) {
+      console.error('Error adding indexes:', error);
+      throw new HttpException(
+        error instanceof Error ? error.message : 'Error al agregar índices',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
   @Roles('admin', 'superadmin')
   @Post('winners')
   saveWinner(@Body() createWinnerDto: CreateWinnerDto) {

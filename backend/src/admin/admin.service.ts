@@ -23,6 +23,74 @@ export class AdminService {
   ) {}
 
   // --- INICIO: Lógica de reparación de tabla winners ---
+  async addPerformanceIndexes() {
+    this.logger.log('🔧 Agregando índices de rendimiento...');
+    
+    try {
+      // Índices para raffles
+      this.logger.log('📊 Creando índices para raffles...');
+      await this.prisma.$executeRaw`
+        CREATE INDEX IF NOT EXISTS idx_raffles_status 
+        ON raffles(status) 
+        WHERE status = 'active';
+      `;
+
+      await this.prisma.$executeRaw`
+        CREATE INDEX IF NOT EXISTS idx_raffles_drawdate 
+        ON raffles(drawDate);
+      `;
+
+      await this.prisma.$executeRaw`
+        CREATE INDEX IF NOT EXISTS idx_raffles_slug 
+        ON raffles(slug) 
+        WHERE slug IS NOT NULL;
+      `;
+
+      // Índices para orders
+      this.logger.log('📊 Creando índices para orders...');
+      await this.prisma.$executeRaw`
+        CREATE INDEX IF NOT EXISTS idx_orders_status 
+        ON orders(status);
+      `;
+
+      await this.prisma.$executeRaw`
+        CREATE INDEX IF NOT EXISTS idx_orders_createdat 
+        ON orders(createdAt DESC);
+      `;
+
+      await this.prisma.$executeRaw`
+        CREATE INDEX IF NOT EXISTS idx_orders_userid 
+        ON orders(userId);
+      `;
+
+      await this.prisma.$executeRaw`
+        CREATE INDEX IF NOT EXISTS idx_orders_raffleid 
+        ON orders(raffleId);
+      `;
+
+      // Índices para winners
+      this.logger.log('📊 Creando índices para winners...');
+      await this.prisma.$executeRaw`
+        CREATE INDEX IF NOT EXISTS idx_winners_drawdate 
+        ON winners(drawDate DESC);
+      `;
+
+      await this.prisma.$executeRaw`
+        CREATE INDEX IF NOT EXISTS idx_winners_createdat 
+        ON winners(createdAt DESC);
+      `;
+
+      this.logger.log('✅ Todos los índices agregados exitosamente');
+      return { 
+        success: true, 
+        message: 'Índices de rendimiento agregados exitosamente' 
+      };
+    } catch (error) {
+      this.logger.error('❌ Error agregando índices:', error);
+      throw error;
+    }
+  }
+
   async fixWinnersTable() {
     this.logger.warn('⚠️ Iniciando reparación de tabla winners (DROP & CREATE)...');
     
