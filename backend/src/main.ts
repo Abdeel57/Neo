@@ -1,18 +1,37 @@
 
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, HttpException } from '@nestjs/common';
 import { AppModule } from './app.module';
+import { GlobalExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     bodyParser: false, // Disable default body parser
   });
   
+  // Enable Global Exception Filter
+  app.useGlobalFilters(new GlobalExceptionFilter());
+
   // Enable Global Validation Pipe
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,
     forbidNonWhitelisted: true,
     transform: true,
+    exceptionFactory: (errors) => {
+      // Formatear errores de validación de forma amigable
+      const messages = errors.map(error => {
+        const constraints = error.constraints || {};
+        return Object.values(constraints)[0] || 'Error de validación';
+      });
+      return new HttpException(
+        {
+          message: messages,
+          error: 'Bad Request',
+          statusCode: 400,
+        },
+        400
+      );
+    },
   }));
   
   // Configure body parser with increased limit for images
