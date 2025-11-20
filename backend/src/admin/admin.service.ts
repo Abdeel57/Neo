@@ -4,6 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { type Prisma, type Raffle, type Winner } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { DatabaseSetupService } from './database-setup.service';
+import { AuthService } from '../auth/auth.service';
 
 @Injectable()
 export class AdminService {
@@ -11,7 +12,8 @@ export class AdminService {
 
   constructor(
     private prisma: PrismaService,
-    private dbSetup: DatabaseSetupService
+    private dbSetup: DatabaseSetupService,
+    private authService: AuthService
   ) {}
 
   // --- INICIO: Lógica de reparación de tabla winners ---
@@ -1195,9 +1197,19 @@ export class AdminService {
         throw new BadRequestException('Credenciales incorrectas');
       }
 
-      // Retornar usuario sin contraseña
+      // Generar token JWT
+      const tokenData = await this.authService.generateToken({
+        id: user.id,
+        username: user.username,
+        role: user.role || 'admin'
+      });
+
+      // Retornar usuario sin contraseña junto con el token
       const { password: _, ...userWithoutPassword } = user;
-      return userWithoutPassword;
+      return {
+        ...tokenData,
+        user: userWithoutPassword
+      };
     } catch (error) {
       this.logger.error('❌ Error en login:', error);
       // Si ya es una excepción de NestJS, re-lanzarla
@@ -1424,6 +1436,84 @@ export class AdminService {
   }
 
   // Settings
+  // Customers - para que ventas pueda ver clientes y corregir errores
+  async getCustomers() {
+    try {
+      const customers = await this.prisma.user.findMany({
+        include: {
+          orders: {
+            select: {
+              id: true,
+              folio: true,
+              status: true,
+              total: true,
+              createdAt: true,
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 5, // Últimas 5 órdenes por cliente
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+      
+      return customers.map(customer => ({
+        id: customer.id,
+        name: customer.name,
+        email: customer.email,
+        phone: customer.phone,
+        district: customer.district,
+        createdAt: customer.createdAt,
+        totalOrders: customer.orders.length,
+        recentOrders: customer.orders,
+      }));
+    } catch (error: any) {
+      this.logger.error('❌ Error getting customers:', error);
+      throw error;
+    }
+  }
+
+  async getCustomerById(id: string) {
+    try {
+      const customer = await this.prisma.user.findUnique({
+        where: { id },
+        include: {
+          orders: {
+            include: {
+              raffle: {
+                select: {
+                  id: true,
+                  title: true,
+                  imageUrl: true,
+                },
+              },
+            },
+            orderBy: { createdAt: 'desc' },
+          },
+        },
+      });
+
+      if (!customer) {
+        throw new NotFoundException('Cliente no encontrado');
+      }
+
+      return {
+        id: customer.id,
+        name: customer.name,
+        email: customer.email,
+        phone: customer.phone,
+        district: customer.district,
+        createdAt: customer.createdAt,
+        orders: customer.orders,
+      };
+    } catch (error: any) {
+      this.logger.error('❌ Error getting customer by ID:', error);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw error;
+    }
+  }
+
   async updateSettings(data: any) {
     try {
       this.logger.log('🔧 Updating settings');

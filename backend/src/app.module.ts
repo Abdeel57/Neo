@@ -1,5 +1,7 @@
 
 import { Module } from '@nestjs/common';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
@@ -11,9 +13,16 @@ import { TrackingModule } from './tracking/tracking.module';
 import { UploadModule } from './upload/upload.module';
 import { InitController } from './init.controller';
 import { InitDatabaseService } from './init-database';
+import { CustomThrottlerGuard } from './auth/guards/custom-throttler.guard';
 
 @Module({
   imports: [
+    // Rate Limiting Configuration
+    // Configuración global: 100 peticiones por minuto por defecto
+    ThrottlerModule.forRoot([{
+      ttl: 60000, // 1 minuto en milisegundos
+      limit: 100, // 100 peticiones por minuto
+    }]),
     PrismaModule, 
     PublicModule, 
     AdminModule, 
@@ -23,6 +32,14 @@ import { InitDatabaseService } from './init-database';
     UploadModule
   ],
   controllers: [AppController, InitController],
-  providers: [AppService, InitDatabaseService],
+  providers: [
+    AppService, 
+    InitDatabaseService,
+    // Aplicar CustomThrottlerGuard globalmente para límites personalizados
+    {
+      provide: APP_GUARD,
+      useClass: CustomThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}

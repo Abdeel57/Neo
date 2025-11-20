@@ -80,13 +80,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 return true;
             }
             
-            // Intentar login con el backend (usando bcrypt)
+            // Intentar login con el backend (usando bcrypt y JWT)
             try {
-                const userData = await adminLogin(username, password);
-                console.log('✅ Login exitoso con backend:', userData);
+                const loginResult = await adminLogin(username, password);
+                console.log('✅ Login exitoso con backend:', loginResult);
                 
+                // loginResult tiene estructura { user, access_token }
+                const userData = loginResult.user || loginResult;
                 setUser(userData);
                 localStorage.setItem('admin_user', JSON.stringify(userData));
+                // El token ya se guarda en adminLogin
                 setIsLoading(false);
                 return true;
             } catch (backendError) {
@@ -105,6 +108,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const logout = () => {
         setUser(null);
         localStorage.removeItem('admin_user');
+        localStorage.removeItem('admin_token');
     };
 
     const value: AuthContextType = {

@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Body, Param, NotFoundException, Req, HttpException, HttpStatus, Query } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { PublicService } from './public.service';
 import { TrackingService } from '../tracking/tracking.service';
 // FIX: Using `import type` for the Prisma namespace to aid module resolution.
@@ -169,6 +170,8 @@ export class PublicController {
     }
   }
 
+  // Límite de 10 órdenes por minuto por IP (previene spam y abuso)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post('orders')
   async createOrder(@Body() orderData: Prisma.OrderUncheckedCreateInput, @Req() req: any) {
     try {
@@ -201,6 +204,8 @@ export class PublicController {
     }
   }
 
+  // Límite de 30 verificaciones por minuto
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
   @Post('verificar-boleto')
   async verifyTicket(@Body() body: { codigo_qr?: string; numero_boleto?: number; sorteo_id?: string }) {
     try {
@@ -218,6 +223,8 @@ export class PublicController {
     }
   }
 
+  // Límite de 20 búsquedas por minuto
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   @Post('buscar-boletos')
   async searchTickets(@Body() body: {
     numero_boleto?: number;

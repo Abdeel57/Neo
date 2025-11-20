@@ -1,21 +1,29 @@
-import { Controller, Get, Post, Patch, Put, Delete, Body, Param, Query, HttpException, HttpStatus, Res, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Put, Delete, Body, Param, Query, HttpException, HttpStatus, Res, BadRequestException, NotFoundException, UseGuards } from '@nestjs/common';
 import { Response } from 'express';
+import { Throttle } from '@nestjs/throttler';
 import { AdminService } from './admin.service';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 // FIX: Using `import type` for types/namespaces and value import for the enum to fix module resolution.
 import { type Raffle, type Winner, type Prisma } from '@prisma/client';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Public } from '../auth/decorators/public.decorator';
+import { Roles } from '../auth/decorators/roles.decorator';
 
 @Controller('admin')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
   // Dashboard
+  @Roles('admin', 'superadmin')
   @Get('stats')
   getDashboardStats() {
     return this.adminService.getDashboardStats();
   }
 
-  // Orders
+  // Orders - ventas puede ver órdenes
+  @Roles('ventas', 'admin', 'superadmin')
   @Get('orders')
   async getAllOrders(
     @Query('page') page?: string,
@@ -35,6 +43,7 @@ export class AdminController {
     }
   }
   
+  @Roles('ventas', 'admin', 'superadmin')
   @Get('orders/:id')
   async getOrderById(@Param('id') id: string) {
     try {
@@ -45,11 +54,13 @@ export class AdminController {
     }
   }
   
+  @Roles('admin', 'superadmin')
   @Patch('orders/:folio/status')
   updateOrderStatus(@Param('folio') folio: string, @Body() updateStatusDto: UpdateOrderStatusDto) {
     return this.adminService.updateOrderStatus(folio, updateStatusDto.status);
   }
 
+  @Roles('admin', 'superadmin')
   @Patch('orders/:id')
   async updateOrder(@Param('id') id: string, @Body() orderData: any) {
     try {
@@ -61,6 +72,10 @@ export class AdminController {
     }
   }
 
+  // ventas puede marcar como pagado (su función principal)
+  // Límite de 50 marcas por minuto (trabajadores pueden marcar muchos boletos)
+  @Throttle({ default: { limit: 50, ttl: 60000 } })
+  @Roles('ventas', 'admin', 'superadmin')
   @Put('orders/:id/mark-paid')
   async markOrderPaid(
     @Param('id') id: string,
@@ -74,6 +89,10 @@ export class AdminController {
     }
   }
 
+  // ventas puede marcar como pendiente (para corregir errores)
+  // Límite de 30 correcciones por minuto
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  @Roles('ventas', 'admin', 'superadmin')
   @Put('orders/:id/mark-pending')
   async markOrderAsPending(@Param('id') id: string) {
     try {
@@ -84,6 +103,7 @@ export class AdminController {
     }
   }
 
+  @Roles('admin', 'superadmin')
   @Put('orders/:id/edit')
   async editOrder(
     @Param('id') id: string,
@@ -97,6 +117,7 @@ export class AdminController {
     }
   }
 
+  @Roles('admin', 'superadmin')
   @Put('orders/:id/release')
   async releaseOrder(@Param('id') id: string) {
     try {
@@ -107,6 +128,7 @@ export class AdminController {
     }
   }
 
+  @Roles('admin', 'superadmin')
   @Delete('orders/:id')
   async deleteOrder(@Param('id') id: string) {
     try {
@@ -118,7 +140,8 @@ export class AdminController {
     }
   }
 
-  // Raffles
+  // Raffles - solo admin y superadmin
+  @Roles('admin', 'superadmin')
   @Get('raffles')
   async getAllRaffles(@Query('limit') limit?: string) {
     try {
@@ -134,11 +157,15 @@ export class AdminController {
     }
   }
   
+  @Roles('admin', 'superadmin')
   @Get('raffles/finished')
   getFinishedRaffles() {
     return this.adminService.getFinishedRaffles();
   }
 
+  // Límite de 20 creaciones por minuto para prevenir spam
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @Roles('admin', 'superadmin')
   @Post('raffles')
   async createRaffle(@Body() data: Omit<Raffle, 'id' | 'sold' | 'createdAt' | 'updatedAt'>) {
     try {
@@ -157,6 +184,7 @@ export class AdminController {
     }
   }
 
+  @Roles('admin', 'superadmin')
   @Patch('raffles/:id')
   async updateRaffle(@Param('id') id: string, @Body() data: Raffle) {
     try {
@@ -192,6 +220,7 @@ export class AdminController {
     }
   }
 
+  @Roles('admin', 'superadmin')
   @Delete('raffles/:id')
   async deleteRaffle(@Param('id') id: string) {
     try {
@@ -210,6 +239,7 @@ export class AdminController {
     }
   }
 
+  @Roles('admin', 'superadmin')
   @Get('raffles/:id/boletos/apartados/descargar')
   async downloadApartadosTickets(
     @Param('id') raffleId: string,
@@ -242,6 +272,7 @@ export class AdminController {
     }
   }
 
+  @Roles('admin', 'superadmin')
   @Get('raffles/:id/boletos/pagados/descargar')
   async downloadPagadosTickets(
     @Param('id') raffleId: string,
@@ -274,17 +305,20 @@ export class AdminController {
     }
   }
   
-  // Winners
+  // Winners - solo admin y superadmin
+  @Roles('admin', 'superadmin')
   @Get('winners')
   getAllWinners() {
     return this.adminService.getAllWinners();
   }
   
+  @Roles('admin', 'superadmin')
   @Post('winners/draw')
   drawWinner(@Body('raffleId') raffleId: string) {
     return this.adminService.drawWinner(raffleId);
   }
 
+  @Roles('superadmin')
   @Get('fix-winners-table')
   async fixWinnersTable() {
     try {
@@ -298,17 +332,22 @@ export class AdminController {
     }
   }
 
+  @Roles('admin', 'superadmin')
   @Post('winners')
   saveWinner(@Body() data: Omit<Winner, 'id' | 'createdAt' | 'updatedAt'>) {
     return this.adminService.saveWinner(data);
   }
 
+  @Roles('admin', 'superadmin')
   @Delete('winners/:id')
   deleteWinner(@Param('id') id: string) {
     return this.adminService.deleteWinner(id);
   }
 
   // Users
+  // Protección especial contra fuerza bruta: solo 5 intentos por minuto
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Public()
   @Post('login')
   async login(@Body() data: { username: string; password: string }) {
     try {
@@ -333,6 +372,7 @@ export class AdminController {
     }
   }
 
+  @Roles('admin', 'superadmin')
   @Get('users')
   async getUsers() {
     try {
@@ -347,6 +387,9 @@ export class AdminController {
     }
   }
   
+  // Límite de 10 creaciones de usuarios por minuto
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Roles('admin', 'superadmin')
   @Post('users')
   async createUser(@Body() data: Prisma.AdminUserCreateInput) {
     try {
@@ -374,6 +417,7 @@ export class AdminController {
     }
   }
   
+  @Roles('admin', 'superadmin')
   @Patch('users/:id')
   async updateUser(@Param('id') id: string, @Body() data: Prisma.AdminUserUpdateInput) {
     try {
@@ -405,6 +449,7 @@ export class AdminController {
     }
   }
   
+  @Roles('admin', 'superadmin')
   @Delete('users/:id')
   async deleteUser(@Param('id') id: string) {
     try {
@@ -435,7 +480,40 @@ export class AdminController {
     }
   }
   
-  // Settings
+  // Customers - ventas puede ver para corregir errores
+  @Roles('ventas', 'admin', 'superadmin')
+  @Get('customers')
+  async getCustomers() {
+    try {
+      return await this.adminService.getCustomers();
+    } catch (error) {
+      console.error('❌ Error getting customers:', error);
+      throw new HttpException(
+        error instanceof Error ? error.message : 'Error al obtener clientes',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  @Roles('ventas', 'admin', 'superadmin')
+  @Get('customers/:id')
+  async getCustomerById(@Param('id') id: string) {
+    try {
+      return await this.adminService.getCustomerById(id);
+    } catch (error) {
+      console.error('❌ Error getting customer by ID:', error);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new HttpException(
+        error instanceof Error ? error.message : 'Error al obtener cliente',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  // Settings - solo admin y superadmin
+  @Roles('admin', 'superadmin')
   @Post('settings')
   async updateSettings(@Body() data: any) {
     try {

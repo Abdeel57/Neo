@@ -13,6 +13,30 @@ import {
 // En producción: se toma de la variable de entorno VITE_API_URL
 const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3000/api';
 
+// Helper para obtener el token JWT del localStorage
+const getAuthToken = (): string | null => {
+  const tokenData = localStorage.getItem('admin_token');
+  if (tokenData) {
+    try {
+      const parsed = JSON.parse(tokenData);
+      return parsed.access_token || tokenData; // Soporta tanto objeto como string
+    } catch {
+      return tokenData; // Si no es JSON, devolver como string
+    }
+  }
+  return null;
+};
+
+// Helper para crear headers con autenticación
+const getAuthHeaders = (): HeadersInit => {
+  const headers: HeadersInit = { 'Content-Type': 'application/json' };
+  const token = getAuthToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+};
+
 // Debug logging removed for production performance
 
 /**
@@ -307,7 +331,7 @@ export const updateSettings = async (settings: Partial<Settings>): Promise<Setti
         console.log('Trying backend for update settings...');
         const response = await fetch(`${API_URL}/admin/settings`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAuthHeaders(),
             body: JSON.stringify(settings),
         });
         if (response.ok) {
@@ -338,7 +362,7 @@ export const createRaffle = async (raffle: any): Promise<Raffle> => {
         
         const response = await fetch(`${API_URL}/admin/raffles`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAuthHeaders(),
             body: JSON.stringify(raffle),
         });
         
@@ -382,7 +406,7 @@ export const updateRaffle = async (id: string, raffle: Partial<Raffle>): Promise
         
         const response = await fetch(`${API_URL}/admin/raffles/${id}`, {
             method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAuthHeaders(),
             body: JSON.stringify(raffle),
         });
         
@@ -562,6 +586,7 @@ export const deleteRaffle = async (id: string): Promise<void> => {
         console.log('Trying backend for delete raffle...');
         const response = await fetch(`${API_URL}/admin/raffles/${id}`, {
             method: 'DELETE',
+            headers: getAuthHeaders(),
         });
         if (response.ok) {
             console.log('✅ Backend raffle deleted successfully');
@@ -596,7 +621,9 @@ export const deleteRaffle = async (id: string): Promise<void> => {
 export const getRaffles = async (): Promise<Raffle[]> => {
     try {
         console.log('Trying backend for get raffles...');
-        const response = await fetch(`${API_URL}/admin/raffles`);
+        const response = await fetch(`${API_URL}/admin/raffles`, {
+            headers: getAuthHeaders(),
+        });
         if (response.ok) {
             const data = await response.json();
             console.log('✅ Backend raffles loaded successfully');
@@ -621,7 +648,9 @@ export const getRaffles = async (): Promise<Raffle[]> => {
 export const getUsers = async (): Promise<AdminUser[]> => {
     try {
         console.log('🔍 Obteniendo usuarios del backend...');
-        const response = await fetch(`${API_URL}/admin/users`);
+        const response = await fetch(`${API_URL}/admin/users`, {
+            headers: getAuthHeaders(),
+        });
         
         if (!response.ok) {
             const error = await response.json().catch(() => ({ 
@@ -652,7 +681,7 @@ export const createUser = async (user: Omit<AdminUser, 'id' | 'createdAt' | 'upd
         
         const response = await fetch(`${API_URL}/admin/users`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAuthHeaders(),
             body: JSON.stringify(user),
         });
         
@@ -689,7 +718,7 @@ export const updateUser = async (id: string, user: Partial<AdminUser>): Promise<
         
         const response = await fetch(`${API_URL}/admin/users/${id}`, {
             method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAuthHeaders(),
             body: JSON.stringify(user),
         });
         
@@ -726,6 +755,7 @@ export const deleteUser = async (id: string): Promise<void> => {
         
         const response = await fetch(`${API_URL}/admin/users/${id}`, {
             method: 'DELETE',
+            headers: getAuthHeaders(),
         });
         
         if (!response.ok) {
@@ -765,7 +795,9 @@ export const getOrderbyFolio = async (folio: string): Promise<Order | undefined>
 // --- Admin API Calls ---
 
 export const getDashboardStats = async () => {
-    return handleResponse(await fetch(`${API_URL}/admin/stats`));
+    return handleResponse(await fetch(`${API_URL}/admin/stats`, {
+        headers: getAuthHeaders(),
+    }));
 };
 
 // --- Analytics API Calls ---
@@ -813,7 +845,9 @@ export interface ROIMetrics {
 
 export const getSalesTrends = async (period: 'day' | 'week' | 'month' = 'day', days: number = 30): Promise<SalesTrend[]> => {
     try {
-        const response = await fetch(`${API_URL}/admin/analytics/sales-trends?period=${period}&days=${days}`);
+        const response = await fetch(`${API_URL}/admin/analytics/sales-trends?period=${period}&days=${days}`, {
+            headers: getAuthHeaders(),
+        });
         return await handleResponse(response);
     } catch (error) {
         console.error('Error fetching sales trends:', error);
@@ -823,7 +857,9 @@ export const getSalesTrends = async (period: 'day' | 'week' | 'month' = 'day', d
 
 export const getCustomerInsights = async (): Promise<CustomerInsight> => {
     try {
-        const response = await fetch(`${API_URL}/admin/analytics/customer-insights`);
+        const response = await fetch(`${API_URL}/admin/analytics/customer-insights`, {
+            headers: getAuthHeaders(),
+        });
         return await handleResponse(response);
     } catch (error) {
         console.error('Error fetching customer insights:', error);
@@ -833,7 +869,9 @@ export const getCustomerInsights = async (): Promise<CustomerInsight> => {
 
 export const getConversionFunnel = async (): Promise<ConversionFunnel> => {
     try {
-        const response = await fetch(`${API_URL}/admin/analytics/conversion-funnel`);
+        const response = await fetch(`${API_URL}/admin/analytics/conversion-funnel`, {
+            headers: getAuthHeaders(),
+        });
         return await handleResponse(response);
     } catch (error) {
         console.error('Error fetching conversion funnel:', error);
@@ -843,7 +881,9 @@ export const getConversionFunnel = async (): Promise<ConversionFunnel> => {
 
 export const getROIMetrics = async (): Promise<ROIMetrics> => {
     try {
-        const response = await fetch(`${API_URL}/admin/analytics/roi-metrics`);
+        const response = await fetch(`${API_URL}/admin/analytics/roi-metrics`, {
+            headers: getAuthHeaders(),
+        });
         return await handleResponse(response);
     } catch (error) {
         console.error('Error fetching ROI metrics:', error);
@@ -859,7 +899,9 @@ export const getPopularRaffles = async (): Promise<Array<{
     conversionRate: number;
 }>> => {
     try {
-        const response = await fetch(`${API_URL}/admin/analytics/popular-raffles`);
+        const response = await fetch(`${API_URL}/admin/analytics/popular-raffles`, {
+            headers: getAuthHeaders(),
+        });
         return await handleResponse(response);
     } catch (error) {
         console.error('Error fetching popular raffles:', error);
@@ -869,7 +911,9 @@ export const getPopularRaffles = async (): Promise<Array<{
 
 export const getDashboardSummary = async () => {
     try {
-        const response = await fetch(`${API_URL}/admin/analytics/dashboard-summary`);
+        const response = await fetch(`${API_URL}/admin/analytics/dashboard-summary`, {
+            headers: getAuthHeaders(),
+        });
         return await handleResponse(response);
     } catch (error) {
         console.error('Error fetching dashboard summary:', error);
@@ -878,19 +922,23 @@ export const getDashboardSummary = async () => {
 };
 
 export const adminGetAllOrders = async (): Promise<Order[]> => {
-    const data = await handleResponse(await fetch(`${API_URL}/admin/orders`));
+    const data = await handleResponse(await fetch(`${API_URL}/admin/orders`, {
+        headers: getAuthHeaders(),
+    }));
     return data.map(parseOrderDates);
 };
 
 export const adminGetRaffles = async (): Promise<Raffle[]> => {
-    const data = await handleResponse(await fetch(`${API_URL}/admin/raffles`));
+    const data = await handleResponse(await fetch(`${API_URL}/admin/raffles`, {
+        headers: getAuthHeaders(),
+    }));
     return data.map(parseRaffleDates);
 };
 
 export const adminCreateRaffle = async (data: Omit<Raffle, 'id' | 'sold'>): Promise<Raffle> => {
     const response = await fetch(`${API_URL}/admin/raffles`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(data),
     });
     const result = await handleResponse(response);
@@ -900,7 +948,7 @@ export const adminCreateRaffle = async (data: Omit<Raffle, 'id' | 'sold'>): Prom
 export const adminUpdateRaffle = async (data: Raffle): Promise<Raffle> => {
     const response = await fetch(`${API_URL}/admin/raffles/${data.id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(data),
     });
     const result = await handleResponse(response);
@@ -908,14 +956,17 @@ export const adminUpdateRaffle = async (data: Raffle): Promise<Raffle> => {
 };
 
 export const adminDeleteRaffle = async (id: string): Promise<void> => {
-    const response = await fetch(`${API_URL}/admin/raffles/${id}`, { method: 'DELETE' });
+    const response = await fetch(`${API_URL}/admin/raffles/${id}`, { 
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+    });
     await handleResponse(response);
 };
 
 export const adminUpdateOrderStatus = async (folio: string, status: OrderStatus): Promise<Order> => {
      const response = await fetch(`${API_URL}/admin/orders/${folio}/status`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ status }),
     });
     const data = await handleResponse(response);
@@ -923,14 +974,16 @@ export const adminUpdateOrderStatus = async (folio: string, status: OrderStatus)
 };
 
 export const getFinishedRaffles = async (): Promise<Raffle[]> => {
-    const data = await handleResponse(await fetch(`${API_URL}/admin/raffles/finished`));
+    const data = await handleResponse(await fetch(`${API_URL}/admin/raffles/finished`, {
+        headers: getAuthHeaders(),
+    }));
     return data.map(parseRaffleDates);
 }
 
 export const drawWinner = async (raffleId: string): Promise<{ ticket: number; order: Order }> => {
     const response = await fetch(`${API_URL}/admin/winners/draw`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ raffleId }),
     });
     const data = await handleResponse(response);
@@ -940,7 +993,7 @@ export const drawWinner = async (raffleId: string): Promise<{ ticket: number; or
 export const saveWinner = async (winnerData: Omit<Winner, 'id'>): Promise<Winner> => {
     const response = await fetch(`${API_URL}/admin/winners`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(winnerData),
     });
     const data = await handleResponse(response);
@@ -948,17 +1001,24 @@ export const saveWinner = async (winnerData: Omit<Winner, 'id'>): Promise<Winner
 };
 
 export const adminGetAllWinners = async (): Promise<Winner[]> => {
-    const data = await handleResponse(await fetch(`${API_URL}/admin/winners`));
+    const data = await handleResponse(await fetch(`${API_URL}/admin/winners`, {
+        headers: getAuthHeaders(),
+    }));
     return data.map(parseWinnerDates);
 }
 
 export const adminDeleteWinner = async (id: string): Promise<void> => {
-    const response = await fetch(`${API_URL}/admin/winners/${id}`, { method: 'DELETE' });
+    const response = await fetch(`${API_URL}/admin/winners/${id}`, { 
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+    });
     await handleResponse(response);
 }
 
 export const adminGetUsers = async (): Promise<AdminUser[]> => {
-    return handleResponse(await fetch(`${API_URL}/admin/users`));
+    return handleResponse(await fetch(`${API_URL}/admin/users`, {
+        headers: getAuthHeaders(),
+    }));
 };
 
 // Funciones de órdenes mejoradas
@@ -1018,7 +1078,9 @@ export const getOrders = async (page: number = 1, limit: number = 50, status?: s
         params.append('limit', limit.toString());
         if (status) params.append('status', status);
         
-        const response = await fetch(`${API_URL}/admin/orders?${params.toString()}`);
+        const response = await fetch(`${API_URL}/admin/orders?${params.toString()}`, {
+            headers: getAuthHeaders(),
+        });
         
         if (!response.ok) {
             console.log('❌ Backend returned error status:', response.status);
@@ -1044,7 +1106,7 @@ export const updateOrder = async (id: string, order: Partial<Order>): Promise<Or
         console.log('Trying backend for update order...');
         const response = await fetch(`${API_URL}/admin/orders/${id}`, {
             method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAuthHeaders(),
             body: JSON.stringify(order),
         });
         if (response.ok) {
@@ -1069,6 +1131,7 @@ export const deleteOrder = async (id: string): Promise<void> => {
         console.log('Trying backend for delete order...');
         const response = await fetch(`${API_URL}/admin/orders/${id}`, {
             method: 'DELETE',
+            headers: getAuthHeaders(),
         });
         if (response.ok) {
             console.log('✅ Backend order deleted successfully');
@@ -1092,7 +1155,7 @@ export const markOrderAsPending = async (id: string): Promise<Order> => {
         console.log('🚀 Trying backend for mark order as pending...');
         const response = await fetch(`${API_URL}/admin/orders/${id}/mark-pending`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAuthHeaders(),
         });
         if (response.ok) {
             const result = await response.json();
@@ -1118,7 +1181,7 @@ export const markOrderPaid = async (id: string, paymentMethod?: string, notes?: 
         console.log('🚀 Trying backend for mark order paid...');
         const response = await fetch(`${API_URL}/admin/orders/${id}/mark-paid`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAuthHeaders(),
             body: JSON.stringify({ paymentMethod, notes }),
         });
         if (response.ok) {
@@ -1145,7 +1208,7 @@ export const editOrder = async (id: string, data: { customer?: any; tickets?: nu
         console.log('🚀 Trying backend for edit order...');
         const response = await fetch(`${API_URL}/admin/orders/${id}/edit`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAuthHeaders(),
             body: JSON.stringify(data),
         });
         if (response.ok) {
@@ -1172,7 +1235,7 @@ export const releaseOrder = async (id: string): Promise<Order> => {
         console.log('🚀 Trying backend for release order...');
         const response = await fetch(`${API_URL}/admin/orders/${id}/release`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAuthHeaders(),
         });
         if (response.ok) {
             const data = await response.json();
@@ -1194,7 +1257,9 @@ export const releaseOrder = async (id: string): Promise<Order> => {
 export const getCustomers = async (): Promise<any[]> => {
     try {
         console.log('🔍 Trying backend for customers...');
-        const response = await fetch(`${API_URL}/admin/customers`);
+        const response = await fetch(`${API_URL}/admin/customers`, {
+            headers: getAuthHeaders(),
+        });
         const customers = await handleResponse(response);
         console.log('✅ Backend customers loaded successfully:', customers?.length || 0);
         return customers || [];
@@ -1211,7 +1276,9 @@ export const getCustomers = async (): Promise<any[]> => {
 export const getCustomerById = async (id: string): Promise<any | undefined> => {
     try {
         console.log('🔍 Trying backend for customer by ID:', id);
-        const response = await fetch(`${API_URL}/admin/customers/${id}`);
+        const response = await fetch(`${API_URL}/admin/customers/${id}`, {
+            headers: getAuthHeaders(),
+        });
         const customer = await handleResponse(response);
         console.log('✅ Backend customer by ID loaded successfully:', { id: customer?.id });
         return customer;
@@ -1228,7 +1295,7 @@ export const getCustomerById = async (id: string): Promise<any | undefined> => {
 export const adminCreateUser = async (data: Omit<AdminUser, 'id'>): Promise<AdminUser> => {
     const response = await fetch(`${API_URL}/admin/users`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(data),
     });
     return handleResponse(response);
@@ -1237,14 +1304,17 @@ export const adminCreateUser = async (data: Omit<AdminUser, 'id'>): Promise<Admi
 export const adminUpdateUser = async (data: AdminUser): Promise<AdminUser> => {
      const response = await fetch(`${API_URL}/admin/users/${data.id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(data),
     });
     return handleResponse(response);
 };
 
 export const adminDeleteUser = async (id: string): Promise<void> => {
-    const response = await fetch(`${API_URL}/admin/users/${id}`, { method: 'DELETE' });
+    const response = await fetch(`${API_URL}/admin/users/${id}`, { 
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+    });
     await handleResponse(response);
 };
 
@@ -1258,7 +1328,7 @@ export const adminUpdateSettings = async (settings: Settings): Promise<Settings>
 }
 
 // Admin Authentication
-export const adminLogin = async (username: string, password: string): Promise<AdminUser> => {
+export const adminLogin = async (username: string, password: string): Promise<{ user: AdminUser; access_token: string }> => {
     const response = await fetch(`${API_URL}/admin/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1266,6 +1336,19 @@ export const adminLogin = async (username: string, password: string): Promise<Ad
     });
     
     const result = await handleResponse(response);
-    // La respuesta tiene estructura { success, message, data }
-    return result.data;
+    // La respuesta tiene estructura { success, message, data: { access_token, user } }
+    const loginData = result.data || result;
+    
+    // Guardar el token en localStorage
+    if (loginData.access_token) {
+        localStorage.setItem('admin_token', JSON.stringify({
+            access_token: loginData.access_token,
+            expiresAt: Date.now() + (24 * 60 * 60 * 1000) // 24 horas
+        }));
+    }
+    
+    return {
+        user: loginData.user || loginData,
+        access_token: loginData.access_token
+    };
 }
