@@ -10,7 +10,9 @@ import TicketSelector from '../components/TicketSelector';
 import RaffleGallery from '../components/RaffleGallery';
 import BonusesCard from '../components/BonusesCard';
 import PackSelector from '../components/PackSelector';
-import { motion } from 'framer-motion';
+import CasinoButton from '../components/CasinoButton';
+import CasinoSpinResult from '../components/CasinoSpinResult';
+import { motion, AnimatePresence } from 'framer-motion';
 import metaPixelService from '../services/metaPixel';
 import { useToast } from '../hooks/useToast';
 import { useTheme } from '../contexts/ThemeContext';
@@ -27,8 +29,10 @@ const RaffleDetailPage = () => {
     const [loading, setLoading] = useState(true);
     const [listingMode, setListingMode] = useState<'paginado' | 'scroll'>('paginado');
     const [hideOccupied, setHideOccupied] = useState<boolean>(false);
+    const [showSpinResult, setShowSpinResult] = useState(false);
+    const [lastRandomQuantity, setLastRandomQuantity] = useState(0);
     const toast = useToast();
-    
+
     // CRÍTICO: Usar useRef para mantener referencia estable a toast.error
     // Esto evita que handleTicketClick se recree cuando toast cambia
     const toastRef = useRef(toast);
@@ -45,23 +49,23 @@ const RaffleDetailPage = () => {
             const prefs = (settings as any)?.displayPreferences;
             if (prefs?.listingMode) setListingMode(prefs.listingMode);
             if (prefs?.paidTicketsVisibility) setHideOccupied(prefs.paidTicketsVisibility === 'no_disponibles');
-        }).catch(() => {});
+        }).catch(() => { });
 
         if (slug) {
             setLoading(true);
             getRaffleBySlug(slug).then(raffleData => {
-                 setRaffle(raffleData || null);
-                 if (raffleData) {
+                setRaffle(raffleData || null);
+                if (raffleData) {
                     // Track ViewContent event
                     metaPixelService.trackViewContent(raffleData.id, raffleData);
-                    
+
                     getOccupiedTickets(raffleData.id).then(occupiedData => {
                         setOccupiedTickets(occupiedData.tickets || []);
                         setLoading(false);
                     });
-                 } else {
+                } else {
                     setLoading(false);
-                 }
+                }
             }).catch(err => {
                 // Error logging removed for production
                 setLoading(false);
@@ -75,24 +79,24 @@ const RaffleDetailPage = () => {
     const handleTicketClick = useCallback((ticketNumber: number) => {
         // Validación defensiva
         if (!ticketNumber || typeof ticketNumber !== 'number') return;
-        
+
         // CRÍTICO: Usar Set.has() - instantáneo incluso con 10,000 boletos
         // Recrear Sets en cada llamada para tener la versión más reciente
         const currentOccupiedSet = Array.isArray(occupiedTickets) ? new Set(occupiedTickets) : new Set<number>();
         const currentSelectedSet = Array.isArray(selectedTickets) ? new Set(selectedTickets) : new Set<number>();
-        
+
         if (currentOccupiedSet.has(ticketNumber)) {
             toastRef.current.error('Boleto ocupado', 'Este boleto ya está ocupado. Por favor selecciona otro.');
             return;
         }
-        
+
         const wasSelected = currentSelectedSet.has(ticketNumber);
-        const newSelectedTickets = wasSelected 
+        const newSelectedTickets = wasSelected
             ? selectedTickets.filter(t => t !== ticketNumber)
             : [...selectedTickets, ticketNumber];
-        
+
         setSelectedTickets(newSelectedTickets);
-        
+
         // Track AddToCart cuando se selecciona (async, no bloquea UI)
         if (!wasSelected && raffle) {
             // Usar setTimeout para no bloquear la UI
@@ -103,7 +107,7 @@ const RaffleDetailPage = () => {
             }, 0);
         }
     }, [occupiedTickets, selectedTickets, raffle]); // ✅ Removido toast, usando toastRef en su lugar
-    
+
     // CRÍTICO: TODOS los hooks deben ejecutarse ANTES de cualquier return condicional
     // Esto es necesario para cumplir las reglas de los hooks de React
     // CRÍTICO: Memoizar cálculos costosos para evitar recalcular en cada render
@@ -116,13 +120,13 @@ const RaffleDetailPage = () => {
     // Detectar si la selección manual coincide con algún paquete
     const matchedPack = useMemo(() => {
         if (selectedPack || selectedTickets.length === 0 || !raffle?.packs) return null;
-        
+
         // Buscar un paquete que coincida con la cantidad de boletos seleccionados
         const matchingPack = raffle.packs.find(pack => {
             const packTicketCount = pack.tickets || pack.q || 1;
             return packTicketCount === selectedTickets.length;
         });
-        
+
         return matchingPack || null;
     }, [selectedPack, selectedTickets.length, raffle?.packs]);
 
@@ -132,16 +136,16 @@ const RaffleDetailPage = () => {
             // Si hay un paquete seleccionado explícitamente, usar su precio
             return selectedPack.price * packQuantity;
         }
-        
+
         // Si la selección manual coincide con un paquete, aplicar su precio
         if (matchedPack) {
             return matchedPack.price;
         }
-        
+
         // Si no hay paquete, usar boletos individuales
         return selectedTickets.length * pricePerTicket;
     }, [selectedPack, packQuantity, selectedTickets.length, pricePerTicket, matchedPack]);
-    
+
     // Calcular ahorro si se aplicó un paquete automáticamente
     const savingsFromPack = useMemo(() => {
         if (!matchedPack || selectedPack) return 0;
@@ -182,17 +186,17 @@ const RaffleDetailPage = () => {
     // Incluir TODAS las dependencias que se usan: imageUrl, heroImage, gallery.length
     const raffleImages = useMemo(() => {
         if (!raffle) return ['https://images.unsplash.com/photo-1513885535751-8b9238bd345a?w=800&h=600&fit=crop'];
-        
+
         const allImages: string[] = [];
-        
+
         if (raffle.imageUrl) {
             allImages.push(raffle.imageUrl);
         }
-        
+
         if (raffle.heroImage && !allImages.includes(raffle.heroImage)) {
             allImages.push(raffle.heroImage);
         }
-        
+
         if (raffle.gallery && Array.isArray(raffle.gallery) && raffle.gallery.length > 0) {
             raffle.gallery.forEach(img => {
                 if (!allImages.includes(img)) {
@@ -200,14 +204,59 @@ const RaffleDetailPage = () => {
                 }
             });
         }
-        
+
         if (allImages.length === 0) {
             return ['https://images.unsplash.com/photo-1513885535751-8b9238bd345a?w=800&h=600&fit=crop'];
         }
-        
+
         return allImages;
     }, [raffle?.id, raffle?.imageUrl, raffle?.heroImage, raffle?.gallery?.length]);
-    
+
+    // Casino Logic
+    const handleRandomSelect = useCallback((quantity: number) => {
+        if (!raffle || !raffle.tickets) return;
+
+        // 1. Obtener todos los boletos disponibles
+        const totalTickets = raffle.tickets;
+        const allTickets = Array.from({ length: totalTickets }, (_, i) => i + 1);
+
+        // Usar Set para búsqueda rápida de ocupados
+        const occupiedSet = new Set(occupiedTickets);
+        const availableTickets = allTickets.filter(t => !occupiedSet.has(t));
+
+        if (availableTickets.length < quantity) {
+            toastRef.current.error('No hay suficientes boletos', `Solo quedan ${availableTickets.length} boletos disponibles.`);
+            return;
+        }
+
+        // 2. Seleccionar al azar
+        const shuffled = [...availableTickets].sort(() => 0.5 - Math.random());
+        const selected = shuffled.slice(0, quantity);
+
+        // 3. Actualizar estado
+        setSelectedTickets(selected);
+        setSelectedPack(null); // Limpiar selección de paquete si existe
+        setLastRandomQuantity(quantity);
+        setShowSpinResult(true);
+
+        // Track AddToCart for random selection
+        const pricePerTicket = raffle.price || raffle.packs?.find(p => p.tickets === 1 || p.q === 1)?.price || 50;
+        const totalValue = selected.length * pricePerTicket;
+        metaPixelService.trackAddToCart(raffle.id, selected, totalValue);
+
+    }, [raffle, occupiedTickets]);
+
+    const handleSpinAgain = useCallback(() => {
+        handleRandomSelect(lastRandomQuantity);
+    }, [handleRandomSelect, lastRandomQuantity]);
+
+    const handleBuyRandom = useCallback(() => {
+        if (!raffle) return;
+        const url = `/comprar/${raffle.slug}?tickets=${selectedTickets.join(',')}`;
+        // Navegar directamente a la página de compra
+        window.location.href = url; // Usamos window.location para asegurar navegación completa, o useNavigate si estuviera disponible aquí
+    }, [raffle, selectedTickets]);
+
     // AHORA SÍ podemos hacer returns condicionales después de todos los hooks
     if (loading) return <div className="w-full h-screen flex items-center justify-center bg-background-primary"><Spinner /></div>;
     if (!raffle) return <PageAnimator><div className="text-center py-20"><h2 className="text-2xl text-white">Sorteo no encontrado.</h2></div></PageAnimator>;
@@ -218,7 +267,7 @@ const RaffleDetailPage = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
                     {/* Main content */}
                     <div className="lg:col-span-3">
-                        <RaffleGallery 
+                        <RaffleGallery
                             images={raffleImages}
                             title={raffle.title}
                             className="w-full max-w-2xl mx-auto mb-6"
@@ -227,7 +276,7 @@ const RaffleDetailPage = () => {
                             <h1 className="text-3xl font-bold mb-4">{raffle.title}</h1>
                             <p className="text-slate-300 mb-6">{raffle.description || 'Participa en esta increíble rifa'}</p>
                         </div>
-                        
+
                         {/* Bonos y Premios Adicionales */}
                         <BonusesCard bonuses={raffle.bonuses || []} className="mb-6" />
                     </div>
@@ -240,8 +289,8 @@ const RaffleDetailPage = () => {
                                 <CountdownTimer targetDate={raffle.drawDate} />
                                 <div className="my-6">
                                     <div className="w-full bg-slate-700 rounded-full h-2.5">
-                                        <motion.div 
-                                            className="bg-accent h-2.5 rounded-full" 
+                                        <motion.div
+                                            className="bg-accent h-2.5 rounded-full"
                                             initial={{ width: 0 }}
                                             animate={{ width: `${progress}%` }}
                                             transition={{ duration: 1, ease: 'easeOut' }}
@@ -261,17 +310,17 @@ const RaffleDetailPage = () => {
                                         />
                                     </div>
                                 )}
-                                
+
                                 <div className="text-center mb-4">
                                     {!selectedPack && (
                                         <>
-                                            <p 
+                                            <p
                                                 className="mb-2"
                                                 style={{ color: preCalculatedTextColors.description }}
                                             >
                                                 Selecciona tus boletos de la tabla de abajo para comenzar.
                                             </p>
-                                            <div 
+                                            <div
                                                 className="rounded-lg p-3 mb-4 relative overflow-hidden"
                                                 style={{
                                                     background: appearance?.colors?.accent || '#00ff00',
@@ -284,13 +333,13 @@ const RaffleDetailPage = () => {
                                                         background: `radial-gradient(circle at center, ${appearance?.colors?.accent || '#00ff00'} 0%, transparent 70%)`
                                                     }}
                                                 />
-                                                <p 
+                                                <p
                                                     className="text-sm relative z-10"
                                                     style={{ color: preCalculatedTextColors.description }}
                                                 >
                                                     Precio por boleto:
                                                 </p>
-                                                <p 
+                                                <p
                                                     className="text-xl font-bold relative z-10"
                                                     style={{ color: preCalculatedTextColors.title }}
                                                 >
@@ -314,7 +363,7 @@ const RaffleDetailPage = () => {
                                     )}
                                 </div>
                             </div>
-                            
+
                             {/* Selector de boletos individuales - solo si no hay paquete seleccionado */}
                             {!selectedPack && (
                                 <TicketSelector
@@ -326,7 +375,7 @@ const RaffleDetailPage = () => {
                                     onTicketClick={handleTicketClick}
                                 />
                             )}
-                            
+
                             {/* Purchase Summary */}
                             {(selectedTickets.length > 0 || selectedPack) && (
                                 <div className="bg-background-secondary p-6 rounded-lg border border-slate-700/50 shadow-lg">
@@ -403,7 +452,7 @@ const RaffleDetailPage = () => {
                                         {boletosAdicionales > 0 && (
                                             <div className="bg-green-900/20 border border-green-700/50 rounded-lg p-3 mt-3">
                                                 <p className="text-green-400 text-sm font-medium text-center">
-                                                    🎯 Recibirás {selectedTickets.length + boletosAdicionales} boletos en total<br/>
+                                                    🎯 Recibirás {selectedTickets.length + boletosAdicionales} boletos en total<br />
                                                     ({selectedTickets.length} comprados + {boletosAdicionales} de regalo)
                                                 </p>
                                             </div>
@@ -421,19 +470,33 @@ const RaffleDetailPage = () => {
                     </div>
                 </div>
             </div>
-                <StickyPurchaseBar 
-                    raffleSlug={raffle.slug}
-                    selectedTickets={selectedTickets}
-                    totalPrice={totalPrice}
-                    onRemoveTicket={handleTicketClick}
-                    isSubmitting={false}
-                    raffle={raffle}
-                    selectedPack={selectedPack}
-                    packQuantity={packQuantity}
-                    onClearPack={() => setSelectedPack(null)}
-                    matchedPack={matchedPack}
-                    savingsFromPack={savingsFromPack}
-                />
+            <StickyPurchaseBar
+                raffleSlug={raffle.slug}
+                selectedTickets={selectedTickets}
+                totalPrice={totalPrice}
+                onRemoveTicket={handleTicketClick}
+                isSubmitting={false}
+                raffle={raffle}
+                selectedPack={selectedPack}
+                packQuantity={packQuantity}
+                onClearPack={() => setSelectedPack(null)}
+                matchedPack={matchedPack}
+                savingsFromPack={savingsFromPack}
+            />
+
+            {/* Casino Button & Result */}
+            <CasinoButton onSelect={handleRandomSelect} />
+
+            <AnimatePresence>
+                {showSpinResult && (
+                    <CasinoSpinResult
+                        selectedCount={selectedTickets.length}
+                        onBuy={handleBuyRandom}
+                        onSpinAgain={handleSpinAgain}
+                        onClose={() => setShowSpinResult(false)}
+                    />
+                )}
+            </AnimatePresence>
         </PageAnimator>
     );
 };
