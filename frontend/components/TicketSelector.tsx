@@ -27,7 +27,8 @@ type ScrollGridData = {
     createTicketNode: (ticket: number, isOccupied: boolean, isSelected: boolean) => React.ReactNode;
 };
 
-const CELL_GAP = 8;
+// Increased gap for better touch targets
+const CELL_GAP = 12;
 const MIN_SCROLL_HEIGHT = 320;
 
 const VirtualTicketCell: React.FC<GridChildComponentProps<ScrollGridData>> = ({ columnIndex, rowIndex, style, data }) => {
@@ -82,7 +83,7 @@ const TicketSelector = ({ totalTickets, occupiedTickets, selectedTickets, onTick
     const [currentPage, setCurrentPage] = useState(1);
     const ticketsPerPage = 50;
     const occupiedSet = useMemo(() => new Set(occupiedTickets), [occupiedTickets]);
-    
+
     // Usar colores pre-calculados (optimización de rendimiento)
     const backgroundColor = appearance?.colors?.backgroundPrimary || '#1a1a1a';
     const accentColor = appearance?.colors?.accent || '#00ff00';
@@ -162,50 +163,57 @@ const TicketSelector = ({ totalTickets, occupiedTickets, selectedTickets, onTick
     const selectedSet = useMemo(() => new Set(selectedTickets), [selectedTickets]);
 
     const createTicketNode = useCallback((ticket: number, isOccupied: boolean, isSelected: boolean) => {
-        const baseClasses = 'relative p-1 text-center rounded-md text-sm cursor-pointer transition-all duration-200 flex items-center justify-center aspect-square';
-        
+        // Increased font size and weight for better readability
+        const baseClasses = 'relative p-1 text-center rounded-xl text-base font-bold cursor-pointer transition-all duration-200 flex items-center justify-center aspect-square shadow-sm';
+
         // Estilos dinámicos basados en el estado
         let bgStyle: React.CSSProperties = {};
         let textStyle: React.CSSProperties = {};
-        
+
         if (isOccupied) {
-            bgStyle = { background: 'rgba(100, 100, 100, 0.3)' };
-            textStyle = { color: 'rgba(150, 150, 150, 0.5)' };
+            bgStyle = { background: 'rgba(50, 50, 50, 0.3)', border: '1px solid rgba(100, 100, 100, 0.2)' };
+            textStyle = { color: 'rgba(150, 150, 150, 0.3)' };
         } else if (isSelected) {
-            bgStyle = { background: accentColor };
+            bgStyle = {
+                background: accentColor,
+                boxShadow: `0 0 15px ${accentColor}60`,
+                transform: 'scale(1.05)',
+                zIndex: 10
+            };
             // Usar color pre-calculado para boletos seleccionados
             textStyle = { color: preCalculatedTextColors.title };
         } else {
             bgStyle = {
-                background: backgroundColor,
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
                 position: 'relative' as const,
                 overflow: 'hidden' as const
             };
             textStyle = { color: textColor };
         }
-        
+
         const stateClasses = isOccupied
-            ? 'cursor-not-allowed line-through'
+            ? 'cursor-not-allowed'
             : isSelected
-                ? 'font-bold shadow-neon-accent'
-                : 'hover:shadow-neon-accent';
+                ? 'font-extrabold'
+                : 'hover:bg-white/10 hover:border-white/20';
 
         const ticketContent = (
             <>
                 {isSelected && (
-                    <div className="absolute inset-0 flex items-center justify-center z-10">
-                        <Check size={16} style={{ color: textStyle.color }} />
+                    <div className="absolute -top-1 -right-1 bg-white text-black rounded-full p-0.5 shadow-sm z-20">
+                        <Check size={12} strokeWidth={4} />
                     </div>
                 )}
-                <span 
-                    className={isSelected ? 'opacity-0' : 'opacity-100 relative z-10'}
+                <span
+                    className="relative z-10"
                     style={textStyle}
                 >
                     {String(ticket).padStart(ticketPadding, '0')}
                 </span>
             </>
         );
-        
+
         if (mobile) {
             return (
                 <div
@@ -223,6 +231,7 @@ const TicketSelector = ({ totalTickets, occupiedTickets, selectedTickets, onTick
                 className={`${baseClasses} ${stateClasses}`}
                 style={bgStyle}
                 onClick={() => !isOccupied && onTicketClick(ticket)}
+                whileHover={!isOccupied ? { scale: 1.1, zIndex: 20 } : {}}
                 whileTap={{ scale: isOccupied ? 1 : 0.9 }}
             >
                 <AnimatePresence>
@@ -259,19 +268,20 @@ const TicketSelector = ({ totalTickets, occupiedTickets, selectedTickets, onTick
     }, [listingMode, orderedTickets, totalDisplayTickets, currentPage, ticketsPerPage, occupiedSet, selectedSet, createTicketNode]);
 
     const columns = useMemo(() => {
-        if (containerWidth >= 900) return 10;
-        if (containerWidth >= 720) return 9;
-        if (containerWidth >= 640) return 8;
-        if (containerWidth >= 520) return 6;
-        if (containerWidth >= 420) return 5;
-        return 4;
+        // Optimized for mobile: fewer columns = bigger buttons
+        if (containerWidth >= 1024) return 10;
+        if (containerWidth >= 768) return 8;
+        if (containerWidth >= 640) return 7;
+        if (containerWidth >= 480) return 6;
+        if (containerWidth >= 350) return 5; // Standard mobile
+        return 4; // Very small screens
     }, [containerWidth]);
 
     const cellWidth = useMemo(() => {
         if (columns <= 0 || containerWidth <= 0) return 64;
         const totalGap = CELL_GAP * (columns - 1);
         const availableWidth = Math.max(containerWidth - totalGap, 0);
-        return Math.max(Math.floor(availableWidth / columns), 48);
+        return Math.max(Math.floor(availableWidth / columns), 48); // Ensure minimum touch target size
     }, [columns, containerWidth]);
 
     const gridWidth = useMemo(() => {
@@ -305,33 +315,32 @@ const TicketSelector = ({ totalTickets, occupiedTickets, selectedTickets, onTick
     const Legend = () => {
         const legendTextColor = preCalculatedTextColors.description;
         return (
-            <div 
+            <div
                 className="flex flex-wrap justify-center items-center gap-x-6 gap-y-2 mb-4 text-sm"
                 style={{ color: legendTextColor }}
             >
                 <div className="flex items-center gap-2">
-                    <div 
-                        className="w-4 h-4 rounded-full border"
+                    <div
+                        className="w-4 h-4 rounded-full border border-white/20"
                         style={{
-                            background: backgroundColor,
-                            borderColor: accentColor + '60'
+                            background: 'rgba(255, 255, 255, 0.05)',
                         }}
                     />
                     <span>Disponible</span>
                 </div>
                 <div className="flex items-center gap-2">
-                    <div 
-                        className="w-4 h-4 rounded-full"
+                    <div
+                        className="w-4 h-4 rounded-full shadow-sm"
                         style={{ background: accentColor }}
                     />
                     <span>Seleccionado</span>
                 </div>
                 <div className="flex items-center gap-2">
-                    <div 
-                        className="w-4 h-4 rounded-full line-through"
-                        style={{ background: 'rgba(100, 100, 100, 0.3)' }}
+                    <div
+                        className="w-4 h-4 rounded-full"
+                        style={{ background: 'rgba(50, 50, 50, 0.5)' }}
                     />
-                    <span>Vendido</span>
+                    <span className="opacity-50">Vendido</span>
                 </div>
             </div>
         );
@@ -341,84 +350,89 @@ const TicketSelector = ({ totalTickets, occupiedTickets, selectedTickets, onTick
 
     const containerBgColor = appearance?.colors?.backgroundPrimary || '#1a1a1a';
     const containerTextColor = preCalculatedTextColors.description;
-    
+
     return (
-        <div 
-            className="p-4 rounded-lg shadow-lg relative overflow-hidden"
+        <div
+            className="p-4 rounded-xl shadow-lg relative overflow-hidden"
             style={{
                 background: containerBgColor,
-                border: `1px solid ${appearance?.colors?.accent || '#00ff00'}40`,
-                boxShadow: `0 0 40px -10px ${appearance?.colors?.accent || '#00ff00'}30`
+                border: `1px solid ${appearance?.colors?.accent || '#00ff00'}20`,
+                boxShadow: `0 0 40px -10px ${appearance?.colors?.accent || '#00ff00'}10`
             }}
         >
             <div
-                className="absolute inset-0 opacity-10 pointer-events-none"
+                className="absolute inset-0 opacity-5 pointer-events-none"
                 style={{
-                    background: `radial-gradient(circle at top, ${appearance?.colors?.accent || '#00ff00'}20 0%, transparent 50%)`
+                    background: `radial-gradient(circle at top, ${appearance?.colors?.accent || '#00ff00'}40 0%, transparent 60%)`
                 }}
             />
             <div className="relative z-10">
                 <Legend />
-            <div ref={containerRef}>
-                {listingMode === 'scroll' ? (
-                    showScrollGrid ? (
-                        <Grid
-                            columnCount={columns}
-                            columnWidth={cellWidth + CELL_GAP}
-                            height={gridHeight}
-                            rowCount={rowCount}
-                            rowHeight={cellWidth + CELL_GAP}
-                            width={gridWidth}
-                            itemData={itemData}
-                            className="mx-auto"
-                        >
-                            {VirtualTicketCell}
-                        </Grid>
+                <div ref={containerRef}>
+                    {listingMode === 'scroll' ? (
+                        showScrollGrid ? (
+                            <Grid
+                                columnCount={columns}
+                                columnWidth={cellWidth + CELL_GAP}
+                                height={gridHeight}
+                                rowCount={rowCount}
+                                rowHeight={cellWidth + CELL_GAP}
+                                width={gridWidth}
+                                itemData={itemData}
+                                className="mx-auto custom-scrollbar"
+                            >
+                                {VirtualTicketCell}
+                            </Grid>
+                        ) : (
+                            <div className="text-center text-sm text-slate-400 py-6">
+                                {totalDisplayTickets > 0
+                                    ? 'Cargando boletos...'
+                                    : 'No hay boletos disponibles en este momento.'}
+                            </div>
+                        )
                     ) : (
-                        <div className="text-center text-sm text-slate-400 py-6">
-                            {totalDisplayTickets > 0
-                                ? 'Cargando boletos...'
-                                : 'No hay boletos disponibles en este momento.'}
+                        <div
+                            className="grid gap-3"
+                            style={{
+                                gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`
+                            }}
+                        >
+                            {paginatedTickets}
                         </div>
-                    )
-                ) : (
-                    <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
-                        {paginatedTickets}
+                    )}
+                </div>
+                {listingMode === 'paginado' && (
+                    <div
+                        className="flex justify-center items-center gap-4 mt-6"
+                        style={{ color: containerTextColor }}
+                    >
+                        <button
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                            className="px-4 py-2 rounded-lg disabled:opacity-50 font-semibold transition-transform active:scale-95"
+                            style={{
+                                background: appearance?.colors?.action || '#0066ff',
+                                color: preCalculatedTextColors.title
+                            }}
+                        >
+                            Anterior
+                        </button>
+                        <span className="font-mono font-bold">
+                            {currentPage} / {totalPages}
+                        </span>
+                        <button
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages}
+                            className="px-4 py-2 rounded-lg disabled:opacity-50 font-semibold transition-transform active:scale-95"
+                            style={{
+                                background: appearance?.colors?.action || '#0066ff',
+                                color: preCalculatedTextColors.title
+                            }}
+                        >
+                            Siguiente
+                        </button>
                     </div>
                 )}
-            </div>
-            {listingMode === 'paginado' && (
-                <div 
-                    className="flex justify-center items-center gap-4 mt-4"
-                    style={{ color: containerTextColor }}
-                >
-                    <button
-                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                        disabled={currentPage === 1}
-                        className="px-3 py-1 rounded-md disabled:opacity-50"
-                        style={{
-                            background: appearance?.colors?.action || '#0066ff',
-                            color: preCalculatedTextColors.title
-                        }}
-                    >
-                        Anterior
-                    </button>
-                    <span>
-                        Página {currentPage} de {totalPages}
-                    </span>
-                    <button
-                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                        disabled={currentPage === totalPages}
-                        className="px-3 py-1 rounded-md disabled:opacity-50"
-                        style={{
-                            background: appearance?.colors?.action || '#0066ff',
-                            color: preCalculatedTextColors.title
-                        }}
-                    >
-                        Siguiente
-                    </button>
-                </div>
-            )}
             </div>
         </div>
     );
