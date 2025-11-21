@@ -31,13 +31,12 @@ export class CreateRaffleDto {
   @IsOptional()
   purchaseDescription?: string;
 
-  @IsUrl({}, { message: 'La URL de la imagen debe ser válida' })
+  @IsString({ message: 'La imagen debe ser un texto (URL o base64)' })
   @IsOptional()
   imageUrl?: string;
 
   @IsArray({ message: 'La galería debe ser un array' })
   @IsOptional()
-  @IsUrl({}, { each: true, message: 'Cada URL de la galería debe ser válida' })
   gallery?: string[];
 
   @IsNumber({}, { message: 'El precio debe ser un número' })
@@ -106,13 +105,12 @@ export class UpdateRaffleDto {
   @IsOptional()
   purchaseDescription?: string;
 
-  @IsUrl({}, { message: 'La URL de la imagen debe ser válida' })
+  @IsString({ message: 'La imagen debe ser un texto (URL o base64)' })
   @IsOptional()
   imageUrl?: string;
 
   @IsArray({ message: 'La galería debe ser un array' })
   @IsOptional()
-  @IsUrl({}, { each: true, message: 'Cada URL de la galería debe ser válida' })
   gallery?: string[];
 
   @IsNumber({}, { message: 'El precio debe ser un número' })
