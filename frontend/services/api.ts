@@ -1224,6 +1224,26 @@ export const markOrderPaid = async (id: string, paymentMethod?: string, notes?: 
     return localApi.updateOrder(id, { status: 'PAID' });
 };
 
+export const adminValidateTickets = async (raffleId: string, ticketNumbers: number[]): Promise<number[]> => {
+    const response = await fetch(`${API_URL}/admin/raffles/${raffleId}/validate-tickets`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ ticketNumbers }),
+    });
+    const data = await handleResponse(response);
+    return data.takenTickets;
+};
+
+export const adminImportTickets = async (raffleId: string, tickets: { nombre: string; telefono: string; estado: string; boleto: number }[]): Promise<any> => {
+    const response = await fetch(`${API_URL}/admin/raffles/${raffleId}/import`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ tickets }),
+    });
+    return handleResponse(response);
+};
+
+
 export const editOrder = async (id: string, data: { customer?: any; tickets?: number[]; notes?: string }): Promise<Order> => {
     try {
         console.log('🚀 Trying backend for edit order...');

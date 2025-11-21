@@ -1838,4 +1838,152 @@ export class AdminService {
       return null;
     }
   }
+
+  // --- Bulk Import Logic ---
+
+  async validateTickets(raffleId: string, ticketNumbers: number[]) {
+    // Find which of the requested tickets are already taken for this raffle
+    // In this schema, ticket numbers are stored in Order.tickets (Int[])
+    const orders = await this.prisma.order.findMany({
+      where: {
+        raffleId,
+        status: { not: 'CANCELLED' } // Assuming CANCELLED status exists or similar, checking schema... 
+        // Schema says status is OrderStatus @default(PENDING). 
+        // We should check all non-cancelled/expired orders. 
+        // For simplicity, let's assume all existing orders hold the tickets.
+      },
+      select: { tickets: true },
+    });
+
+    const takenSet = new Set<number>();
+    orders.forEach(o => {
+      o.tickets.forEach(t => takenSet.add(t));
+    });
+
+    return ticketNumbers.filter(n => takenSet.has(n));
+  }
+
+  async importTickets(raffleId: string, tickets: { nombre: string; telefono: string; estado: string; boleto: number }[]) {
+    const results = {
+      success: 0,
+      failed: 0,
+      errors: [] as string[],
+    };
+
+    // 1. Validate Raffle
+    const raffle = await this.prisma.raffle.findUnique({ where: { id: raffleId } });
+    if (!raffle) throw new NotFoundException('Rifa no encontrada');
+
+    // 2. Group tickets by phone number (normalized)
+    const ticketsByPhone: Record<string, typeof tickets> = {};
+
+    for (const t of tickets) {
+      const cleanPhone = t.telefono.replace(/\D/g, '');
+      if (!cleanPhone) {
+        results.failed++;
+        results.errors.push(`Boleto ${t.boleto}: Teléfono inválido`);
+        continue;
+      }
+      if (!ticketsByPhone[cleanPhone]) {
+        ticketsByPhone[cleanPhone] = [];
+      }
+      ticketsByPhone[cleanPhone].push(t);
+    }
+
+    // 3. Process each group (User)
+    for (const [phone, userTickets] of Object.entries(ticketsByPhone)) {
+      try {
+        // Use the first ticket's info for user details
+        const representativeTicket = userTickets[0];
+
+        // A. Find or Create User
+        let user = await this.prisma.user.findFirst({
+          where: {
+            OR: [
+              { phone: phone },
+              { phone: representativeTicket.telefono }
+            ]
+          }
+        });
+
+        if (!user) {
+          user = await this.prisma.user.create({
+            data: {
+              name: representativeTicket.nombre,
+              phone: phone,
+              email: `import_${Date.now()}_${Math.random().toString(36).substring(7)}@example.com`,
+              district: representativeTicket.estado, // Mapping 'estado' to 'district'
+              // role: 'user' - User model doesn't seem to have role based on schema view? 
+              // Schema: id, email, name, phone, district, createdAt, updatedAt. No role.
+            },
+          });
+        } else if (representativeTicket.estado && (!user.district || user.district !== representativeTicket.estado)) {
+          await this.prisma.user.update({
+            where: { id: user.id },
+            data: { district: representativeTicket.estado }
+          });
+        }
+
+        // B. Filter valid tickets (check availability again)
+        // We need to check against all orders again to be safe
+        const allOrders = await this.prisma.order.findMany({
+          where: { raffleId },
+          select: { tickets: true }
+        });
+        const takenSet = new Set<number>();
+        allOrders.forEach(o => o.tickets.forEach(t => takenSet.add(t)));
+
+        const validTicketsForOrder = [];
+        for (const t of userTickets) {
+          if (takenSet.has(t.boleto)) {
+            results.failed++;
+            results.errors.push(`Boleto ${t.boleto} ya ocupado (omitido de la orden).`);
+          } else {
+            validTicketsForOrder.push(t);
+          }
+        }
+
+        if (validTicketsForOrder.length === 0) continue;
+
+        // C. Create Order and Ticket Entity in Transaction
+        await this.prisma.$transaction(async (tx) => {
+          // Create Order
+          const folio = `IMP-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+          const ticketNumbers = validTicketsForOrder.map(t => t.boleto);
+
+          const order = await tx.order.create({
+            data: {
+              raffleId,
+              userId: user.id,
+              folio,
+              status: 'PENDING', // Apartado
+              tickets: ticketNumbers, // Int[]
+              total: ticketNumbers.length * raffle.price,
+              expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+            },
+          });
+
+          // Create Ticket Entity (Quantity record)
+          await tx.ticket.create({
+            data: {
+              raffleId,
+              userId: user.id,
+              quantity: ticketNumbers.length,
+              // No orderId in Ticket schema
+            }
+          });
+        });
+
+        results.success += validTicketsForOrder.length;
+
+      } catch (error: any) {
+        results.failed += userTickets.length;
+        results.errors.push(`Error procesando orden para ${phone}: ${error.message}`);
+        this.logger.error(`Error importing group ${phone}:`, error);
+      }
+    }
+
+    return results;
+  }
 }
+

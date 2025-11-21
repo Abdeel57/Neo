@@ -18,7 +18,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 @Controller('admin')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+  constructor(private readonly adminService: AdminService) { }
 
   // Dashboard
   @Roles('admin', 'superadmin')
@@ -39,7 +39,7 @@ export class AdminController {
     try {
       const pageNum = page ? parseInt(page, 10) : 1;
       const limitNum = limit ? Math.min(parseInt(limit, 10), 100) : 50; // Máximo 100
-      
+
       const result = await this.adminService.getAllOrders(pageNum, limitNum, status, raffleId);
       return result;
     } catch (error) {
@@ -47,7 +47,7 @@ export class AdminController {
       throw new HttpException('Error al obtener las órdenes', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
-  
+
   @Roles('ventas', 'admin', 'superadmin')
   @Get('orders/:id')
   async getOrderById(@Param('id') id: string) {
@@ -58,7 +58,7 @@ export class AdminController {
       throw new HttpException('Error al obtener la orden', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
-  
+
   @Roles('admin', 'superadmin')
   @Patch('orders/:folio/status')
   updateOrderStatus(@Param('folio') folio: string, @Body() updateStatusDto: UpdateOrderStatusDto) {
@@ -161,7 +161,7 @@ export class AdminController {
       );
     }
   }
-  
+
   @Roles('admin', 'superadmin')
   @Get('raffles/finished')
   getFinishedRaffles() {
@@ -202,15 +202,15 @@ export class AdminController {
         packsIsArray: Array.isArray(updateRaffleDto.packs),
         bonusesIsArray: Array.isArray(updateRaffleDto.bonuses)
       });
-      
+
       const raffle = await this.adminService.updateRaffle(id, updateRaffleDto);
-      
+
       console.log('✅ Controller returning updated raffle:', {
         id: raffle.id,
         packs: raffle.packs,
         bonuses: raffle.bonuses
       });
-      
+
       return {
         success: true,
         message: 'Rifa actualizada exitosamente',
@@ -253,11 +253,11 @@ export class AdminController {
   ) {
     try {
       const result = await this.adminService.downloadTickets(raffleId, 'apartados', formato);
-      
+
       // Configurar headers para la descarga
       res.setHeader('Content-Type', result.contentType);
       res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
-      
+
       // Enviar el contenido
       if (formato === 'excel') {
         // Para Excel, el contenido viene en base64, convertirlo a buffer
@@ -267,7 +267,7 @@ export class AdminController {
         // Para CSV, enviar como string con UTF-8 BOM
         res.send(Buffer.from(result.content, 'utf-8'));
       }
-      
+
     } catch (error) {
       console.error('❌ Error downloading apartados tickets:', error);
       throw new HttpException(
@@ -286,11 +286,11 @@ export class AdminController {
   ) {
     try {
       const result = await this.adminService.downloadTickets(raffleId, 'pagados', formato);
-      
+
       // Configurar headers para la descarga
       res.setHeader('Content-Type', result.contentType);
       res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
-      
+
       // Enviar el contenido
       if (formato === 'excel') {
         // Para Excel, el contenido viene en base64, convertirlo a buffer
@@ -300,7 +300,7 @@ export class AdminController {
         // Para CSV, enviar como string con UTF-8 BOM
         res.send(Buffer.from(result.content, 'utf-8'));
       }
-      
+
     } catch (error) {
       console.error('❌ Error downloading pagados tickets:', error);
       throw new HttpException(
@@ -309,14 +309,14 @@ export class AdminController {
       );
     }
   }
-  
+
   // Winners - solo admin y superadmin
   @Roles('admin', 'superadmin')
   @Get('winners')
   getAllWinners() {
     return this.adminService.getAllWinners();
   }
-  
+
   @Roles('admin', 'superadmin')
   @Post('winners/draw')
   drawWinner(@Body('raffleId') raffleId: string) {
@@ -407,7 +407,7 @@ export class AdminController {
       );
     }
   }
-  
+
   // Límite de 10 creaciones de usuarios por minuto
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Roles('admin', 'superadmin')
@@ -437,7 +437,7 @@ export class AdminController {
       );
     }
   }
-  
+
   @Roles('admin', 'superadmin')
   @Patch('users/:id')
   async updateUser(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
@@ -459,17 +459,17 @@ export class AdminController {
         throw error;
       }
       // Determinar el status code apropiado
-      const statusCode = error instanceof Error && error.message.includes('not found') 
-        ? HttpStatus.NOT_FOUND 
+      const statusCode = error instanceof Error && error.message.includes('not found')
+        ? HttpStatus.NOT_FOUND
         : HttpStatus.BAD_REQUEST;
-      
+
       throw new HttpException(
         error instanceof Error ? error.message : 'Error al actualizar usuario',
         statusCode
       );
     }
   }
-  
+
   @Roles('admin', 'superadmin')
   @Delete('users/:id')
   async deleteUser(@Param('id') id: string) {
@@ -490,17 +490,17 @@ export class AdminController {
         throw error;
       }
       // Determinar el status code apropiado
-      const statusCode = error instanceof Error && error.message.includes('not found') 
-        ? HttpStatus.NOT_FOUND 
+      const statusCode = error instanceof Error && error.message.includes('not found')
+        ? HttpStatus.NOT_FOUND
         : HttpStatus.BAD_REQUEST;
-      
+
       throw new HttpException(
         error instanceof Error ? error.message : 'Error al eliminar usuario',
         statusCode
       );
     }
   }
-  
+
   // Customers - ventas puede ver para corregir errores
   @Roles('ventas', 'admin', 'superadmin')
   @Get('customers')
@@ -543,6 +543,48 @@ export class AdminController {
       console.error('❌ Controller error updating settings:', error);
       throw new HttpException(
         error.message || 'Error al actualizar configuración',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  // --- Bulk Import Endpoints ---
+
+  @Roles('admin', 'superadmin')
+  @Post('raffles/:id/validate-tickets')
+  async validateTickets(
+    @Param('id') id: string,
+    @Body() body: { ticketNumbers: number[] }
+  ) {
+    try {
+      const takenTickets = await this.adminService.validateTickets(id, body.ticketNumbers);
+      return { takenTickets };
+    } catch (error) {
+      console.error('Error validating tickets:', error);
+      throw new HttpException(
+        error instanceof Error ? error.message : 'Error al validar boletos',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  @Roles('admin', 'superadmin')
+  @Post('raffles/:id/import')
+  async importTickets(
+    @Param('id') id: string,
+    @Body() body: { tickets: { nombre: string; telefono: string; estado: string; boleto: number }[] }
+  ) {
+    try {
+      const result = await this.adminService.importTickets(id, body.tickets);
+      return {
+        success: true,
+        message: `Importación completada: ${result.success} exitosos, ${result.failed} fallidos`,
+        data: result
+      };
+    } catch (error) {
+      console.error('Error importing tickets:', error);
+      throw new HttpException(
+        error instanceof Error ? error.message : 'Error al importar boletos',
         HttpStatus.INTERNAL_SERVER_ERROR
       );
     }

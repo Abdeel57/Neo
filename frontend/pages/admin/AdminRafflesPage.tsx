@@ -9,6 +9,7 @@ import AdvancedRaffleForm from '../../components/admin/AdvancedRaffleForm';
 import MobileOptimizedRaffleForm from '../../components/admin/MobileOptimizedRaffleForm';
 import { useToast } from '../../hooks/useToast';
 import ToastContainer from '../../components/ToastContainer';
+import ImportTicketsModal from '../../components/admin/ImportTicketsModal';
 
 // Hook para detectar dispositivos móviles
 const useIsMobile = () => {
@@ -36,6 +37,10 @@ const AdminRafflesPage: React.FC = () => {
     const [editingRaffle, setEditingRaffle] = useState<Partial<Raffle> | null>(null);
     const [refreshing, setRefreshing] = useState(false);
 
+    // Import Modal State
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    const [selectedRaffleId, setSelectedRaffleId] = useState<string | null>(null);
+
     const fetchRaffles = async () => {
         setLoading(true);
         try {
@@ -43,8 +48,6 @@ const AdminRafflesPage: React.FC = () => {
             const data = await getRaffles();
             console.log('✅ Raffles fetched:', data.length);
             if (data.length > 0) {
-                console.log('📝 First raffle ID:', data[0]?.id);
-                console.log('📝 First raffle title:', data[0]?.title);
                 // Verificar que los IDs sean válidos (no "1", "2", etc. de datos locales)
                 const hasInvalidIds = data.some(r => r.id === '1' || r.id === '2' || r.id === '3');
                 if (hasInvalidIds) {
@@ -57,8 +60,7 @@ const AdminRafflesPage: React.FC = () => {
             setRaffles(data);
         } catch (error) {
             console.error('❌ Error fetching raffles:', error);
-            toast.error('Error al cargar rifas', 'No se pudieron cargar las rifas desde el backend. Verifica la conexión.');
-            setRaffles([]); // No usar datos locales
+            toast.error('Error', 'No se pudieron cargar las rifas');
         } finally {
             setLoading(false);
         }
