@@ -6,6 +6,7 @@ import { Plus, RefreshCw, Download, Upload } from 'lucide-react';
 import Spinner from '../../components/Spinner';
 import OptimizedRaffleManager from '../../components/admin/OptimizedRaffleManager';
 import AdvancedRaffleForm from '../../components/admin/AdvancedRaffleForm';
+import ImportTicketsModal from '../../components/admin/ImportTicketsModal';
 
 const OptimizedAdminRafflesPage: React.FC = () => {
     const [raffles, setRaffles] = useState<Raffle[]>([]);
@@ -13,6 +14,10 @@ const OptimizedAdminRafflesPage: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingRaffle, setEditingRaffle] = useState<Partial<Raffle> | null>(null);
     const [refreshing, setRefreshing] = useState(false);
+
+    // Import Modal State
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    const [selectedRaffleId, setSelectedRaffleId] = useState<string | null>(null);
 
     const fetchRaffles = async () => {
         setLoading(true);
@@ -52,6 +57,16 @@ const OptimizedAdminRafflesPage: React.FC = () => {
         setIsModalOpen(false);
     };
 
+    const handleOpenImportModal = (raffleId: string) => {
+        setSelectedRaffleId(raffleId);
+        setIsImportModalOpen(true);
+    };
+
+    const handleCloseImportModal = () => {
+        setIsImportModalOpen(false);
+        setSelectedRaffleId(null);
+    };
+
     // Función para limpiar datos antes de enviar
     const cleanRaffleData = (data: Raffle) => {
         const gallery = data.gallery || [];
@@ -72,7 +87,7 @@ const OptimizedAdminRafflesPage: React.FC = () => {
     const handleSaveRaffle = async (data: Raffle) => {
         try {
             const cleanedData = cleanRaffleData(data);
-            
+
             if (data.id) {
                 await updateRaffle(data.id!, cleanedData);
             } else {
@@ -114,10 +129,10 @@ const OptimizedAdminRafflesPage: React.FC = () => {
 
     const handleExportRaffles = () => {
         const dataStr = JSON.stringify(raffles, null, 2);
-        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-        
+        const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+
         const exportFileDefaultName = `rifas-${new Date().toISOString().split('T')[0]}.json`;
-        
+
         const linkElement = document.createElement('a');
         linkElement.setAttribute('href', dataUri);
         linkElement.setAttribute('download', exportFileDefaultName);
@@ -159,8 +174,8 @@ const OptimizedAdminRafflesPage: React.FC = () => {
     }
 
     return (
-        <motion.div 
-            initial={{ opacity: 0, y: 20 }} 
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="space-y-4"
         >
@@ -170,7 +185,7 @@ const OptimizedAdminRafflesPage: React.FC = () => {
                     <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Rifas</h1>
                     <p className="text-gray-600 text-sm">Administra tus rifas de forma profesional</p>
                 </div>
-                
+
                 <div className="flex items-center space-x-2">
                     <button
                         onClick={refreshRaffles}
@@ -180,7 +195,7 @@ const OptimizedAdminRafflesPage: React.FC = () => {
                         <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
                         <span className="hidden sm:inline">Actualizar</span>
                     </button>
-                    
+
                     <button
                         onClick={handleExportRaffles}
                         className="flex items-center space-x-2 px-3 py-2 bg-green-100 text-green-700 rounded-xl hover:bg-green-200 transition-all duration-200 text-sm"
@@ -188,7 +203,7 @@ const OptimizedAdminRafflesPage: React.FC = () => {
                         <Download className="w-4 h-4" />
                         <span className="hidden sm:inline">Exportar</span>
                     </button>
-                    
+
                     <button
                         onClick={handleImportRaffles}
                         className="flex items-center space-x-2 px-3 py-2 bg-blue-100 text-blue-700 rounded-xl hover:bg-blue-200 transition-all duration-200 text-sm"
@@ -196,7 +211,7 @@ const OptimizedAdminRafflesPage: React.FC = () => {
                         <Upload className="w-4 h-4" />
                         <span className="hidden sm:inline">Importar</span>
                     </button>
-                    
+
                     <button
                         onClick={() => handleOpenModal()}
                         className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all duration-200 shadow-lg text-sm"
@@ -214,9 +229,10 @@ const OptimizedAdminRafflesPage: React.FC = () => {
                 onDelete={handleDeleteRaffle}
                 onDuplicate={handleDuplicateRaffle}
                 onCreate={() => handleOpenModal()}
+                onImport={handleOpenImportModal}
                 loading={refreshing}
             />
-            
+
             {/* Modal de formulario avanzado */}
             <AnimatePresence>
                 {isModalOpen && (
@@ -228,6 +244,16 @@ const OptimizedAdminRafflesPage: React.FC = () => {
                     />
                 )}
             </AnimatePresence>
+
+            {/* Import Modal */}
+            <ImportTicketsModal
+                isOpen={isImportModalOpen}
+                onClose={handleCloseImportModal}
+                raffleId={selectedRaffleId || ''}
+                onSuccess={() => {
+                    refreshRaffles();
+                }}
+            />
         </motion.div>
     );
 };

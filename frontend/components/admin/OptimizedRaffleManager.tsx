@@ -1,11 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-    Plus, 
-    Search, 
-    Edit3, 
-    Trash2, 
-    Copy, 
+import {
+    Plus,
+    Search,
+    Edit3,
+    Trash2,
+    Copy,
     Calendar,
     Filter,
     Grid3X3,
@@ -14,7 +14,8 @@ import {
     Download,
     FileText,
     FileSpreadsheet,
-    Eye
+    Eye,
+    Upload
 } from 'lucide-react';
 import RaffleAnalytics from './RaffleAnalytics';
 import { Raffle } from '../../types';
@@ -27,6 +28,7 @@ interface OptimizedRaffleManagerProps {
     onDelete: (id: string) => void;
     onDuplicate: (raffle: Raffle) => void;
     onCreate: () => void;
+    onImport?: (raffleId: string) => void;
     loading?: boolean;
 }
 
@@ -36,6 +38,7 @@ const OptimizedRaffleManager: React.FC<OptimizedRaffleManagerProps> = ({
     onDelete,
     onDuplicate,
     onCreate,
+    onImport,
     loading = false
 }) => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -61,7 +64,7 @@ const OptimizedRaffleManager: React.FC<OptimizedRaffleManagerProps> = ({
     const handleDownloadTickets = async (raffleId: string, tipo: 'apartados' | 'pagados', formato: 'csv' | 'excel') => {
         const downloadKey = `${raffleId}-${tipo}-${formato}`;
         setDownloading(downloadKey);
-        
+
         try {
             await downloadTickets(raffleId, tipo, formato);
             toast.success(
@@ -84,7 +87,7 @@ const OptimizedRaffleManager: React.FC<OptimizedRaffleManagerProps> = ({
     const filteredAndSortedRaffles = useMemo(() => {
         let filtered = raffles.filter(raffle => {
             const matchesSearch = raffle.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                (raffle.description || '').toLowerCase().includes(searchTerm.toLowerCase());
+                (raffle.description || '').toLowerCase().includes(searchTerm.toLowerCase());
             const matchesStatus = statusFilter === 'all' || raffle.status === statusFilter;
             return matchesSearch && matchesStatus;
         });
@@ -126,7 +129,7 @@ const OptimizedRaffleManager: React.FC<OptimizedRaffleManagerProps> = ({
                             <p className="text-gray-600">Administra tus rifas</p>
                         </div>
                     </div>
-                    
+
                     <div className="flex gap-3">
                         <button
                             onClick={onCreate}
@@ -227,7 +230,17 @@ const OptimizedRaffleManager: React.FC<OptimizedRaffleManagerProps> = ({
                                     <Edit3 className="w-4 h-4" />
                                     <span>Editar</span>
                                 </button>
-                                
+
+                                {onImport && (
+                                    <button
+                                        onClick={() => onImport(raffle.id)}
+                                        className="flex items-center justify-center space-x-2 px-3 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors text-sm"
+                                    >
+                                        <Upload className="w-4 h-4" />
+                                        <span>Importar</span>
+                                    </button>
+                                )}
+
                                 <button
                                     onClick={() => onDuplicate(raffle)}
                                     className="flex items-center justify-center space-x-2 px-3 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors text-sm"
@@ -235,7 +248,7 @@ const OptimizedRaffleManager: React.FC<OptimizedRaffleManagerProps> = ({
                                     <Copy className="w-4 h-4" />
                                     <span>Duplicar</span>
                                 </button>
-                                
+
                                 <button
                                     onClick={() => onDelete(raffle.id)}
                                     className="flex items-center justify-center space-x-2 px-3 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors text-sm"
@@ -243,7 +256,7 @@ const OptimizedRaffleManager: React.FC<OptimizedRaffleManagerProps> = ({
                                     <Trash2 className="w-4 h-4" />
                                     <span>Eliminar</span>
                                 </button>
-                                
+
                                 <button
                                     onClick={() => handleViewRaffle(raffle)}
                                     className="flex items-center justify-center space-x-2 px-3 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors text-sm"
@@ -311,21 +324,21 @@ const OptimizedRaffleManager: React.FC<OptimizedRaffleManagerProps> = ({
                 </AnimatePresence>
             </div>
 
-                {filteredAndSortedRaffles.length === 0 && (
-                    <div className="text-center py-12">
-                        <div className="text-gray-400 mb-4">
-                            <Calendar className="w-16 h-16 mx-auto" />
-                        </div>
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">No se encontraron rifas</h3>
-                        <p className="text-gray-600 mb-4">Intenta ajustar los filtros o crear una nueva rifa</p>
-                        <button
-                            onClick={onCreate}
-                            className="bg-blue-500 text-white px-6 py-3 rounded-xl hover:bg-blue-600 transition-all duration-200"
-                        >
-                            Crear Nueva Rifa
-                        </button>
+            {filteredAndSortedRaffles.length === 0 && (
+                <div className="text-center py-12">
+                    <div className="text-gray-400 mb-4">
+                        <Calendar className="w-16 h-16 mx-auto" />
                     </div>
-                )}
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No se encontraron rifas</h3>
+                    <p className="text-gray-600 mb-4">Intenta ajustar los filtros o crear una nueva rifa</p>
+                    <button
+                        onClick={onCreate}
+                        className="bg-blue-500 text-white px-6 py-3 rounded-xl hover:bg-blue-600 transition-all duration-200"
+                    >
+                        Crear Nueva Rifa
+                    </button>
+                </div>
+            )}
         </div>
     );
 };
