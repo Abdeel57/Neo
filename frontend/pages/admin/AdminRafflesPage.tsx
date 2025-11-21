@@ -115,7 +115,7 @@ const AdminRafflesPage: React.FC = () => {
         }
 
         const gallery = data.gallery || [];
-        
+
         // Logs detallados para debug - expandir objetos
         console.log('🧹 CLEANING RAFFLE DATA - INICIO');
         console.log('📦 Original packs:', data.packs);
@@ -124,7 +124,7 @@ const AdminRafflesPage: React.FC = () => {
         console.log('🎁 Original bonuses:', data.bonuses);
         console.log('🎁 Bonuses type:', typeof data.bonuses);
         console.log('🎁 Bonuses isArray:', Array.isArray(data.bonuses));
-        
+
         // Procesar packs - asegurar que sea un array o null
         let processedPacks = null;
         if (data.packs) {
@@ -155,7 +155,7 @@ const AdminRafflesPage: React.FC = () => {
                 }
             }
         }
-        
+
         // Procesar bonuses - asegurar que sea un array de strings
         let processedBonuses: string[] = [];
         if (data.bonuses) {
@@ -188,16 +188,17 @@ const AdminRafflesPage: React.FC = () => {
                 }
             }
         }
-        
+
         console.log('✅ PROCESSED DATA');
         console.log('📦 Processed packs:', processedPacks);
         console.log('📦 Packs length:', processedPacks?.length || 0);
         console.log('🎁 Processed bonuses:', processedBonuses);
         console.log('🎁 Bonuses length:', processedBonuses.length);
-        
+
         const cleaned = {
             title: data.title.trim(),
             description: data.description || null,
+            purchaseDescription: data.purchaseDescription || null,
             imageUrl: gallery.length > 0 ? gallery[0] : (data.imageUrl || data.heroImage || null),
             gallery: gallery.length > 0 ? gallery : null,
             price: Number(data.price),
@@ -212,7 +213,7 @@ const AdminRafflesPage: React.FC = () => {
             // NO enviar: heroImage, sold, createdAt, updatedAt
             // Estos no existen en el esquema Prisma o son generados automáticamente
         };
-        
+
         console.log('📤 SENDING TO BACKEND');
         console.log('📤 Full cleaned object:', JSON.stringify(cleaned, null, 2));
         console.log('📦 Packs in cleaned:', cleaned.packs);
@@ -223,15 +224,15 @@ const AdminRafflesPage: React.FC = () => {
     const handleSaveRaffle = async (data: Raffle) => {
         try {
             setRefreshing(true);
-            
+
             console.log('💾 Saving raffle:', {
                 isEdit: !!editingRaffle,
                 originalData: data
             });
-            
+
             const cleanedData = cleanRaffleData(data);
             console.log('✅ Cleaned data:', cleanedData);
-            
+
             let savedRaffle: Raffle;
             if (editingRaffle?.id) {
                 // Asegurar que el ID sea el correcto de la base de datos
@@ -245,7 +246,7 @@ const AdminRafflesPage: React.FC = () => {
                 savedRaffle = await createRaffle(cleanedData);
                 toast.success('¡Rifa creada!', 'La rifa se creó exitosamente');
             }
-            
+
             console.log('✅ RAFFLE SAVED SUCCESSFULLY');
             console.log('✅ Saved raffle object:', JSON.stringify(savedRaffle, null, 2));
             console.log('📦 Saved raffle packs:', savedRaffle.packs);
@@ -254,16 +255,16 @@ const AdminRafflesPage: React.FC = () => {
             console.log('🎁 Saved raffle bonuses:', savedRaffle.bonuses);
             console.log('🎁 Saved bonuses type:', typeof savedRaffle.bonuses);
             console.log('🎁 Saved bonuses isArray:', Array.isArray(savedRaffle.bonuses));
-            
+
             // Parsear el raffle guardado para asegurar que packs y bonuses estén correctos
             const parsedRaffle = parseRaffleDates(savedRaffle);
             console.log('✅ PARSED RAFFLE');
             console.log('📦 Parsed packs:', parsedRaffle.packs);
             console.log('🎁 Parsed bonuses:', parsedRaffle.bonuses);
-            
+
             // Cerrar modal primero
             handleCloseModal();
-            
+
             // IMPORTANTE: Refrescar desde el backend para obtener los datos actualizados
             // Esto asegura que se muestren los cambios correctamente
             console.log('🔄 Refreshing raffles from backend...');
@@ -315,10 +316,10 @@ const AdminRafflesPage: React.FC = () => {
 
     const handleExportRaffles = () => {
         const dataStr = JSON.stringify(raffles, null, 2);
-        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-        
+        const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+
         const exportFileDefaultName = `rifas-${new Date().toISOString().split('T')[0]}.json`;
-        
+
         const linkElement = document.createElement('a');
         linkElement.setAttribute('href', dataUri);
         linkElement.setAttribute('download', exportFileDefaultName);
@@ -361,8 +362,8 @@ const AdminRafflesPage: React.FC = () => {
     }
 
     return (
-        <motion.div 
-            initial={{ opacity: 0, y: 20 }} 
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="space-y-4"
         >
@@ -372,7 +373,7 @@ const AdminRafflesPage: React.FC = () => {
                     <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Rifas</h1>
                     <p className="text-gray-600 text-sm">Administra tus rifas de forma profesional</p>
                 </div>
-                
+
                 <div className="flex items-center space-x-2">
                     <button
                         onClick={refreshRaffles}
@@ -382,7 +383,7 @@ const AdminRafflesPage: React.FC = () => {
                         <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
                         <span className="hidden sm:inline">Actualizar</span>
                     </button>
-                    
+
                     <button
                         onClick={handleExportRaffles}
                         className="flex items-center space-x-2 px-3 py-2 bg-green-100 text-green-700 rounded-xl hover:bg-green-200 transition-all duration-200 text-sm"
@@ -390,7 +391,7 @@ const AdminRafflesPage: React.FC = () => {
                         <Download className="w-4 h-4" />
                         <span className="hidden sm:inline">Exportar</span>
                     </button>
-                    
+
                     <button
                         onClick={handleImportRaffles}
                         className="flex items-center space-x-2 px-3 py-2 bg-blue-100 text-blue-700 rounded-xl hover:bg-blue-200 transition-all duration-200 text-sm"
@@ -398,7 +399,7 @@ const AdminRafflesPage: React.FC = () => {
                         <Upload className="w-4 h-4" />
                         <span className="hidden sm:inline">Importar</span>
                     </button>
-                    
+
                     <button
                         onClick={() => handleOpenModal()}
                         className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all duration-200 shadow-lg text-sm"
@@ -418,7 +419,7 @@ const AdminRafflesPage: React.FC = () => {
                 onCreate={() => handleOpenModal()}
                 loading={refreshing}
             />
-            
+
             {/* Modal de formulario - Responsive */}
             <AnimatePresence>
                 {isModalOpen && (
@@ -439,7 +440,7 @@ const AdminRafflesPage: React.FC = () => {
                     )
                 )}
             </AnimatePresence>
-            
+
             {/* Toast Container */}
             <ToastContainer />
         </motion.div>
