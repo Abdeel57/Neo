@@ -65,6 +65,7 @@ const AdvancedRaffleForm: React.FC<AdvancedRaffleFormProps> = ({
         defaultValues: raffle
             ? {
                 ...raffle,
+                purchaseDescription: raffle.purchaseDescription || '',
                 packs: Array.isArray(raffle.packs) ? raffle.packs : [],
                 bonuses: raffle.bonuses?.map(b => ({ value: b })) || [],
                 gallery: raffle.gallery || []
@@ -73,6 +74,7 @@ const AdvancedRaffleForm: React.FC<AdvancedRaffleFormProps> = ({
                 status: 'draft',
                 tickets: 1000,
                 price: 50,
+                purchaseDescription: '',
                 packs: [],
                 bonuses: [],
                 gallery: []
