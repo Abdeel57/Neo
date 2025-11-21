@@ -4,10 +4,10 @@ import { Dices, X } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 
 interface CasinoButtonProps {
-    onRandomSelect: (quantity: number) => void;
+    onSelect: (quantity: number) => void;
 }
 
-const CasinoButton: React.FC<CasinoButtonProps> = ({ onRandomSelect }) => {
+const CasinoButton: React.FC<CasinoButtonProps> = ({ onSelect }) => {
     const [isOpen, setIsOpen] = useState(false);
     const { appearance } = useTheme();
     const accentColor = appearance?.colors?.accent || '#00ff00';
@@ -38,7 +38,7 @@ const CasinoButton: React.FC<CasinoButtonProps> = ({ onRandomSelect }) => {
                                 <button
                                     key={qty}
                                     onClick={() => {
-                                        onRandomSelect(qty);
+                                        onSelect(qty);
                                         setIsOpen(false);
                                     }}
                                     className="flex flex-col items-center justify-center p-2 rounded-lg bg-slate-700/50 hover:bg-slate-700 transition-colors border border-slate-600/50 hover:border-slate-500"
