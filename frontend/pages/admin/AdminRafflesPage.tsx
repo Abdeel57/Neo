@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getRaffles, createRaffle, updateRaffle, deleteRaffle, parseRaffleDates } from '../../services/api';
+import { getRaffles, createRaffle, updateRaffle, adminDeleteRaffle, parseRaffleDates } from '../../services/api';
 import { Raffle } from '../../types';
 import { Plus, RefreshCw, Download, Upload } from 'lucide-react';
 import Spinner from '../../components/Spinner';
@@ -286,7 +286,7 @@ const AdminRafflesPage: React.FC = () => {
             try {
                 setRefreshing(true);
                 console.log('🗑️ Deleting raffle:', raffleId);
-                await deleteRaffle(raffleId);
+                await adminDeleteRaffle(raffleId);
                 await refreshRaffles();
                 console.log('✅ Raffle deleted successfully');
                 toast.success('Rifa eliminada', 'La rifa se eliminó correctamente');
