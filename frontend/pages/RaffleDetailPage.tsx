@@ -276,7 +276,7 @@ const RaffleDetailPage = () => {
                             <h1 className="text-3xl font-bold mb-4">{raffle.title}</h1>
                             {raffle.purchaseDescription ? (
                                 <div
-                                    className="prose prose-invert max-w-none text-slate-300 mb-6 [&>p]:mb-4 [&>ul]:list-disc [&>ul]:pl-5 [&>ol]:list-decimal [&>ol]:pl-5 [&>h1]:text-2xl [&>h1]:font-bold [&>h1]:mb-4 [&>h2]:text-xl [&>h2]:font-bold [&>h2]:mb-3 [&>h3]:text-lg [&>h3]:font-bold [&>h3]:mb-2 [&>a]:text-accent [&>a]:underline"
+                                    className="prose prose-invert max-w-none text-slate-300 mb-6 [&>p]:mb-4 [&>ul]:list-disc [&>ul]:pl-5 [&>ol]:list-decimal [&>ol]:pl-5 [&>h1]:text-2xl [&>h1]:font-bold [&>h1]:mb-4 [&>h2]:text-xl [&>h2]:font-bold [&>h2]:mb-3 [&>h3]:text-lg [&>h3]:font-bold [&>h3]:mb-2 [&>a]:text-accent [&>a]:underline [&>.ql-align-center]:text-center [&>.ql-align-right]:text-right [&>.ql-align-justify]:text-justify"
                                     dangerouslySetInnerHTML={{ __html: raffle.purchaseDescription }}
                                 />
                             ) : (
