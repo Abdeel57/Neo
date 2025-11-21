@@ -1,10 +1,10 @@
 import {
-  Raffle,
-  Order,
-  Winner,
-  Settings,
-  OrderStatus,
-  AdminUser,
+    Raffle,
+    Order,
+    Winner,
+    Settings,
+    OrderStatus,
+    AdminUser,
 } from '../types';
 
 // --- IMPORTANTE ---
@@ -15,26 +15,26 @@ const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3000
 
 // Helper para obtener el token JWT del localStorage
 const getAuthToken = (): string | null => {
-  const tokenData = localStorage.getItem('admin_token');
-  if (tokenData) {
-    try {
-      const parsed = JSON.parse(tokenData);
-      return parsed.access_token || tokenData; // Soporta tanto objeto como string
-    } catch {
-      return tokenData; // Si no es JSON, devolver como string
+    const tokenData = localStorage.getItem('admin_token');
+    if (tokenData) {
+        try {
+            const parsed = JSON.parse(tokenData);
+            return parsed.access_token || tokenData; // Soporta tanto objeto como string
+        } catch {
+            return tokenData; // Si no es JSON, devolver como string
+        }
     }
-  }
-  return null;
+    return null;
 };
 
 // Helper para crear headers con autenticación
 const getAuthHeaders = (): HeadersInit => {
-  const headers: HeadersInit = { 'Content-Type': 'application/json' };
-  const token = getAuthToken();
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-  return headers;
+    const headers: HeadersInit = { 'Content-Type': 'application/json' };
+    const token = getAuthToken();
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    return headers;
 };
 
 // Debug logging removed for production performance
@@ -81,7 +81,7 @@ const parseDates = (data: any, fields: string[]): any => {
             } else {
                 parsedData[field] = new Date(dateValue);
             }
-            
+
             // Validar que la fecha sea válida
             if (isNaN(parsedData[field].getTime())) {
                 console.warn(`⚠️ Invalid date for field ${field}:`, dateValue);
@@ -94,7 +94,7 @@ const parseDates = (data: any, fields: string[]): any => {
 const parseOrderDates = (order: any) => parseDates(order, ['createdAt', 'expiresAt']);
 export const parseRaffleDates = (raffle: any) => {
     const parsed = parseDates(raffle, ['drawDate']);
-    
+
     // Parsear packs (JSON) - puede venir como string, array, objeto o null
     if (parsed.packs !== null && parsed.packs !== undefined) {
         if (Array.isArray(parsed.packs)) {
@@ -115,7 +115,7 @@ export const parseRaffleDates = (raffle: any) => {
     } else {
         parsed.packs = null;
     }
-    
+
     // Parsear bonuses (array de strings) - puede venir como array, string o null
     if (parsed.bonuses) {
         if (Array.isArray(parsed.bonuses)) {
@@ -136,7 +136,7 @@ export const parseRaffleDates = (raffle: any) => {
     } else {
         parsed.bonuses = [];
     }
-    
+
     return parsed;
 };
 const parseWinnerDates = (winner: any) => parseDates(winner, ['drawDate']);
@@ -151,7 +151,7 @@ export const getActiveRaffles = async (): Promise<Raffle[]> => {
         if (response.ok) {
             const data = await response.json();
             console.log('✅ Backend raffles loaded successfully:', data);
-            
+
             // Ensure we return an array
             if (Array.isArray(data)) {
                 return data.map(parseRaffleDates);
@@ -167,7 +167,7 @@ export const getActiveRaffles = async (): Promise<Raffle[]> => {
     } catch (error) {
         console.log('❌ Backend failed with exception:', error);
     }
-    
+
     // Fallback to local data
     console.log('🔄 Using local data for active raffles');
     const { localApi } = await import('./localApi');
@@ -184,7 +184,7 @@ export const getRaffleBySlug = async (slug: string): Promise<Raffle | undefined>
     } catch (error) {
         console.error('❌ Backend error for raffle by slug:', error);
     }
-    
+
     // Fallback to local data
     console.log('🔄 Using local data for raffle by slug');
     const { localApi } = await import('./localApi');
@@ -202,7 +202,7 @@ export const getRaffleById = async (id: string): Promise<Raffle | undefined> => 
     } catch (error) {
         console.error('❌ Backend error for raffle by ID:', error);
     }
-    
+
     // Fallback to local data
     console.log('🔄 Using local data for raffle by ID');
     const { localApi } = await import('./localApi');
@@ -264,7 +264,7 @@ export const getOccupiedTickets = async (
     } catch (error) {
         console.error('❌ Backend error for occupied tickets:', error);
     }
-    
+
     // Fallback to local data
     console.log('🔄 Using local data for occupied tickets');
     return {
@@ -282,7 +282,7 @@ export const getPastWinners = async (): Promise<Winner[]> => {
         if (response.ok) {
             const data = await response.json();
             console.log('✅ Backend winners loaded successfully:', data);
-            
+
             // Ensure we return an array
             if (Array.isArray(data)) {
                 return data.map(parseWinnerDates);
@@ -298,7 +298,7 @@ export const getPastWinners = async (): Promise<Winner[]> => {
     } catch (error) {
         console.log('❌ Backend failed with exception:', error);
     }
-    
+
     // Fallback to local data
     console.log('🔄 Using local data for winners');
     const { localApi } = await import('./localApi');
@@ -319,7 +319,7 @@ export const getSettings = async (): Promise<Settings> => {
     } catch (error) {
         console.log('❌ Backend failed with exception:', error);
     }
-    
+
     // Fallback to local data
     console.log('🔄 Using local data for settings');
     const { localApi } = await import('./localApi');
@@ -339,16 +339,25 @@ export const updateSettings = async (settings: Partial<Settings>): Promise<Setti
             console.log('✅ Backend settings updated successfully');
             return data;
         } else {
+            const errorText = await response.text();
             console.log('❌ Backend returned error status:', response.status);
+            console.log('❌ Error details:', errorText);
+
+            // Intentar parsear el error como JSON
+            try {
+                const errorData = JSON.parse(errorText);
+                throw new Error(errorData.message || errorData.error || 'No estás autorizado para realizar esta acción');
+            } catch {
+                throw new Error(`Error ${response.status}: No estás autorizado para realizar esta acción`);
+            }
         }
     } catch (error) {
         console.log('❌ Backend failed with exception:', error);
+        if (error instanceof Error) {
+            throw error; // Re-lanzar el error para que se maneje en el componente
+        }
+        throw new Error('Error desconocido al actualizar configuración');
     }
-    
-    // Fallback to local data
-    console.log('🔄 Using local data for update settings');
-    const { localApi } = await import('./localApi');
-    return localApi.updateSettings(settings);
 };
 
 // --- Admin API Calls ---
@@ -359,17 +368,17 @@ export const createRaffle = async (raffle: any): Promise<Raffle> => {
         console.log('📤 Payload packs:', raffle.packs);
         console.log('📤 Payload bonuses:', raffle.bonuses);
         console.log('📤 Full payload:', JSON.stringify(raffle, null, 2));
-        
+
         const response = await fetch(`${API_URL}/admin/raffles`, {
             method: 'POST',
             headers: getAuthHeaders(),
             body: JSON.stringify(raffle),
         });
-        
+
         if (response.ok) {
             const result = await response.json();
             console.log('✅ Backend raffle created successfully');
-            
+
             // Si la respuesta tiene estructura { success, data }, extraer data
             const raffleData = result.success && result.data ? result.data : result;
             // Parsear la rifa para asegurar que packs y bonuses estén correctos
@@ -378,7 +387,7 @@ export const createRaffle = async (raffle: any): Promise<Raffle> => {
             const errorText = await response.text();
             console.log('❌ Backend returned error status:', response.status);
             console.log('❌ Error details:', errorText);
-            
+
             // Intentar parsear el error como JSON
             try {
                 const errorData = JSON.parse(errorText);
@@ -403,24 +412,24 @@ export const updateRaffle = async (id: string, raffle: Partial<Raffle>): Promise
         console.log('🔄 Update payload packs:', raffle.packs);
         console.log('🔄 Update payload bonuses:', raffle.bonuses);
         console.log('🔄 Full update payload:', JSON.stringify(raffle, null, 2));
-        
+
         const response = await fetch(`${API_URL}/admin/raffles/${id}`, {
             method: 'PATCH',
             headers: getAuthHeaders(),
             body: JSON.stringify(raffle),
         });
-        
+
         if (response.ok) {
             const result = await response.json();
             console.log('✅ BACKEND RAFFLE UPDATED SUCCESSFULLY');
             console.log('✅ Response result:', JSON.stringify(result, null, 2));
-            
+
             // Si la respuesta tiene estructura { success, data }, extraer data
             const raffleData = result.success && result.data ? result.data : result;
             console.log('✅ Extracted raffleData:', JSON.stringify(raffleData, null, 2));
             console.log('📦 RaffleData packs:', raffleData.packs);
             console.log('🎁 RaffleData bonuses:', raffleData.bonuses);
-            
+
             // Parsear la rifa para asegurar que packs y bonuses estén correctos
             const parsed = parseRaffleDates(raffleData);
             console.log('✅ PARSED RESPONSE');
@@ -431,7 +440,7 @@ export const updateRaffle = async (id: string, raffle: Partial<Raffle>): Promise
             const errorText = await response.text();
             console.log('❌ Backend returned error status:', response.status);
             console.log('❌ Error details:', errorText);
-            
+
             // Intentar parsear el error como JSON
             try {
                 const errorData = JSON.parse(errorText);
@@ -452,13 +461,13 @@ export const updateRaffle = async (id: string, raffle: Partial<Raffle>): Promise
 export const verifyTicket = async (data: { codigo_qr?: string; numero_boleto?: number; sorteo_id?: string }): Promise<any> => {
     try {
         console.log('🔍 Verifying ticket:', data);
-        
+
         const response = await fetch(`${API_URL}/public/verificar-boleto`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data),
         });
-        
+
         if (response.ok) {
             const result = await response.json();
             console.log('✅ Ticket verification successful');
@@ -467,7 +476,7 @@ export const verifyTicket = async (data: { codigo_qr?: string; numero_boleto?: n
             const errorText = await response.text();
             console.log('❌ Backend returned error status:', response.status);
             console.log('❌ Error details:', errorText);
-            
+
             try {
                 const errorData = JSON.parse(errorText);
                 throw new Error(errorData.message || errorData.error || 'Error al verificar el boleto');
@@ -492,23 +501,23 @@ export const searchTickets = async (criteria: {
 }): Promise<any> => {
     try {
         console.log('🔍 Buscando boletos con criterios:', criteria);
-        
+
         const response = await fetch(`${API_URL}/public/buscar-boletos`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(criteria),
         });
-        
+
         if (!response.ok) {
-            const error = await response.json().catch(() => ({ 
-                message: `Error ${response.status}: ${response.statusText}` 
+            const error = await response.json().catch(() => ({
+                message: `Error ${response.status}: ${response.statusText}`
             }));
             throw new Error(error.message || 'Error al buscar boletos');
         }
-        
+
         const result = await response.json();
         console.log('✅ Búsqueda exitosa:', result);
-        
+
         // El backend devuelve { success: true, data: {...} }
         return result.data || result;
     } catch (error) {
@@ -520,34 +529,34 @@ export const searchTickets = async (criteria: {
 export const downloadTickets = async (raffleId: string, tipo: 'apartados' | 'pagados', formato: 'csv' | 'excel' = 'csv'): Promise<void> => {
     try {
         console.log('📥 Downloading tickets:', { raffleId, tipo, formato });
-        
+
         const response = await fetch(`${API_URL}/admin/raffles/${raffleId}/boletos/${tipo}/descargar?formato=${formato}`, {
             method: 'GET',
         });
-        
+
         if (response.ok) {
             console.log('✅ Tickets downloaded successfully');
-            
+
             // Obtener el nombre del archivo del header Content-Disposition
             const contentDisposition = response.headers.get('Content-Disposition');
             let filename = `boletos-${tipo}-${raffleId}.${formato === 'excel' ? 'xlsx' : 'csv'}`;
-            
+
             if (contentDisposition) {
                 const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
                 if (filenameMatch) {
                     filename = filenameMatch[1];
                 }
             }
-            
+
             // Obtener el tipo de contenido
-            const contentType = response.headers.get('Content-Type') || 
-                (formato === 'excel' 
-                    ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+            const contentType = response.headers.get('Content-Type') ||
+                (formato === 'excel'
+                    ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
                     : 'text/csv');
-            
+
             // Obtener el contenido como blob
             const blob = await response.blob();
-            
+
             // Crear y descargar archivo
             const url = window.URL.createObjectURL(new Blob([blob], { type: contentType }));
             const link = document.createElement('a');
@@ -557,14 +566,14 @@ export const downloadTickets = async (raffleId: string, tipo: 'apartados' | 'pag
             link.click();
             document.body.removeChild(link);
             window.URL.revokeObjectURL(url);
-            
+
             console.log('✅ File downloaded:', filename);
-            
+
         } else {
             const errorText = await response.text();
             console.log('❌ Backend returned error status:', response.status);
             console.log('❌ Error details:', errorText);
-            
+
             try {
                 const errorData = JSON.parse(errorText);
                 throw new Error(errorData.message || errorData.error || 'Error al descargar boletos');
@@ -595,7 +604,7 @@ export const deleteRaffle = async (id: string): Promise<void> => {
             console.log('❌ Backend returned error status:', response.status);
             const errorText = await response.text();
             console.log('❌ Error details:', errorText);
-            
+
             // Intentar parsear el error como JSON
             try {
                 const errorData = JSON.parse(errorText);
@@ -611,7 +620,7 @@ export const deleteRaffle = async (id: string): Promise<void> => {
         }
         throw new Error('Error desconocido al eliminar la rifa');
     }
-    
+
     // Fallback to local data
     console.log('🔄 Using local data for delete raffle');
     const { localApi } = await import('./localApi');
@@ -651,23 +660,23 @@ export const getUsers = async (): Promise<AdminUser[]> => {
         const response = await fetch(`${API_URL}/admin/users`, {
             headers: getAuthHeaders(),
         });
-        
+
         if (!response.ok) {
-            const error = await response.json().catch(() => ({ 
-                message: `Error ${response.status}: ${response.statusText}` 
+            const error = await response.json().catch(() => ({
+                message: `Error ${response.status}: ${response.statusText}`
             }));
             throw new Error(error.message || `Error al obtener usuarios: ${response.status}`);
         }
-        
+
         const data = await response.json();
         console.log('✅ Usuarios obtenidos exitosamente:', data.length || 0);
-        
+
         // El backend devuelve un array directo de usuarios (sin password)
         // Validar que es un array
         if (!Array.isArray(data)) {
             throw new Error('Respuesta del servidor en formato incorrecto');
         }
-        
+
         return data;
     } catch (error) {
         console.error('❌ Error al obtener usuarios:', error);
@@ -678,32 +687,32 @@ export const getUsers = async (): Promise<AdminUser[]> => {
 export const createUser = async (user: Omit<AdminUser, 'id' | 'createdAt' | 'updatedAt'>): Promise<AdminUser> => {
     try {
         console.log('➕ Creando usuario en el backend...', { username: user.username, role: user.role });
-        
+
         const response = await fetch(`${API_URL}/admin/users`, {
             method: 'POST',
             headers: getAuthHeaders(),
             body: JSON.stringify(user),
         });
-        
+
         if (!response.ok) {
             // Intentar obtener mensaje de error del backend
-            const error = await response.json().catch(() => ({ 
-                message: `Error ${response.status}: ${response.statusText}` 
+            const error = await response.json().catch(() => ({
+                message: `Error ${response.status}: ${response.statusText}`
             }));
-            
+
             // El backend devuelve { message: string } en caso de error
             const errorMessage = error.message || error.error || `Error al crear usuario: ${response.status}`;
             throw new Error(errorMessage);
         }
-        
+
         const result = await response.json();
         console.log('✅ Usuario creado exitosamente');
-        
+
         // El backend devuelve { success: true, message: string, data: AdminUser }
         if (result.data) {
             return result.data;
         }
-        
+
         // Si no viene en formato estructurado, asumir que es el usuario directamente
         return result;
     } catch (error) {
@@ -715,32 +724,32 @@ export const createUser = async (user: Omit<AdminUser, 'id' | 'createdAt' | 'upd
 export const updateUser = async (id: string, user: Partial<AdminUser>): Promise<AdminUser> => {
     try {
         console.log('🔧 Actualizando usuario en el backend...', { id, updates: Object.keys(user) });
-        
+
         const response = await fetch(`${API_URL}/admin/users/${id}`, {
             method: 'PATCH',
             headers: getAuthHeaders(),
             body: JSON.stringify(user),
         });
-        
+
         if (!response.ok) {
             // Intentar obtener mensaje de error del backend
-            const error = await response.json().catch(() => ({ 
-                message: `Error ${response.status}: ${response.statusText}` 
+            const error = await response.json().catch(() => ({
+                message: `Error ${response.status}: ${response.statusText}`
             }));
-            
+
             // El backend devuelve { message: string } en caso de error
             const errorMessage = error.message || error.error || `Error al actualizar usuario: ${response.status}`;
             throw new Error(errorMessage);
         }
-        
+
         const result = await response.json();
         console.log('✅ Usuario actualizado exitosamente');
-        
+
         // El backend devuelve { success: true, message: string, data: AdminUser }
         if (result.data) {
             return result.data;
         }
-        
+
         // Si no viene en formato estructurado, asumir que es el usuario directamente
         return result;
     } catch (error) {
@@ -752,27 +761,27 @@ export const updateUser = async (id: string, user: Partial<AdminUser>): Promise<
 export const deleteUser = async (id: string): Promise<void> => {
     try {
         console.log('🗑️ Eliminando usuario en el backend...', { id });
-        
+
         const response = await fetch(`${API_URL}/admin/users/${id}`, {
             method: 'DELETE',
             headers: getAuthHeaders(),
         });
-        
+
         if (!response.ok) {
             // Intentar obtener mensaje de error del backend
-            const error = await response.json().catch(() => ({ 
-                message: `Error ${response.status}: ${response.statusText}` 
+            const error = await response.json().catch(() => ({
+                message: `Error ${response.status}: ${response.statusText}`
             }));
-            
+
             // El backend devuelve { message: string } en caso de error
             const errorMessage = error.message || error.error || `Error al eliminar usuario: ${response.status}`;
             throw new Error(errorMessage);
         }
-        
+
         // El backend devuelve { success: true, message: string }
         const result = await response.json().catch(() => ({}));
         console.log('✅ Usuario eliminado exitosamente');
-        
+
         // No necesitamos retornar nada en delete
         return;
     } catch (error) {
@@ -783,7 +792,7 @@ export const deleteUser = async (id: string): Promise<void> => {
 
 
 export const getOrderbyFolio = async (folio: string): Promise<Order | undefined> => {
-     try {
+    try {
         const data = await handleResponse(await fetch(`${API_URL}/public/orders/folio/${folio}`));
         return data ? parseOrderDates(data) : undefined;
     } catch (e) {
@@ -956,7 +965,7 @@ export const adminUpdateRaffle = async (data: Raffle): Promise<Raffle> => {
 };
 
 export const adminDeleteRaffle = async (id: string): Promise<void> => {
-    const response = await fetch(`${API_URL}/admin/raffles/${id}`, { 
+    const response = await fetch(`${API_URL}/admin/raffles/${id}`, {
         method: 'DELETE',
         headers: getAuthHeaders(),
     });
@@ -964,7 +973,7 @@ export const adminDeleteRaffle = async (id: string): Promise<void> => {
 };
 
 export const adminUpdateOrderStatus = async (folio: string, status: OrderStatus): Promise<Order> => {
-     const response = await fetch(`${API_URL}/admin/orders/${folio}/status`, {
+    const response = await fetch(`${API_URL}/admin/orders/${folio}/status`, {
         method: 'PATCH',
         headers: getAuthHeaders(),
         body: JSON.stringify({ status }),
@@ -1008,7 +1017,7 @@ export const adminGetAllWinners = async (): Promise<Winner[]> => {
 }
 
 export const adminDeleteWinner = async (id: string): Promise<void> => {
-    const response = await fetch(`${API_URL}/admin/winners/${id}`, { 
+    const response = await fetch(`${API_URL}/admin/winners/${id}`, {
         method: 'DELETE',
         headers: getAuthHeaders(),
     });
@@ -1027,16 +1036,16 @@ export const createOrder = async (order: Omit<Order, 'id' | 'folio' | 'createdAt
         console.log('🚀 Trying backend for create order...');
         console.log('📤 Sending order data:', order);
         console.log('🌐 API URL:', `${API_URL}/public/orders`);
-        
+
         const response = await fetch(`${API_URL}/public/orders`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(order),
         });
-        
+
         console.log('📡 Response status:', response.status);
         console.log('📡 Response ok:', response.ok);
-        
+
         if (response.ok) {
             const data = await response.json();
             console.log('✅ Backend order created successfully:', data);
@@ -1063,7 +1072,7 @@ export const getOrderByFolio = async (folio: string): Promise<Order | undefined>
     } catch (error) {
         console.error('❌ Backend error for order by folio:', error);
     }
-    
+
     // Fallback to local data
     console.log('🔄 Using local data for order by folio');
     const { localApi } = await import('./localApi');
@@ -1077,16 +1086,16 @@ export const getOrders = async (page: number = 1, limit: number = 50, status?: s
         params.append('page', page.toString());
         params.append('limit', limit.toString());
         if (status) params.append('status', status);
-        
+
         const response = await fetch(`${API_URL}/admin/orders?${params.toString()}`, {
             headers: getAuthHeaders(),
         });
-        
+
         if (!response.ok) {
             console.log('❌ Backend returned error status:', response.status);
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
-        
+
         const data = await response.json();
         // El backend ahora devuelve { orders: [], pagination: {} }
         const orders = data.orders || data; // Compatibilidad con respuesta vieja y nueva
@@ -1119,7 +1128,7 @@ export const updateOrder = async (id: string, order: Partial<Order>): Promise<Or
     } catch (error) {
         console.log('❌ Backend failed with exception:', error);
     }
-    
+
     // Fallback to local data
     console.log('🔄 Using local data for update order');
     const { localApi } = await import('./localApi');
@@ -1142,7 +1151,7 @@ export const deleteOrder = async (id: string): Promise<void> => {
     } catch (error) {
         console.log('❌ Backend failed with exception:', error);
     }
-    
+
     // Fallback to local data
     console.log('🔄 Using local data for delete order');
     const { localApi } = await import('./localApi');
@@ -1169,7 +1178,7 @@ export const markOrderAsPending = async (id: string): Promise<Order> => {
     } catch (error) {
         console.log('❌ Backend failed with exception:', error);
     }
-    
+
     // Fallback to local data
     console.log('🔄 Using local data for mark order as pending');
     const { localApi } = await import('./localApi');
@@ -1196,7 +1205,7 @@ export const markOrderPaid = async (id: string, paymentMethod?: string, notes?: 
     } catch (error) {
         console.log('❌ Backend failed with exception:', error);
     }
-    
+
     // Fallback to local data
     console.log('🔄 Using local data for mark order paid');
     const { localApi } = await import('./localApi');
@@ -1223,7 +1232,7 @@ export const editOrder = async (id: string, data: { customer?: any; tickets?: nu
     } catch (error) {
         console.log('❌ Backend failed with exception:', error);
     }
-    
+
     // Fallback to local data
     console.log('🔄 Using local data for edit order');
     const { localApi } = await import('./localApi');
@@ -1266,7 +1275,7 @@ export const getCustomers = async (): Promise<any[]> => {
     } catch (error) {
         console.error('❌ Backend error for customers:', error);
     }
-    
+
     // Fallback to local data
     console.log('🔄 Using local data for customers');
     const { localApi } = await import('./localApi');
@@ -1285,7 +1294,7 @@ export const getCustomerById = async (id: string): Promise<any | undefined> => {
     } catch (error) {
         console.error('❌ Backend error for customer by ID:', error);
     }
-    
+
     // Fallback to local data
     console.log('🔄 Using local data for customer by ID');
     const { localApi } = await import('./localApi');
@@ -1302,7 +1311,7 @@ export const adminCreateUser = async (data: Omit<AdminUser, 'id'>): Promise<Admi
 };
 
 export const adminUpdateUser = async (data: AdminUser): Promise<AdminUser> => {
-     const response = await fetch(`${API_URL}/admin/users/${data.id}`, {
+    const response = await fetch(`${API_URL}/admin/users/${data.id}`, {
         method: 'PATCH',
         headers: getAuthHeaders(),
         body: JSON.stringify(data),
@@ -1311,7 +1320,7 @@ export const adminUpdateUser = async (data: AdminUser): Promise<AdminUser> => {
 };
 
 export const adminDeleteUser = async (id: string): Promise<void> => {
-    const response = await fetch(`${API_URL}/admin/users/${id}`, { 
+    const response = await fetch(`${API_URL}/admin/users/${id}`, {
         method: 'DELETE',
         headers: getAuthHeaders(),
     });
@@ -1334,11 +1343,11 @@ export const adminLogin = async (username: string, password: string): Promise<{ 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
     });
-    
+
     const result = await handleResponse(response);
     // La respuesta tiene estructura { success, message, data: { access_token, user } }
     const loginData = result.data || result;
-    
+
     // Guardar el token en localStorage
     if (loginData.access_token) {
         localStorage.setItem('admin_token', JSON.stringify({
@@ -1346,7 +1355,7 @@ export const adminLogin = async (username: string, password: string): Promise<{ 
             expiresAt: Date.now() + (24 * 60 * 60 * 1000) // 24 horas
         }));
     }
-    
+
     return {
         user: loginData.user || loginData,
         access_token: loginData.access_token
