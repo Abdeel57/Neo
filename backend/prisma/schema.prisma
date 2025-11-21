@@ -59,7 +59,7 @@ model Ticket {
   quantity  Int
   createdAt DateTime @default(now())
 
-  raffle Raffle @relation(fields: [raffleId], references: [id])
+  raffle Raffle @relation(fields: [raffleId], references: [id], onDelete: Cascade)
   user   User   @relation(fields: [userId], references: [id])
 
   @@map("tickets")
@@ -79,7 +79,7 @@ model Order {
   updatedAt    DateTime    @updatedAt
   expiresAt    DateTime
 
-  raffle Raffle @relation(fields: [raffleId], references: [id])
+  raffle Raffle @relation(fields: [raffleId], references: [id], onDelete: Cascade)
   user   User   @relation(fields: [userId], references: [id])
 
   @@map("orders")
