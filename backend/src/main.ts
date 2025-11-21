@@ -8,7 +8,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     bodyParser: false, // Disable default body parser
   });
-  
+
   // Enable Global Exception Filter
   app.useGlobalFilters(new GlobalExceptionFilter());
 
@@ -33,12 +33,12 @@ async function bootstrap() {
       );
     },
   }));
-  
+
   // Configure body parser with increased limit for images
   const express = require('express');
   app.use(express.json({ limit: '50mb' }));
   app.use(express.urlencoded({ limit: '50mb', extended: true }));
-  
+
   // Enable CORS with specific configuration
   const allowedOrigins = [
     /^http:\/\/localhost:5173$/, // Vite dev server
@@ -49,6 +49,10 @@ async function bootstrap() {
     'https://www.luckysnaphn.com',
     'https://luckysnap.netlify.app', // optional legacy domain
     'https://neodemo.netlify.app', // Dominio actual
+    'https://sorteosgama.pro', // 🆕 Dominio de producción
+    'https://www.sorteosgama.pro', // 🆕 Versión con www
+    'http://sorteosgama.pro', // 🆕 HTTP (para desarrollo, se redirigirá a HTTPS)
+    'http://www.sorteosgama.pro', // 🆕 HTTP con www
   ];
 
   app.enableCors({
@@ -75,11 +79,11 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
   });
-  
+
   // Add a simple root route before setting the global prefix
   app.getHttpAdapter().get('/', (req, res) => {
-    res.json({ 
-      message: 'Lucky Snap Backend API', 
+    res.json({
+      message: 'Lucky Snap Backend API',
       status: 'running',
       version: '1.0.0',
       endpoints: {
@@ -91,23 +95,23 @@ async function bootstrap() {
 
   // Add health check endpoint
   app.getHttpAdapter().get('/api/health', (req, res) => {
-    res.json({ 
+    res.json({
       status: 'ok',
       timestamp: new Date().toISOString(),
       uptime: process.uptime()
     });
   });
-  
+
   app.setGlobalPrefix('api'); // Set a global prefix for all routes
-  
+
   const port = process.env.PORT || 3000;
   const nodeEnv = process.env.NODE_ENV || 'development';
-  
+
   console.log(`🚀 Lucky Snap Backend starting...`);
   console.log(`📡 Environment: ${nodeEnv}`);
   console.log(`🌐 Port: ${port}`);
   console.log(`🔗 API Base: http://localhost:${port}/api`);
-  
+
   await app.listen(port);
 }
 bootstrap();
