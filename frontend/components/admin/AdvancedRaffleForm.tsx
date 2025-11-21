@@ -138,6 +138,8 @@ const AdvancedRaffleForm: React.FC<AdvancedRaffleFormProps> = ({
             console.log('🎁 Form bonuses type:', typeof data.bonuses);
             console.log('🎁 Form bonuses isArray:', Array.isArray(data.bonuses));
             console.log('🎁 Form bonuses length:', data.bonuses?.length || 0);
+            console.log('📝 purchaseDescription:', data.purchaseDescription);
+            console.log('📝 purchaseDescription type:', typeof data.purchaseDescription);
 
             // Asegurar que packs tenga la estructura correcta
             const processedPacks = data.packs?.map(pack => ({
@@ -149,6 +151,7 @@ const AdvancedRaffleForm: React.FC<AdvancedRaffleFormProps> = ({
 
             const saveData = {
                 ...data,
+                purchaseDescription: data.purchaseDescription || '',
                 bonuses: data.bonuses?.map(b => b.value).filter(b => b && b.trim() !== '') || [],
                 packs: processedPacks.length > 0 ? processedPacks : null
             };
