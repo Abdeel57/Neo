@@ -55,7 +55,7 @@ const RaffleGallery: React.FC<RaffleGalleryProps> = ({ images, title, className 
                 {/* Imagen principal con diseño creativo */}
                 <div className="relative group">
                     {/* Contenedor con aspecto cuadrado y efectos visuales */}
-                    <div className="relative w-full aspect-square overflow-hidden rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 shadow-2xl border-2 border-slate-700/50">
+                    <div className="relative w-full aspect-square overflow-hidden rounded-2xl bg-gradient-to-br from-background-secondary to-background-primary shadow-2xl border-2 border-white/10">
                         {/* Imagen principal con transición automática */}
                         <AnimatePresence mode="wait">
                             <motion.img
@@ -74,7 +74,7 @@ const RaffleGallery: React.FC<RaffleGalleryProps> = ({ images, title, className 
                                 }}
                             />
                         </AnimatePresence>
-                        
+
                         {/* Indicador de galería */}
                         {images.length > 1 && (
                             <div className="absolute top-2 sm:top-4 right-2 sm:right-4 bg-black/70 backdrop-blur-md rounded-full px-2 py-1 sm:px-3 sm:py-1.5 shadow-lg">
@@ -113,11 +113,10 @@ const RaffleGallery: React.FC<RaffleGalleryProps> = ({ images, title, className 
                             <button
                                 key={index}
                                 onClick={() => setCurrentIndex(index)}
-                                className={`flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-lg sm:rounded-xl overflow-hidden border-2 transition-all duration-300 ${
-                                    index === currentIndex 
-                                        ? 'border-accent shadow-lg shadow-accent/20 scale-105' 
-                                        : 'border-slate-600 hover:border-slate-400 active:scale-95'
-                                }`}
+                                className={`flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-lg sm:rounded-xl overflow-hidden border-2 transition-all duration-300 ${index === currentIndex
+                                        ? 'border-accent shadow-lg shadow-accent/20 scale-105'
+                                        : 'border-white/10 hover:border-white/30 active:scale-95'
+                                    }`}
                             >
                                 <img
                                     src={image || 'https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=400&h=300&fit=crop'}
