@@ -3,16 +3,23 @@ import { Type } from 'class-transformer';
 
 class PackDto {
   @IsString({ message: 'El nombre del paquete debe ser un texto' })
-  @IsNotEmpty({ message: 'El nombre del paquete es requerido' })
-  name: string;
+  @IsOptional()
+  name?: string;
 
   @IsNumber({}, { message: 'La cantidad de boletos debe ser un número' })
+  @IsOptional()
   @Min(1, { message: 'La cantidad de boletos debe ser al menos 1' })
-  tickets: number;
+  tickets?: number;
+
+  @IsNumber({}, { message: 'La cantidad (q) debe ser un número' })
+  @IsOptional()
+  @Min(1, { message: 'La cantidad (q) debe ser al menos 1' })
+  q?: number;
 
   @IsNumber({}, { message: 'El precio debe ser un número' })
+  @IsOptional()
   @Min(0, { message: 'El precio no puede ser negativo' })
-  price: number;
+  price?: number;
 }
 
 export class CreateRaffleDto {
