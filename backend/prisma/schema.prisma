@@ -29,6 +29,7 @@ model Raffle {
   id          String   @id @default(cuid())
   title       String
   description String?
+  purchaseDescription String?  @db.Text
   imageUrl    String?
   gallery     Json?    // Array de imágenes
   price       Float    @default(50.0)

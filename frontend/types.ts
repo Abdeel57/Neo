@@ -20,6 +20,7 @@ export interface Raffle {
     title: string;
     slug?: string;
     description?: string;
+    purchaseDescription?: string;
     imageUrl?: string;
     price: number;
     tickets: number;

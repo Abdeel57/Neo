@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-    X, 
-    Plus, 
-    Trash2, 
-    Save, 
-    Eye, 
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
+import {
+    X,
+    Plus,
+    Trash2,
+    Save,
+    Eye,
     Calendar,
     DollarSign,
     Users,
@@ -17,7 +19,8 @@ import {
     Clock,
     AlertCircle,
     CheckCircle,
-    Info
+    Info,
+    FileText
 } from 'lucide-react';
 import { Raffle } from '../../types';
 import MultiImageUploader from './MultiImageUploader';
@@ -44,7 +47,7 @@ const AdvancedRaffleForm: React.FC<AdvancedRaffleFormProps> = ({
     onSave,
     loading = false
 }) => {
-    const [activeTab, setActiveTab] = useState<'basic' | 'pricing' | 'images' | 'advanced'>('basic');
+    const [activeTab, setActiveTab] = useState<'basic' | 'description' | 'pricing' | 'images' | 'advanced'>('basic');
     const [previewMode, setPreviewMode] = useState(false);
     const toast = useToast();
 
@@ -59,23 +62,23 @@ const AdvancedRaffleForm: React.FC<AdvancedRaffleFormProps> = ({
     }, [raffle]);
 
     const { register, handleSubmit, control, watch, formState: { errors, isSubmitting } } = useForm<RaffleFormValues>({
-        defaultValues: raffle 
-            ? { 
-                ...raffle, 
-                packs: Array.isArray(raffle.packs) ? raffle.packs : [], 
+        defaultValues: raffle
+            ? {
+                ...raffle,
+                packs: Array.isArray(raffle.packs) ? raffle.packs : [],
                 bonuses: raffle.bonuses?.map(b => ({ value: b })) || [],
                 gallery: raffle.gallery || []
             }
-            : { 
-                status: 'draft', 
+            : {
+                status: 'draft',
                 tickets: 1000,
                 price: 50,
-                packs: [], 
-                bonuses: [], 
+                packs: [],
+                bonuses: [],
                 gallery: []
             }
     });
-    
+
     // Logs después de inicializar el formulario
     React.useEffect(() => {
         const subscription = watch((value, { name, type }) => {
@@ -106,17 +109,17 @@ const AdvancedRaffleForm: React.FC<AdvancedRaffleFormProps> = ({
                 toast.error('Título requerido', 'Por favor ingresa un título para la rifa');
                 return;
             }
-            
+
             if (!data.tickets || data.tickets < 1) {
                 toast.error('Boletos requeridos', 'Debes especificar al menos 1 boleto');
                 return;
             }
-            
+
             if (!data.price || data.price <= 0) {
                 toast.error('Precio requerido', 'El precio debe ser mayor a 0');
                 return;
             }
-            
+
             if (!data.drawDate) {
                 toast.error('Fecha requerida', 'Debes seleccionar la fecha del sorteo');
                 return;
@@ -133,7 +136,7 @@ const AdvancedRaffleForm: React.FC<AdvancedRaffleFormProps> = ({
             console.log('🎁 Form bonuses type:', typeof data.bonuses);
             console.log('🎁 Form bonuses isArray:', Array.isArray(data.bonuses));
             console.log('🎁 Form bonuses length:', data.bonuses?.length || 0);
-            
+
             // Asegurar que packs tenga la estructura correcta
             const processedPacks = data.packs?.map(pack => ({
                 name: pack.name || '',
@@ -141,13 +144,13 @@ const AdvancedRaffleForm: React.FC<AdvancedRaffleFormProps> = ({
                 q: Number(pack.q || pack.tickets || 1),
                 price: Number(pack.price || 0)
             })).filter(pack => pack.price > 0) || [];
-            
+
             const saveData = {
                 ...data,
                 bonuses: data.bonuses?.map(b => b.value).filter(b => b && b.trim() !== '') || [],
                 packs: processedPacks.length > 0 ? processedPacks : null
             };
-            
+
             console.log('💾 SAVING DATA - FINAL');
             console.log('💾 Full saveData:', JSON.stringify(saveData, null, 2));
             console.log('📦 SaveData packs:', saveData.packs);
@@ -156,14 +159,14 @@ const AdvancedRaffleForm: React.FC<AdvancedRaffleFormProps> = ({
             console.log('🎁 SaveData bonuses:', saveData.bonuses);
             console.log('🎁 SaveData bonuses type:', typeof saveData.bonuses);
             console.log('🎁 SaveData bonuses isArray:', Array.isArray(saveData.bonuses));
-            
+
             await onSave({ ...raffle, ...saveData } as Raffle);
-            
+
             toast.success(
                 raffle ? '¡Rifa actualizada!' : '¡Rifa creada!',
                 raffle ? 'La rifa se actualizó correctamente' : 'La rifa se creó exitosamente'
             );
-            
+
             onClose();
         } catch (error: any) {
             console.error('Error saving raffle:', error);
@@ -176,6 +179,7 @@ const AdvancedRaffleForm: React.FC<AdvancedRaffleFormProps> = ({
 
     const tabs = [
         { id: 'basic', label: 'Información Básica', icon: Info },
+        { id: 'description', label: 'Descripción Detallada', icon: FileText },
         { id: 'pricing', label: 'Precios y Paquetes', icon: DollarSign },
         { id: 'images', label: 'Imágenes', icon: ImageIcon },
         { id: 'advanced', label: 'Configuración Avanzada', icon: Settings }
@@ -184,17 +188,27 @@ const AdvancedRaffleForm: React.FC<AdvancedRaffleFormProps> = ({
     const inputClasses = "w-full mt-1 p-3 border border-gray-300 rounded-xl bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200";
     const labelClasses = "block text-sm font-semibold text-gray-700 mb-2";
 
+    const modules = {
+        toolbar: [
+            [{ 'header': [1, 2, 3, false] }],
+            ['bold', 'italic', 'underline', 'strike'],
+            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+            [{ 'color': [] }, { 'background': [] }],
+            ['link', 'clean']
+        ],
+    };
+
     return (
         <motion.div
-            initial={{ opacity: 0 }} 
-            animate={{ opacity: 1 }} 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4"
             onClick={onClose}
         >
             <motion.div
-                initial={{ scale: 0.9, y: -20 }} 
-                animate={{ scale: 1, y: 0 }} 
+                initial={{ scale: 0.9, y: -20 }}
+                animate={{ scale: 1, y: 0 }}
                 exit={{ scale: 0.9, y: 20 }}
                 className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[95vh] overflow-hidden"
                 onClick={(e) => e.stopPropagation()}
@@ -238,11 +252,10 @@ const AdvancedRaffleForm: React.FC<AdvancedRaffleFormProps> = ({
                                     <button
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id as any)}
-                                        className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-                                            activeTab === tab.id
+                                        className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${activeTab === tab.id
                                                 ? 'bg-blue-500 text-white shadow-lg'
                                                 : 'text-gray-600 hover:bg-gray-100'
-                                        }`}
+                                            }`}
                                     >
                                         <Icon className="w-5 h-5" />
                                         <span className="font-medium">{tab.label}</span>
@@ -257,11 +270,10 @@ const AdvancedRaffleForm: React.FC<AdvancedRaffleFormProps> = ({
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between text-sm">
                                     <span className="text-gray-600">Estado:</span>
-                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                        watchedData.status === 'active' ? 'bg-green-100 text-green-800' :
-                                        watchedData.status === 'draft' ? 'bg-yellow-100 text-yellow-800' :
-                                        'bg-red-100 text-red-800'
-                                    }`}>
+                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${watchedData.status === 'active' ? 'bg-green-100 text-green-800' :
+                                            watchedData.status === 'draft' ? 'bg-yellow-100 text-yellow-800' :
+                                                'bg-red-100 text-red-800'
+                                        }`}>
                                         {watchedData.status}
                                     </span>
                                 </div>
@@ -333,14 +345,17 @@ const AdvancedRaffleForm: React.FC<AdvancedRaffleFormProps> = ({
                                         <div>
                                             <label className={labelClasses}>
                                                 <Gift className="w-4 h-4 inline mr-2" />
-                                                Descripción
+                                                Descripción Corta (Para la tarjeta de inicio)
                                             </label>
                                             <textarea
                                                 {...register('description')}
                                                 rows={4}
                                                 className={inputClasses}
-                                                placeholder="Describe el premio y los detalles de la rifa..."
+                                                placeholder="Breve descripción del premio para la página principal..."
                                             />
+                                            <p className="text-gray-500 text-sm mt-1">
+                                                Esta descripción aparecerá en las tarjetas de la página de inicio. Mantenla breve y atractiva.
+                                            </p>
                                         </div>
 
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -366,8 +381,8 @@ const AdvancedRaffleForm: React.FC<AdvancedRaffleFormProps> = ({
                                                 <input
                                                     type="number"
                                                     step="0.01"
-                                                    {...register('price', { 
-                                                        required: 'El precio es requerido', 
+                                                    {...register('price', {
+                                                        required: 'El precio es requerido',
                                                         min: { value: 0.01, message: 'El precio debe ser mayor a 0' }
                                                     })}
                                                     className={inputClasses}
@@ -421,6 +436,43 @@ const AdvancedRaffleForm: React.FC<AdvancedRaffleFormProps> = ({
                                                     <span>Agregar Bono</span>
                                                 </button>
                                             </div>
+                                        </div>
+                                    </motion.div>
+                                )}
+
+                                {/* Tab: Descripción Detallada (Rich Text) */}
+                                {activeTab === 'description' && (
+                                    <motion.div
+                                        key="description"
+                                        initial={{ opacity: 0, x: 20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: -20 }}
+                                        className="space-y-6"
+                                    >
+                                        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                                            <div className="flex items-center space-x-2 mb-2">
+                                                <FileText className="w-5 h-5 text-blue-600" />
+                                                <h3 className="font-semibold text-blue-900">Descripción Detallada para Compra</h3>
+                                            </div>
+                                            <p className="text-blue-700 text-sm">
+                                                Esta descripción aparecerá en la página de compra. Puedes usar formato enriquecido (negritas, listas, colores) para hacerla más atractiva.
+                                            </p>
+                                        </div>
+
+                                        <div className="h-[400px] mb-12">
+                                            <Controller
+                                                name="purchaseDescription"
+                                                control={control}
+                                                render={({ field }) => (
+                                                    <ReactQuill
+                                                        theme="snow"
+                                                        value={field.value || ''}
+                                                        onChange={field.onChange}
+                                                        modules={modules}
+                                                        className="h-[350px]"
+                                                    />
+                                                )}
+                                            />
                                         </div>
                                     </motion.div>
                                 )}
@@ -592,7 +644,7 @@ const AdvancedRaffleForm: React.FC<AdvancedRaffleFormProps> = ({
                                                 <Gift className="w-5 h-5 text-blue-600" />
                                                 <h3 className="font-semibold text-blue-900">Múltiples Oportunidades</h3>
                                             </div>
-                                            
+
                                             <div className="space-y-4">
                                                 <div className="flex items-center space-x-3">
                                                     <input
@@ -604,7 +656,7 @@ const AdvancedRaffleForm: React.FC<AdvancedRaffleFormProps> = ({
                                                         Boletos con Múltiples Oportunidades
                                                     </label>
                                                 </div>
-                                                
+
                                                 {watch('boletosConOportunidades') && (
                                                     <div>
                                                         <label className={labelClasses}>
@@ -612,8 +664,8 @@ const AdvancedRaffleForm: React.FC<AdvancedRaffleFormProps> = ({
                                                         </label>
                                                         <input
                                                             type="number"
-                                                            {...register('numeroOportunidades', { 
-                                                                min: 1, 
+                                                            {...register('numeroOportunidades', {
+                                                                min: 1,
                                                                 max: 10,
                                                                 valueAsNumber: true
                                                             })}

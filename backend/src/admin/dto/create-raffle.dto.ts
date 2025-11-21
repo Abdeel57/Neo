@@ -27,6 +27,10 @@ export class CreateRaffleDto {
   @MaxLength(2000, { message: 'La descripción no puede tener más de 2000 caracteres' })
   description?: string;
 
+  @IsString({ message: 'La descripción de compra debe ser un texto' })
+  @IsOptional()
+  purchaseDescription?: string;
+
   @IsUrl({}, { message: 'La URL de la imagen debe ser válida' })
   @IsOptional()
   imageUrl?: string;
@@ -97,6 +101,10 @@ export class UpdateRaffleDto {
   @IsOptional()
   @MaxLength(2000, { message: 'La descripción no puede tener más de 2000 caracteres' })
   description?: string;
+
+  @IsString({ message: 'La descripción de compra debe ser un texto' })
+  @IsOptional()
+  purchaseDescription?: string;
 
   @IsUrl({}, { message: 'La URL de la imagen debe ser válida' })
   @IsOptional()
