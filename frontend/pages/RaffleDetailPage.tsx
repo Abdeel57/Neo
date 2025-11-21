@@ -272,6 +272,9 @@ const RaffleDetailPage = () => {
                             title={raffle.title}
                             className="w-full max-w-2xl mx-auto mb-6"
                         />
+                        <div className="w-full max-w-2xl mx-auto mb-6 flex justify-center">
+                            <CountdownTimer targetDate={raffle.drawDate} />
+                        </div>
                         <div className="bg-background-secondary p-6 rounded-lg border border-slate-700/50 mb-6">
                             <h1 className="text-3xl font-bold mb-4 text-center">{raffle.title}</h1>
                             {raffle.purchaseDescription ? (
@@ -293,7 +296,6 @@ const RaffleDetailPage = () => {
                         <div className="sticky top-24 space-y-6">
                             <div className="bg-background-secondary p-6 rounded-lg border border-slate-700/50 shadow-lg shadow-neon-accent">
                                 <h2 className="text-2xl font-bold text-center mb-4">Participa Ahora</h2>
-                                <CountdownTimer targetDate={raffle.drawDate} />
                                 <div className="my-6">
                                     <div className="w-full bg-slate-700 rounded-full h-2.5">
                                         <motion.div
