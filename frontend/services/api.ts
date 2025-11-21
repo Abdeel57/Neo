@@ -11,7 +11,8 @@ import {
 // Esta URL se configura automáticamente según el entorno
 // En desarrollo: http://localhost:3000/api (con proxy de Vite)
 // En producción: se toma de la variable de entorno VITE_API_URL
-const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3000/api';
+const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+const API_URL = isLocal ? 'http://localhost:3000/api' : ((import.meta as any).env?.VITE_API_URL || 'http://localhost:3000/api');
 
 // Helper para obtener el token JWT del localStorage
 const getAuthToken = (): string | null => {
