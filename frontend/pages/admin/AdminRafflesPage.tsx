@@ -100,6 +100,16 @@ const AdminRafflesPage: React.FC = () => {
         setIsModalOpen(false);
     };
 
+    const handleOpenImportModal = (raffleId: string) => {
+        setSelectedRaffleId(raffleId);
+        setIsImportModalOpen(true);
+    };
+
+    const handleCloseImportModal = () => {
+        setIsImportModalOpen(false);
+        setSelectedRaffleId(null);
+    };
+
     // Función para limpiar datos antes de enviar - SOLO campos válidos del esquema Prisma
     const cleanRaffleData = (data: Raffle) => {
         // Validar campos requeridos
@@ -186,7 +196,9 @@ const AdminRafflesPage: React.FC = () => {
                             .filter((b: string) => b !== '');
                     }
                 } catch (e) {
-                    processedBonuses = data.bonuses.trim() !== '' ? [data.bonuses.trim()] : [];
+                    // Handle string case safely
+                    const trimmed = String(data.bonuses).trim();
+                    processedBonuses = trimmed !== '' ? [trimmed] : [];
                 }
             }
         }
@@ -309,10 +321,9 @@ const AdminRafflesPage: React.FC = () => {
             slug: `${raffle.slug}-copia-${Date.now()}`,
             status: 'draft' as const,
             sold: 0,
-            createdAt: undefined,
-            updatedAt: undefined
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
         };
-        console.log('📋 Duplicating raffle:', { original: raffle.title, duplicate: duplicatedRaffle.title });
         handleOpenModal(duplicatedRaffle);
     };
 
@@ -340,7 +351,6 @@ const AdminRafflesPage: React.FC = () => {
                     try {
                         const importedRaffles = JSON.parse(e.target?.result as string);
                         console.log('Rifas importadas:', importedRaffles);
-                        // Aquí podrías implementar la lógica para importar las rifas
                         alert('Funcionalidad de importación en desarrollo');
                     } catch (error) {
                         alert('Error al leer el archivo JSON');
@@ -369,7 +379,7 @@ const AdminRafflesPage: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             className="space-y-4"
         >
-            {/* Header compacto */}
+            {/* Header compacto con acciones */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Rifas</h1>
@@ -419,6 +429,7 @@ const AdminRafflesPage: React.FC = () => {
                 onDelete={handleDeleteRaffle}
                 onDuplicate={handleDuplicateRaffle}
                 onCreate={() => handleOpenModal()}
+                onImport={handleOpenImportModal}
                 loading={refreshing}
             />
 
@@ -443,8 +454,15 @@ const AdminRafflesPage: React.FC = () => {
                 )}
             </AnimatePresence>
 
-            {/* Toast Container */}
-            <ToastContainer />
+            {/* Import Modal */}
+            <ImportTicketsModal
+                isOpen={isImportModalOpen}
+                onClose={handleCloseImportModal}
+                raffleId={selectedRaffleId || ''}
+                onSuccess={() => {
+                    refreshRaffles();
+                }}
+            />
         </motion.div>
     );
 };
