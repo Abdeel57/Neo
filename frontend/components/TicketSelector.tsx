@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion';
 import { FixedSizeGrid as Grid } from 'react-window';
 import type { GridChildComponentProps } from 'react-window';
-import { Check } from 'lucide-react';
+import { Check, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { isMobile } from '../utils/deviceDetection';
 import { useTheme } from '../contexts/ThemeContext';
 import { DesignSystemUtils } from '../utils/design-system-utils';
@@ -353,7 +353,7 @@ const TicketSelector = ({ totalTickets, occupiedTickets, selectedTickets, onTick
 
     return (
         <div
-            className="p-4 rounded-xl shadow-lg relative overflow-hidden"
+            className="p-2 rounded-xl shadow-lg relative overflow-hidden"
             style={{
                 background: containerBgColor,
                 border: `1px solid ${appearance?.colors?.accent || '#00ff00'}20`,
@@ -403,13 +403,26 @@ const TicketSelector = ({ totalTickets, occupiedTickets, selectedTickets, onTick
                 </div>
                 {listingMode === 'paginado' && (
                     <div
-                        className="flex justify-center items-center gap-4 mt-6"
+                        className="flex justify-center items-center gap-2 mt-3"
                         style={{ color: containerTextColor }}
                     >
                         <button
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 10))}
+                            disabled={currentPage === 1}
+                            className="p-2 rounded-lg disabled:opacity-50 transition-transform active:scale-95"
+                            style={{
+                                background: appearance?.colors?.action || '#0066ff',
+                                color: preCalculatedTextColors.title
+                            }}
+                            title="-10 páginas"
+                        >
+                            <ChevronsLeft size={18} />
+                        </button>
+
+                        <button
                             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                             disabled={currentPage === 1}
-                            className="px-4 py-2 rounded-lg disabled:opacity-50 font-semibold transition-transform active:scale-95"
+                            className="px-3 py-2 rounded-lg disabled:opacity-50 font-semibold transition-transform active:scale-95 text-sm"
                             style={{
                                 background: appearance?.colors?.action || '#0066ff',
                                 color: preCalculatedTextColors.title
@@ -417,19 +430,32 @@ const TicketSelector = ({ totalTickets, occupiedTickets, selectedTickets, onTick
                         >
                             Anterior
                         </button>
-                        <span className="font-mono font-bold">
+                        <span className="font-mono font-bold text-sm min-w-[80px] text-center">
                             {currentPage} / {totalPages}
                         </span>
                         <button
                             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                             disabled={currentPage === totalPages}
-                            className="px-4 py-2 rounded-lg disabled:opacity-50 font-semibold transition-transform active:scale-95"
+                            className="px-3 py-2 rounded-lg disabled:opacity-50 font-semibold transition-transform active:scale-95 text-sm"
                             style={{
                                 background: appearance?.colors?.action || '#0066ff',
                                 color: preCalculatedTextColors.title
                             }}
                         >
                             Siguiente
+                        </button>
+
+                        <button
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 10))}
+                            disabled={currentPage === totalPages}
+                            className="p-2 rounded-lg disabled:opacity-50 transition-transform active:scale-95"
+                            style={{
+                                background: appearance?.colors?.action || '#0066ff',
+                                color: preCalculatedTextColors.title
+                            }}
+                            title="+10 páginas"
+                        >
+                            <ChevronsRight size={18} />
                         </button>
                     </div>
                 )}
