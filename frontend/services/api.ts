@@ -1342,7 +1342,7 @@ export const adminDeleteUser = async (id: string): Promise<void> => {
 export const adminUpdateSettings = async (settings: Settings): Promise<Settings> => {
     const response = await fetch(`${API_URL}/admin/settings`, {
         method: 'POST', // Using POST for upsert
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(settings),
     });
     return handleResponse(response);
