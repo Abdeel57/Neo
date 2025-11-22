@@ -84,8 +84,8 @@ const Header = () => {
                                                 transform: 'scale(1.2)'
                                             }}
                                         />
-                                        {/* Contenedor del logo - 100px sin bordes (25% más grande) */}
-                                        <div className="relative w-[100px] h-[100px] flex items-center justify-center bg-transparent">
+                                        {/* Contenedor del logo - 92px sin bordes (tamaño ajustado) */}
+                                        <div className="relative w-[92px] h-[92px] flex items-center justify-center bg-transparent">
                                             <img
                                                 src={appearance.logoUrl || (appearance as any)?.logo}
                                                 alt={appearance?.siteName || 'Logo'}
@@ -119,9 +119,9 @@ const Header = () => {
                                                 transform: 'scale(1.2)'
                                             }}
                                         />
-                                        {/* Contenedor cuadrado con nombre - 100px sin bordes (25% más grande) */}
+                                        {/* Contenedor cuadrado con nombre - 92px sin bordes (tamaño ajustado) */}
                                         <div
-                                            className="relative w-[100px] h-[100px] flex items-center justify-center rounded-lg"
+                                            className="relative w-[92px] h-[92px] flex items-center justify-center rounded-lg"
                                             style={{
                                                 backgroundColor: appearance?.colors?.backgroundPrimary || '#111827'
                                             }}
