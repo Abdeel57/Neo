@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 
 const Header = () => {
     const { appearance } = useTheme();
-    
+
     // Obtener colores del tema o usar valores por defecto
     const primaryColor = appearance?.colors?.action || '#0ea5e9';
     const accentColor = appearance?.colors?.accent || '#ec4899';
@@ -15,24 +15,24 @@ const Header = () => {
     return (
         <header className="relative w-full sticky top-0 z-50 overflow-hidden">
             {/* Línea de color superior */}
-            <div 
+            <div
                 className="w-full h-1"
-                style={{ 
+                style={{
                     background: `linear-gradient(90deg, ${headerColor} 0%, ${accentColor} 50%, ${headerColor} 100%)`
                 }}
             />
-            
+
             {/* Barra principal del header */}
-            <div 
+            <div
                 className="w-full py-2 md:py-2.5 px-4 md:px-6 flex justify-center items-center"
-                style={{ 
+                style={{
                     backgroundColor: appearance?.colors?.backgroundSecondary || '#1f2937'
                 }}
             >
                 <div className="w-full max-w-[85%] sm:max-w-[70%] md:max-w-[55%] lg:max-w-[45%] relative flex justify-center mx-auto">
                     <div className="flex items-center justify-between relative w-full gap-2 md:gap-4">
                         {/* Botón Izquierdo - Métodos de Pago */}
-                        <Link 
+                        <Link
                             to="/cuentas-de-pago"
                             className="flex-1 flex items-center justify-center"
                         >
@@ -46,14 +46,14 @@ const Header = () => {
                                 }}
                             >
                                 <div className="flex flex-col items-center leading-tight">
-                                    <span 
+                                    <span
                                         style={{
                                             textShadow: `0 0 10px ${headerColor}80, 0 0 20px ${headerColor}60, 0 0 30px ${headerColor}40`
                                         }}
                                     >
                                         MÉTODOS
                                     </span>
-                                    <span 
+                                    <span
                                         style={{
                                             textShadow: `0 0 10px ${headerColor}80, 0 0 20px ${headerColor}60, 0 0 30px ${headerColor}40`
                                         }}
@@ -65,8 +65,8 @@ const Header = () => {
                         </Link>
 
                         {/* Logo en el centro */}
-                        <Link 
-                            to="/" 
+                        <Link
+                            to="/"
                             className="flex-shrink-0 mx-4 md:mx-8 relative"
                         >
                             <motion.div
@@ -77,20 +77,20 @@ const Header = () => {
                                 {(appearance?.logoUrl || (appearance as any)?.logo) ? (
                                     <div className="relative">
                                         {/* Efecto de resplandor sutil siempre visible */}
-                                        <div 
+                                        <div
                                             className="absolute inset-0 opacity-60 blur-2xl"
                                             style={{
                                                 background: `radial-gradient(circle, ${headerColor}40 0%, transparent 70%)`,
                                                 transform: 'scale(1.2)'
                                             }}
                                         />
-                                        {/* Contenedor del logo - 80px sin bordes */}
-                                        <div className="relative w-20 h-20 flex items-center justify-center bg-transparent">
-                                            <img 
-                                                src={appearance.logoUrl || (appearance as any)?.logo} 
-                                                alt={appearance?.siteName || 'Logo'} 
+                                        {/* Contenedor del logo - 100px sin bordes (25% más grande) */}
+                                        <div className="relative w-[100px] h-[100px] flex items-center justify-center bg-transparent">
+                                            <img
+                                                src={appearance.logoUrl || (appearance as any)?.logo}
+                                                alt={appearance?.siteName || 'Logo'}
                                                 className="w-full h-full object-contain bg-transparent"
-                                                style={{ 
+                                                style={{
                                                     mixBlendMode: 'normal',
                                                     filter: `drop-shadow(0 0 5px ${headerColor}80) drop-shadow(0 0 10px ${headerColor}60) drop-shadow(0 0 15px ${headerColor}40) drop-shadow(0 0 20px ${headerColor}30) drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2))`
                                                 }}
@@ -100,7 +100,7 @@ const Header = () => {
                                             />
                                         </div>
                                         {/* Badge de verificación - siempre visible, esquina superior derecha, azul */}
-                                        <div 
+                                        <div
                                             className="absolute -top-1 -right-1 w-6 h-6 md:w-7 md:h-7 rounded-full flex items-center justify-center shadow-lg border-2 border-white z-10"
                                             style={{ backgroundColor: verificationBlue }}
                                         >
@@ -112,29 +112,29 @@ const Header = () => {
                                 ) : (
                                     <div className="relative">
                                         {/* Efecto de resplandor sutil siempre visible */}
-                                        <div 
+                                        <div
                                             className="absolute inset-0 opacity-60 blur-2xl"
                                             style={{
                                                 background: `radial-gradient(circle, ${headerColor}40 0%, transparent 70%)`,
                                                 transform: 'scale(1.2)'
                                             }}
                                         />
-                                        {/* Contenedor cuadrado con nombre - 80px sin bordes */}
-                                        <div 
-                                            className="relative w-20 h-20 flex items-center justify-center rounded-lg"
+                                        {/* Contenedor cuadrado con nombre - 100px sin bordes (25% más grande) */}
+                                        <div
+                                            className="relative w-[100px] h-[100px] flex items-center justify-center rounded-lg"
                                             style={{
                                                 backgroundColor: appearance?.colors?.backgroundPrimary || '#111827'
                                             }}
                                         >
-                                            <span 
-                                                className="text-2xl md:text-3xl font-black"
+                                            <span
+                                                className="text-3xl md:text-4xl font-black"
                                                 style={{ color: headerColor }}
                                             >
                                                 {appearance?.siteName?.charAt(0) || 'L'}
                                             </span>
                                         </div>
                                         {/* Badge de verificación - siempre visible, esquina superior derecha, azul */}
-                                        <div 
+                                        <div
                                             className="absolute -top-1 -right-1 w-6 h-6 md:w-7 md:h-7 rounded-full flex items-center justify-center shadow-lg border-2 border-white z-10"
                                             style={{ backgroundColor: verificationBlue }}
                                         >
@@ -148,7 +148,7 @@ const Header = () => {
                         </Link>
 
                         {/* Botón Derecho - Verificar Boletos */}
-                        <Link 
+                        <Link
                             to="/verificador"
                             className="flex-1 flex items-center justify-center"
                         >
@@ -162,14 +162,14 @@ const Header = () => {
                                 }}
                             >
                                 <div className="flex flex-col items-center leading-tight">
-                                    <span 
+                                    <span
                                         style={{
                                             textShadow: `0 0 10px ${headerColor}80, 0 0 20px ${headerColor}60, 0 0 30px ${headerColor}40`
                                         }}
                                     >
                                         VERIFICAR
                                     </span>
-                                    <span 
+                                    <span
                                         style={{
                                             textShadow: `0 0 10px ${headerColor}80, 0 0 20px ${headerColor}60, 0 0 30px ${headerColor}40`
                                         }}
@@ -184,9 +184,9 @@ const Header = () => {
             </div>
 
             {/* Línea de color inferior */}
-            <div 
+            <div
                 className="w-full h-1"
-                style={{ 
+                style={{
                     background: `linear-gradient(90deg, ${headerColor} 0%, ${accentColor} 50%, ${headerColor} 100%)`
                 }}
             />
