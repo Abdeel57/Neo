@@ -1,9 +1,27 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lucky Snap</title>
+  <title id="page-title">Sorteos Gama</title>
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://sorteosgama.pro">
+  <meta property="og:title" id="og-title" content="Sorteos Gama">
+  <meta property="og:description" id="og-description"
+    content="Participa en nuestros emocionantes sorteos y gana increíbles premios">
+  <meta property="og:image" id="og-image" content="https://sorteosgama.pro/logo.png">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://sorteosgama.pro">
+  <meta property="twitter:title" id="twitter-title" content="Sorteos Gama">
+  <meta property="twitter:description" id="twitter-description"
+    content="Participa en nuestros emocionantes sorteos y gana increíbles premios">
+  <meta property="twitter:image" id="twitter-image" content="https://sorteosgama.pro/logo.png">
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script type="importmap">
 {
@@ -45,25 +63,33 @@
     ::-webkit-scrollbar {
       width: 8px;
     }
+
     ::-webkit-scrollbar-track {
       background: rgb(var(--color-background-secondary));
     }
+
     ::-webkit-scrollbar-thumb {
       background-color: rgb(var(--color-accent));
       border-radius: 10px;
     }
+
     .no-scrollbar::-webkit-scrollbar {
       display: none;
     }
+
     .no-scrollbar {
-      -ms-overflow-style: none; /* IE and Edge */
-      scrollbar-width: none; /* Firefox */
+      -ms-overflow-style: none;
+      /* IE and Edge */
+      scrollbar-width: none;
+      /* Firefox */
     }
   </style>
-<link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/styles.css">
 </head>
+
 <body class="bg-background-primary">
   <div id="root"></div>
   <script type="module" src="/index.tsx"></script>
 </body>
+
 </html>
